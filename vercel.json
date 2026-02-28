@@ -1,6 +1,6 @@
 {
   "functions": {
-    "app/api/hlaða-upp/route.ts": {
+    "app/api/hljod-skra/route.ts": {
       "maxDuration": 300
     },
     "app/api/hljod-hluti/route.ts": {
