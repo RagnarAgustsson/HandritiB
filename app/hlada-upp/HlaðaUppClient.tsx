@@ -59,7 +59,7 @@ export default function HlaðaUppClient() {
 
     try {
       setFramvinda('Hljóðritar og greinir... (getur tekið nokkrar mínútur)')
-      const res = await fetch('/api/hlaða-upp', { method: 'POST', body: fd })
+      const res = await fetch('/api/hlada-upp', { method: 'POST', body: fd })
       const data = await res.json()
 
       if (!res.ok) {

@@ -23,7 +23,7 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/hlaða-upp"
+            href="/hlada-upp"
             className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-gray-300"
           >
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50">
