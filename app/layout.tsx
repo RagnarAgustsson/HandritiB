@@ -13,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <ClerkProvider localization={isIS}>
       <html lang="is">
-        <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+        <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
           <Nav />
           {children}
         </body>

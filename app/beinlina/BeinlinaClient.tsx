@@ -5,12 +5,13 @@ import { Zap, Square, Loader2, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type Staða = 'biðröð' | 'tengist' | 'í-gangi' | 'vistar' | 'villa'
+type Message = { type: 'user' | 'handriti'; text: string }
 
 export default function BeinlinaClient() {
   const router = useRouter()
   const [staða, setStaða] = useState<Staða>('biðröð')
   const [villa, setVilla] = useState('')
-  const [uppskrift, setUppskrift] = useState('')
+  const [messages, setMessages] = useState<Message[]>([])
 
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const dcRef = useRef<RTCDataChannel | null>(null)
@@ -18,53 +19,50 @@ export default function BeinlinaClient() {
 
   async function byrja() {
     setVilla('')
-    setUppskrift('')
+    setMessages([])
     setStaða('tengist')
 
     try {
-      // 1. Get ephemeral token from our server
       const tokenRes = await fetch('/api/beinlina', { method: 'POST' })
       if (!tokenRes.ok) throw new Error('Gat ekki fengið aðgangslykilinn')
       const { client_secret } = await tokenRes.json()
 
-      // 2. Get mic
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
 
-      // 3. Create WebRTC connection to OpenAI directly
       const pc = new RTCPeerConnection()
       pcRef.current = pc
 
-      // Add audio track
       stream.getAudioTracks().forEach(track => pc.addTrack(track, stream))
 
-      // Receive AI audio response (optional — for future use)
       pc.ontrack = (e) => {
         const audio = new Audio()
         audio.srcObject = e.streams[0]
         audio.play().catch(() => {})
       }
 
-      // Data channel for transcript events
       const dc = pc.createDataChannel('oai-events')
       dcRef.current = dc
 
       dc.onmessage = (e) => {
         try {
           const event = JSON.parse(e.data)
-          if (event.type === 'conversation.item.input_audio_transcription.completed') {
-            setUppskrift(prev => prev + (prev ? ' ' : '') + event.transcript)
+          // User speech transcript
+          if (event.type === 'conversation.item.input_audio_transcription.completed' && event.transcript?.trim()) {
+            setMessages(prev => [...prev, { type: 'user', text: event.transcript.trim() }])
+          }
+          // Handriti's spoken response transcript
+          if (event.type === 'response.audio_transcript.done' && event.transcript?.trim()) {
+            setMessages(prev => [...prev, { type: 'handriti', text: event.transcript.trim() }])
           }
         } catch {
           // ignore malformed events
         }
       }
 
-      // Create offer
       const offer = await pc.createOffer()
       await pc.setLocalDescription(offer)
 
-      // Send to OpenAI Realtime
       const sdpRes = await fetch('https://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview', {
         method: 'POST',
         headers: {
@@ -98,15 +96,22 @@ export default function BeinlinaClient() {
 
   async function stöðva() {
     loka()
-    if (!uppskrift.trim()) {
+    const userLines = messages.filter(m => m.type === 'user').map(m => m.text)
+    if (userLines.length === 0) {
       setStaða('biðröð')
       return
     }
     setStaða('vistar')
+
+    // Build full conversation transcript for context
+    const fullTranscript = messages
+      .map(m => m.type === 'handriti' ? `[Handriti]: ${m.text}` : m.text)
+      .join('\n\n')
+
     const res = await fetch('/api/beinlina-vista', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript: uppskrift, profile: 'frjálst' }),
+      body: JSON.stringify({ transcript: fullTranscript, profile: 'fundur' }),
     })
     const data = await res.json()
     if (res.ok) router.push(`/lotur/${data.sessionId}`)
@@ -119,18 +124,35 @@ export default function BeinlinaClient() {
   useEffect(() => () => loka(), [])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-950">
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Beinlína</h1>
+        <h1 className="text-2xl font-bold text-zinc-100 mb-8">Beinlína</h1>
 
         {(staða === 'biðröð' || staða === 'villa') && (
           <div className="space-y-6">
-            <p className="text-gray-500 text-sm">
-              Tengist beint við GPT Realtime í gegnum WebRTC. Talaðu — uppskrift birtist á skjánum.
+            <p className="text-zinc-500 text-sm">
+              Handriti hlustir í þögn og skráir samtalið. Hér er hvernig þú talar við það:
             </p>
 
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
+              <div className="flex items-start gap-3">
+                <span className="text-indigo-400 font-mono text-sm shrink-0 mt-0.5">→</span>
+                <div>
+                  <p className="text-sm font-medium text-zinc-200">"Hvað segir þú um X, Handriti?"</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Handriti svarar spurningunni með öllu samhengi samtalsins í huga</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-indigo-400 font-mono text-sm shrink-0 mt-0.5">→</span>
+                <div>
+                  <p className="text-sm font-medium text-zinc-200">"Takk Handriti"</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Handriti þegir og hlustir áfram</p>
+                </div>
+              </div>
+            </div>
+
             {villa && (
-              <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-red-700 text-sm">
+              <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-400 text-sm">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {villa}
               </div>
@@ -138,7 +160,7 @@ export default function BeinlinaClient() {
 
             <button
               onClick={byrja}
-              className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-white font-semibold hover:bg-purple-700 transition"
+              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white font-semibold hover:bg-indigo-700 transition"
             >
               <Zap className="h-5 w-5" />
               Byrja beinlínu
@@ -147,7 +169,7 @@ export default function BeinlinaClient() {
         )}
 
         {staða === 'tengist' && (
-          <div className="flex items-center gap-3 text-gray-500">
+          <div className="flex items-center gap-3 text-zinc-400">
             <Loader2 className="h-5 w-5 animate-spin" />
             Tengist...
           </div>
@@ -157,30 +179,47 @@ export default function BeinlinaClient() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-purple-500 animate-pulse" />
-                <span className="font-semibold text-gray-900">Í beinlínu</span>
+                <span className="h-3 w-3 rounded-full bg-indigo-400 animate-pulse" />
+                <span className="font-semibold text-zinc-100">Í beinlínu</span>
               </div>
               <button
                 onClick={stöðva}
-                className="flex items-center gap-2 rounded-xl bg-gray-900 px-5 py-2.5 text-white font-semibold hover:bg-gray-700 transition"
+                className="flex items-center gap-2 rounded-xl bg-zinc-800 px-5 py-2.5 text-zinc-100 font-semibold hover:bg-zinc-700 transition"
               >
                 <Square className="h-4 w-4" />
                 Loka og vista
               </button>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-4 min-h-32">
-              {uppskrift ? (
-                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{uppskrift}</p>
+            {/* Hint */}
+            <div className="flex gap-4 text-xs text-zinc-600 flex-wrap">
+              <span><span className="text-zinc-500">"Hvað segir þú um X, Handriti?"</span> — spyrja</span>
+              <span><span className="text-zinc-500">"Takk Handriti"</span> — halda áfram</span>
+            </div>
+
+            {/* Conversation transcript */}
+            <div className="space-y-3 min-h-32">
+              {messages.length === 0 ? (
+                <p className="text-sm text-zinc-600">Uppskrift birtist hér...</p>
               ) : (
-                <p className="text-sm text-gray-400">Uppskrift birtist hér...</p>
+                messages.map((m, i) => (
+                  <div key={i} className={m.type === 'handriti'
+                    ? 'rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3'
+                    : ''
+                  }>
+                    {m.type === 'handriti' && (
+                      <div className="text-xs text-indigo-400 font-medium mb-1">Handriti</div>
+                    )}
+                    <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{m.text}</p>
+                  </div>
+                ))
               )}
             </div>
           </div>
         )}
 
         {staða === 'vistar' && (
-          <div className="flex items-center gap-3 text-gray-500">
+          <div className="flex items-center gap-3 text-zinc-400">
             <Loader2 className="h-5 w-5 animate-spin" />
             Vistar og skapar samantekt...
           </div>

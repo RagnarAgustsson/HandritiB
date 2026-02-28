@@ -74,16 +74,18 @@ export default function HlaðaUppClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-zinc-950">
       <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Hlaða upp skrá</h1>
+        <h1 className="text-2xl font-bold text-zinc-100 mb-8">Hlaða upp skrá</h1>
 
         {staða === 'biðröð' || staða === 'villa' ? (
           <div className="space-y-6">
             <div
               onClick={() => fileRef.current?.click()}
               className={`cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition ${
-                skrá ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                skrá
+                  ? 'border-emerald-500/50 bg-emerald-500/5'
+                  : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'
               }`}
             >
               <input
@@ -93,29 +95,29 @@ export default function HlaðaUppClient() {
                 onChange={velja}
                 className="hidden"
               />
-              <Upload className={`h-8 w-8 mx-auto mb-3 ${skrá ? 'text-green-500' : 'text-gray-300'}`} />
+              <Upload className={`h-8 w-8 mx-auto mb-3 ${skrá ? 'text-emerald-400' : 'text-zinc-600'}`} />
               {skrá ? (
                 <div>
-                  <p className="font-medium text-gray-900">{skrá.name}</p>
-                  <p className="text-sm text-gray-400 mt-1">{(skrá.size / 1024 / 1024).toFixed(1)} MB</p>
+                  <p className="font-medium text-zinc-100">{skrá.name}</p>
+                  <p className="text-sm text-zinc-500 mt-1">{(skrá.size / 1024 / 1024).toFixed(1)} MB</p>
                 </div>
               ) : (
                 <div>
-                  <p className="text-gray-500">Smelltu til að velja skrá</p>
-                  <p className="text-sm text-gray-400 mt-1">{LEYFÐAR_ENDINGAR.join(' · ')} · hámark {MAX_MB}MB</p>
+                  <p className="text-zinc-400">Smelltu til að velja skrá</p>
+                  <p className="text-sm text-zinc-600 mt-1">{LEYFÐAR_ENDINGAR.join(' · ')} · hámark {MAX_MB}MB</p>
                 </div>
               )}
             </div>
 
             {villa && (
-              <div className="flex items-start gap-2 rounded-lg bg-red-50 px-4 py-3 text-red-700 text-sm">
+              <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-400 text-sm">
                 <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>{villa}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tegund</label>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">Tegund</label>
               <div className="flex gap-2 flex-wrap">
                 {(Object.keys(profileNöfn) as Profile[]).map(p => (
                   <button
@@ -123,8 +125,8 @@ export default function HlaðaUppClient() {
                     onClick={() => setProfile(p)}
                     className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                       profile === p
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white border border-gray-200 text-gray-700 hover:border-gray-300'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                     }`}
                   >
                     {profileNöfn[p]}
@@ -134,20 +136,20 @@ export default function HlaðaUppClient() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nafn (valfrjálst)</label>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">Nafn (valfrjálst)</label>
               <input
                 type="text"
                 value={nafn}
                 onChange={e => setNafn(e.target.value)}
                 placeholder="Nafn á lotu"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
             <button
               onClick={senda}
               disabled={!skrá}
-              className="flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white font-semibold hover:bg-indigo-700 transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Upload className="h-5 w-5" />
               Senda til vinnslu
@@ -155,15 +157,15 @@ export default function HlaðaUppClient() {
           </div>
         ) : staða === 'hleður' ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            <p className="font-medium text-gray-900">Hleður upp og þýðir...</p>
-            <p className="text-sm text-gray-400">Þetta getur tekið nokkrar mínútur — loka ekki þessum glugga</p>
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+            <p className="font-medium text-zinc-100">Hleður upp og þýðir...</p>
+            <p className="text-sm text-zinc-500">Þetta getur tekið nokkrar mínútur — loka ekki þessum glugga</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <CheckCircle className="h-8 w-8 text-green-500" />
-            <p className="font-medium text-gray-900">Vinnslu lokið!</p>
-            <p className="text-sm text-gray-400">Fer yfir á niðurstöður...</p>
+            <CheckCircle className="h-8 w-8 text-emerald-400" />
+            <p className="font-medium text-zinc-100">Vinnslu lokið!</p>
+            <p className="text-sm text-zinc-500">Fer yfir á niðurstöður...</p>
           </div>
         )}
       </div>
