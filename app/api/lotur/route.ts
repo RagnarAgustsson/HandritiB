@@ -1,8 +1,9 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createSession, getUserSessions, updateSession } from '@/lib/db/sessions'
 import { generateFinalSummary } from '@/lib/pipeline/summarize'
 import { getSessionChunks } from '@/lib/db/sessions'
+import { logAction } from '@/lib/db/admin'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export async function GET() {
@@ -27,6 +28,10 @@ export async function POST(request: NextRequest) {
     status: 'virkt',
   })
 
+  const user = await currentUser()
+  const email = user?.emailAddresses[0]?.emailAddress || ''
+  await logAction(userId, email, 'lota.stofna', `${session.name} (${session.profile})`)
+
   return NextResponse.json({ session })
 }
 
@@ -48,11 +53,21 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updated = await updateSession(sessionId, { status: 'lokið', finalSummary })
+
+    const user = await currentUser()
+    const email = user?.emailAddresses[0]?.emailAddress || ''
+    await logAction(userId, email, 'lota.ljuka', `Lota ${sessionId}`)
+
     return NextResponse.json({ session: updated })
   }
 
   if (aðgerð === 'endurnefna' && body.nafn) {
     const updated = await updateSession(sessionId, { name: body.nafn })
+
+    const user = await currentUser()
+    const email = user?.emailAddresses[0]?.emailAddress || ''
+    await logAction(userId, email, 'lota.endurnefna', `${sessionId} → ${body.nafn}`)
+
     return NextResponse.json({ session: updated })
   }
 

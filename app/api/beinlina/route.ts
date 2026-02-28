@@ -1,6 +1,7 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { openai } from '@/lib/openai/client'
+import { logAction } from '@/lib/db/admin'
 
 // Issues an ephemeral token so the browser can connect directly to OpenAI Realtime.
 // The API key never leaves the server.
@@ -29,6 +30,10 @@ EIN REGLA, engar undantekningar: Þú talar EINUNGIS þegar einhver segir bókst
       silence_duration_ms: 800,
     },
   })
+
+  const user = await currentUser()
+  const email = user?.emailAddresses[0]?.emailAddress || ''
+  await logAction(userId, email, 'beinlina.hefja')
 
   return NextResponse.json({
     client_secret: session.client_secret,

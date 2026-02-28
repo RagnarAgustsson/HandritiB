@@ -1,7 +1,8 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createSession, createChunk, updateSession } from '@/lib/db/sessions'
 import { generateFinalSummary } from '@/lib/pipeline/summarize'
+import { logAction } from '@/lib/db/admin'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 // Save a completed Realtime session transcript to the database
@@ -32,6 +33,10 @@ export async function POST(request: NextRequest) {
 
   const finalSummary = await generateFinalSummary([transcript], profile as PromptProfile)
   await updateSession(session.id, { status: 'lokið', finalSummary })
+
+  const user = await currentUser()
+  const email = user?.emailAddresses[0]?.emailAddress || ''
+  await logAction(userId, email, 'beinlina.vista', `Lota ${session.id}`)
 
   return NextResponse.json({ sessionId: session.id, finalSummary })
 }

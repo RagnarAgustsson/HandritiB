@@ -1,8 +1,9 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createSession, updateSession, createChunk, createNote } from '@/lib/db/sessions'
 import { transcribeAudio } from '@/lib/pipeline/transcribe'
 import { generateNotes, generateFinalSummary } from '@/lib/pipeline/summarize'
+import { logAction } from '@/lib/db/admin'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export const maxDuration = 300
@@ -51,6 +52,10 @@ export async function POST(request: NextRequest) {
 
     const finalSummary = await generateFinalSummary([transcript], profile)
     await updateSession(session.id, { status: 'lokið', finalSummary })
+
+    const user = await currentUser()
+    const email = user?.emailAddresses[0]?.emailAddress || ''
+    await logAction(userId, email, 'skra.hlada', `${skrá.name} (${(skrá.size / 1024 / 1024).toFixed(1)}MB)`)
 
     return NextResponse.json({ sessionId: session.id })
   } catch (error) {

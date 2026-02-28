@@ -39,3 +39,24 @@ export type Chunk = typeof chunks.$inferSelect
 export type NewChunk = typeof chunks.$inferInsert
 export type Note = typeof notes.$inferSelect
 export type NewNote = typeof notes.$inferInsert
+
+// ── Admin & Audit ────────────────────────────────────────────
+
+export const admins = pgTable('admins', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().unique(),
+  email: text('email').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const auditLog = pgTable('audit_log', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull(),
+  email: text('email').notNull(),
+  action: text('action').notNull(),
+  details: text('details'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export type Admin = typeof admins.$inferSelect
+export type AuditLogEntry = typeof auditLog.$inferSelect
