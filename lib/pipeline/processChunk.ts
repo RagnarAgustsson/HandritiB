@@ -9,6 +9,7 @@ interface ProcessChunkInput {
   audioBlob: Blob
   profile: PromptProfile
   durationSeconds?: number
+  filename?: string
 }
 
 interface ProcessChunkResult {
@@ -19,10 +20,10 @@ interface ProcessChunkResult {
 }
 
 export async function processChunk(input: ProcessChunkInput): Promise<ProcessChunkResult> {
-  const { sessionId, seq, audioBlob, profile, durationSeconds = 0 } = input
+  const { sessionId, seq, audioBlob, profile, durationSeconds = 0, filename } = input
 
   // 1. Transcribe
-  const transcript = await transcribeAudio(audioBlob)
+  const transcript = await transcribeAudio(audioBlob, filename)
   if (!transcript) return { transcript: '', notes: '', rollingSummary: '', chunkId: '' }
 
   // 2. Save chunk

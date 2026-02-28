@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       audioBlob,
       profile: session.profile as PromptProfile,
       durationSeconds: Math.round(parseFloat(formData.get('seconds') as string || '0')),
+      filename: hljod.name,
     })
     return NextResponse.json(result)
   } catch (error) {
