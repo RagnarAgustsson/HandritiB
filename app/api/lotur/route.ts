@@ -4,6 +4,7 @@ import { createSession, getUserSessions, updateSession } from '@/lib/db/sessions
 import { generateFinalSummary } from '@/lib/pipeline/summarize'
 import { getSessionChunks } from '@/lib/db/sessions'
 import { logAction } from '@/lib/db/admin'
+import { sendSummaryEmail } from '@/lib/email/send-summary'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export async function GET() {
@@ -57,6 +58,7 @@ export async function PATCH(request: NextRequest) {
     const user = await currentUser()
     const email = user?.emailAddresses[0]?.emailAddress || ''
     await logAction(userId, email, 'lota.ljuka', `Lota ${sessionId}`)
+    if (email && finalSummary) sendSummaryEmail(email, updated.name, finalSummary).catch(() => {})
 
     return NextResponse.json({ session: updated })
   }

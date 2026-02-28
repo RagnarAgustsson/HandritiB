@@ -4,6 +4,7 @@ import { createSession, updateSession, createChunk, createNote } from '@/lib/db/
 import { transcribeAudio } from '@/lib/pipeline/transcribe'
 import { generateNotes, generateFinalSummary } from '@/lib/pipeline/summarize'
 import { logAction } from '@/lib/db/admin'
+import { sendSummaryEmail } from '@/lib/email/send-summary'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export const maxDuration = 300
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
     const user = await currentUser()
     const email = user?.emailAddresses[0]?.emailAddress || ''
     await logAction(userId, email, 'skra.hlada', `${skrá.name} (${(skrá.size / 1024 / 1024).toFixed(1)}MB)`)
+    if (email && finalSummary) sendSummaryEmail(email, nafn || skrá.name, finalSummary).catch(() => {})
 
     return NextResponse.json({ sessionId: session.id })
   } catch (error) {

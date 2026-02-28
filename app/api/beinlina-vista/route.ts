@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createSession, createChunk, updateSession } from '@/lib/db/sessions'
 import { generateFinalSummary } from '@/lib/pipeline/summarize'
 import { logAction } from '@/lib/db/admin'
+import { sendSummaryEmail } from '@/lib/email/send-summary'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 // Save a completed Realtime session transcript to the database
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
   const user = await currentUser()
   const email = user?.emailAddresses[0]?.emailAddress || ''
   await logAction(userId, email, 'beinlina.vista', `Lota ${session.id}`)
+  if (email && finalSummary) sendSummaryEmail(email, session.name, finalSummary).catch(() => {})
 
   return NextResponse.json({ sessionId: session.id, finalSummary })
 }
