@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Copy, Check, ArrowLeft } from 'lucide-react'
+import { Copy, Check, ArrowLeft, Pencil } from 'lucide-react'
 import type { Session, Chunk, Note } from '@/lib/db/schema'
 
 interface Props {
@@ -31,6 +31,20 @@ const profileNöfn: Record<string, string> = {
 
 export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
   const [flipi, setFlipi] = useState<'glósur' | 'uppskrift' | 'samantekt'>('glósur')
+  const [nafn, setNafn] = useState(session.name)
+  const [endurnefna, setEndurnefna] = useState(false)
+  const [nýttNafn, setNýttNafn] = useState(session.name)
+
+  async function vistaEndurnefna() {
+    if (!nýttNafn.trim()) return
+    await fetch('/api/lotur', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: session.id, aðgerð: 'endurnefna', nafn: nýttNafn }),
+    })
+    setNafn(nýttNafn)
+    setEndurnefna(false)
+  }
 
   const uppskrift = chunks.map(c => c.transcript).join('\n\n')
   const allGlósur = notes.map(n => n.content).join('\n\n')
@@ -44,7 +58,29 @@ export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
         </Link>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">{session.name}</h1>
+          {endurnefna ? (
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={nýttNafn}
+                onChange={e => setNýttNafn(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') vistaEndurnefna(); if (e.key === 'Escape') setEndurnefna(false) }}
+                className="text-2xl font-bold text-gray-900 border-b-2 border-blue-500 bg-transparent outline-none flex-1"
+              />
+              <button onClick={vistaEndurnefna} className="text-sm text-blue-600 hover:underline">Vista</button>
+              <button onClick={() => setEndurnefna(false)} className="text-sm text-gray-400 hover:underline">Hætta við</button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group">
+              <h1 className="text-2xl font-bold text-gray-900">{nafn}</h1>
+              <button
+                onClick={() => { setNýttNafn(nafn); setEndurnefna(true) }}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-gray-100 text-gray-400 transition"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           <div className="text-sm text-gray-400 mt-1">
             {profileNöfn[session.profile]} · {new Date(session.createdAt).toLocaleDateString('is-IS')}
           </div>
