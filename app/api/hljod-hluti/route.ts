@@ -26,13 +26,17 @@ export async function POST(request: NextRequest) {
 
   const audioBlob = new Blob([await hljod.arrayBuffer()], { type: hljod.type || 'audio/webm' })
 
-  const result = await processChunk({
-    sessionId,
-    seq,
-    audioBlob,
-    profile: session.profile as PromptProfile,
-    durationSeconds: Math.round(parseFloat(formData.get('seconds') as string || '0')),
-  })
-
-  return NextResponse.json(result)
+  try {
+    const result = await processChunk({
+      sessionId,
+      seq,
+      audioBlob,
+      profile: session.profile as PromptProfile,
+      durationSeconds: Math.round(parseFloat(formData.get('seconds') as string || '0')),
+    })
+    return NextResponse.json(result)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Óþekkt villa við vinnslu hljóðs'
+    return NextResponse.json({ villa: message }, { status: 500 })
+  }
 }

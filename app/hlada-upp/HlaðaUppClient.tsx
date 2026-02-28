@@ -15,8 +15,7 @@ const profileNöfn: Record<Profile, string> = {
 }
 
 const LEYFÐAR_ENDINGAR = ['.mp3', '.mp4', '.m4a', '.wav', '.webm', '.ogg', '.flac']
-const MAX_MB = 200
-const CHUNK_BYTES = 5 * 1024 * 1024 // 5MB per chunk — well within server limits
+const MAX_MB = 24
 
 export default function HlaðaUppClient() {
   const router = useRouter()
@@ -25,9 +24,6 @@ export default function HlaðaUppClient() {
   const [nafn, setNafn] = useState('')
   const [villa, setVilla] = useState('')
   const [skrá, setSkrá] = useState<File | null>(null)
-  const [framvinda, setFramvinda] = useState('')
-  const [hlutarFarið, setHlutarFarið] = useState(0)
-  const [hlutarAllt, setHlutarAllt] = useState(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function velja(e: React.ChangeEvent<HTMLInputElement>) {
@@ -39,7 +35,7 @@ export default function HlaðaUppClient() {
       return
     }
     if (f.size > MAX_MB * 1024 * 1024) {
-      setVilla(`Skráin er of stór. Hámark er ${MAX_MB}MB.`)
+      setVilla(`Skráin er of stór (${(f.size / 1024 / 1024).toFixed(0)}MB). Hámark er ${MAX_MB}MB. Notaðu "Taka upp" fyrir lengri fundi.`)
       return
     }
     setVilla('')
@@ -52,56 +48,21 @@ export default function HlaðaUppClient() {
     setStaða('hleður')
     setVilla('')
 
-    // 1. Reikna fjölda hluta
-    const fjöldi = Math.ceil(skrá.size / CHUNK_BYTES)
-    setHlutarAllt(fjöldi)
-    setHlutarFarið(0)
-    setFramvinda(`Undirbý...`)
-
     try {
-      // 2. Búa til lotu
-      const lotaRes = await fetch('/api/lotur', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nafn: nafn || skrá.name.replace(/\.[^/.]+$/, ''),
-          profile,
-        }),
-      })
-      const { session } = await lotaRes.json()
+      const fd = new FormData()
+      fd.append('skrá', skrá, skrá.name)
+      fd.append('profile', profile)
+      fd.append('nafn', nafn || skrá.name.replace(/\.[^/.]+$/, ''))
 
-      // 3. Senda hvern hluta
-      for (let i = 0; i < fjöldi; i++) {
-        setFramvinda(`Hljóðritar hluta ${i + 1} af ${fjöldi}...`)
-        const start = i * CHUNK_BYTES
-        const end = Math.min(start + CHUNK_BYTES, skrá.size)
-        const blob = skrá.slice(start, end, skrá.type || 'audio/webm')
+      const res = await fetch('/api/hljod-skra', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
 
-        const fd = new FormData()
-        fd.append('hljod', blob, `hluti-${i}${getExtension(skrá.name)}`)
-        fd.append('sessionId', session.id)
-        fd.append('seq', String(i))
-        fd.append('seconds', String(Math.round((end - start) / skrá.size * estimateDuration(skrá))))
-
-        const res = await fetch('/api/hljod-hluti', { method: 'POST', body: fd })
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}))
-          throw new Error(err.villa || `Hluti ${i + 1} mistókst`)
-        }
-
-        setHlutarFarið(i + 1)
+      if (!res.ok) {
+        throw new Error(data.villa || `Villa ${res.status}`)
       }
 
-      // 4. Ljúka lotu og búa til lokasamantekt
-      setFramvinda('Skapar lokasamantekt...')
-      await fetch('/api/lotur', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: session.id, aðgerð: 'ljúka' }),
-      })
-
       setStaða('lokið')
-      setTimeout(() => router.push(`/lotur/${session.id}`), 1000)
+      setTimeout(() => router.push(`/lotur/${data.sessionId}`), 1000)
     } catch (err) {
       setVilla(err instanceof Error ? err.message : 'Tenging mistókst. Reyndu aftur.')
       setStaða('villa')
@@ -191,19 +152,8 @@ export default function HlaðaUppClient() {
         ) : staða === 'hleður' ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            <p className="font-medium text-gray-900">{framvinda}</p>
-            {hlutarAllt > 1 && (
-              <div className="w-full max-w-xs">
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                    style={{ width: `${(hlutarFarið / hlutarAllt) * 100}%` }}
-                  />
-                </div>
-                <p className="text-sm text-gray-400 mt-2">{hlutarFarið} / {hlutarAllt} hlutar</p>
-              </div>
-            )}
-            <p className="text-sm text-gray-400">Loka ekki þessum glugga</p>
+            <p className="font-medium text-gray-900">Hleður upp og þýðir...</p>
+            <p className="text-sm text-gray-400">Þetta getur tekið nokkrar mínútur — loka ekki þessum glugga</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
@@ -215,14 +165,4 @@ export default function HlaðaUppClient() {
       </div>
     </div>
   )
-}
-
-function getExtension(filename: string): string {
-  const ext = filename.split('.').pop()
-  return ext ? `.${ext}` : '.webm'
-}
-
-function estimateDuration(file: File): number {
-  // Rough estimate: ~1MB per minute for compressed audio
-  return Math.round(file.size / (1024 * 1024))
 }
