@@ -1,65 +1,61 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { Mic, Upload, Zap } from 'lucide-react'
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="w-full max-w-lg text-center">
+        <h1 className="text-5xl font-bold tracking-tight text-gray-900 mb-3">Handriti</h1>
+        <p className="text-lg text-gray-500 mb-12">Hljóðritar og tekur saman á íslensku</p>
+
+        <div className="grid gap-4">
+          <Link
+            href="/taka-upp"
+            className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-gray-300"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50">
+              <Mic className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <div className="font-semibold text-gray-900">Taka upp</div>
+              <div className="text-sm text-gray-500">Hljóðrita í beinni og fáðu glósur samstundis</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/hlaða-upp"
+            className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-gray-300"
           >
-            Documentation
-          </a>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50">
+              <Upload className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <div className="font-semibold text-gray-900">Hlaða upp skrá</div>
+              <div className="text-sm text-gray-500">Sendu hljóðskrá og fáðu alla samantekt</div>
+            </div>
+          </Link>
+
+          <Link
+            href="/beinlina"
+            className="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-gray-300"
+          >
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50">
+              <Zap className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <div className="font-semibold text-gray-900">Beinlína</div>
+              <div className="text-sm text-gray-500">Talaðu beint við AI með GPT Realtime</div>
+            </div>
+          </Link>
         </div>
-      </main>
-    </div>
-  );
+
+        <Link
+          href="/lotur"
+          className="mt-8 inline-block text-sm text-gray-400 hover:text-gray-600 transition"
+        >
+          Skoða fyrri lotur →
+        </Link>
+      </div>
+    </main>
+  )
 }
