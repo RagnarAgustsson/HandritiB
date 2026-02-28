@@ -1,17 +1,18 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Zap, Square, Loader2, AlertCircle } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { Zap, Square, Loader2, AlertCircle, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
-type Staða = 'biðröð' | 'tengist' | 'í-gangi' | 'vistar' | 'villa'
+type Staða = 'biðröð' | 'tengist' | 'í-gangi' | 'vistar' | 'lokið' | 'villa'
 type Message = { type: 'user' | 'handriti'; text: string }
 
 export default function BeinlinaClient() {
-  const router = useRouter()
   const [staða, setStaða] = useState<Staða>('biðröð')
   const [villa, setVilla] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [summary, setSummary] = useState('')
 
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const dcRef = useRef<RTCDataChannel | null>(null)
@@ -20,6 +21,8 @@ export default function BeinlinaClient() {
   async function byrja() {
     setVilla('')
     setMessages([])
+    setSummary('')
+    setSessionId(null)
     setStaða('tengist')
 
     try {
@@ -47,11 +50,9 @@ export default function BeinlinaClient() {
       dc.onmessage = (e) => {
         try {
           const event = JSON.parse(e.data)
-          // User speech transcript
           if (event.type === 'conversation.item.input_audio_transcription.completed' && event.transcript?.trim()) {
             setMessages(prev => [...prev, { type: 'user', text: event.transcript.trim() }])
           }
-          // Handriti's spoken response transcript
           if (event.type === 'response.audio_transcript.done' && event.transcript?.trim()) {
             setMessages(prev => [...prev, { type: 'handriti', text: event.transcript.trim() }])
           }
@@ -96,14 +97,13 @@ export default function BeinlinaClient() {
 
   async function stöðva() {
     loka()
-    const userLines = messages.filter(m => m.type === 'user').map(m => m.text)
+    const userLines = messages.filter(m => m.type === 'user')
     if (userLines.length === 0) {
       setStaða('biðröð')
       return
     }
     setStaða('vistar')
 
-    // Build full conversation transcript for context
     const fullTranscript = messages
       .map(m => m.type === 'handriti' ? `[Handriti]: ${m.text}` : m.text)
       .join('\n\n')
@@ -114,8 +114,11 @@ export default function BeinlinaClient() {
       body: JSON.stringify({ transcript: fullTranscript, profile: 'fundur' }),
     })
     const data = await res.json()
-    if (res.ok) router.push(`/lotur/${data.sessionId}`)
-    else {
+    if (res.ok) {
+      setSessionId(data.sessionId)
+      setSummary(data.finalSummary || '')
+      setStaða('lokið')
+    } else {
       setVilla(data.villa || 'Villa við vistun')
       setStaða('villa')
     }
@@ -191,13 +194,11 @@ export default function BeinlinaClient() {
               </button>
             </div>
 
-            {/* Hint */}
             <div className="flex gap-4 text-xs text-zinc-600 flex-wrap">
               <span><span className="text-zinc-500">"Hvað segir þú um X, Handriti?"</span> — spyrja</span>
               <span><span className="text-zinc-500">"Takk Handriti"</span> — halda áfram</span>
             </div>
 
-            {/* Conversation transcript */}
             <div className="space-y-3 min-h-32">
               {messages.length === 0 ? (
                 <p className="text-sm text-zinc-600">Uppskrift birtist hér...</p>
@@ -222,6 +223,35 @@ export default function BeinlinaClient() {
           <div className="flex items-center gap-3 text-zinc-400">
             <Loader2 className="h-5 w-5 animate-spin" />
             Vistar og skapar samantekt...
+          </div>
+        )}
+
+        {staða === 'lokið' && (
+          <div className="space-y-6">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-zinc-600 mb-3">Samantekt</div>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                  {summary || 'Engin samantekt til.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Link
+                href={`/lotur/${sessionId}`}
+                className="flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition"
+              >
+                Skoða alla niðurstöður
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <button
+                onClick={() => setStaða('biðröð')}
+                className="text-sm text-zinc-500 hover:text-zinc-300 transition"
+              >
+                Byrja nýja lotu
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -33,5 +33,5 @@ export async function POST(request: NextRequest) {
   const finalSummary = await generateFinalSummary([transcript], profile as PromptProfile)
   await updateSession(session.id, { status: 'lokið', finalSummary })
 
-  return NextResponse.json({ sessionId: session.id })
+  return NextResponse.json({ sessionId: session.id, finalSummary })
 }
