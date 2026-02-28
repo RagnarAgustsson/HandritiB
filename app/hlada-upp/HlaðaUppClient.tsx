@@ -16,6 +16,7 @@ const profileNöfn: Record<Profile, string> = {
 
 const LEYFÐAR_ENDINGAR = ['.mp3', '.mp4', '.m4a', '.wav', '.webm', '.ogg', '.flac']
 const MAX_MB = 200
+const CHUNK_BYTES = 5 * 1024 * 1024 // 5MB per chunk — well within server limits
 
 export default function HlaðaUppClient() {
   const router = useRouter()
@@ -25,12 +26,13 @@ export default function HlaðaUppClient() {
   const [villa, setVilla] = useState('')
   const [skrá, setSkrá] = useState<File | null>(null)
   const [framvinda, setFramvinda] = useState('')
+  const [hlutarFarið, setHlutarFarið] = useState(0)
+  const [hlutarAllt, setHlutarAllt] = useState(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function velja(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
     if (!f) return
-
     const ext = '.' + f.name.split('.').pop()?.toLowerCase()
     if (!LEYFÐAR_ENDINGAR.includes(ext)) {
       setVilla(`Ólögleg skráarending. Leyfðar: ${LEYFÐAR_ENDINGAR.join(', ')}`)
@@ -40,7 +42,6 @@ export default function HlaðaUppClient() {
       setVilla(`Skráin er of stór. Hámark er ${MAX_MB}MB.`)
       return
     }
-
     setVilla('')
     setSkrá(f)
     if (!nafn) setNafn(f.name.replace(/\.[^/.]+$/, ''))
@@ -49,29 +50,60 @@ export default function HlaðaUppClient() {
   async function senda() {
     if (!skrá) return
     setStaða('hleður')
-    setFramvinda('Sendir skrá...')
     setVilla('')
 
-    const fd = new FormData()
-    fd.append('skrá', skrá)
-    fd.append('profile', profile)
-    fd.append('nafn', nafn || skrá.name)
+    // 1. Reikna fjölda hluta
+    const fjöldi = Math.ceil(skrá.size / CHUNK_BYTES)
+    setHlutarAllt(fjöldi)
+    setHlutarFarið(0)
+    setFramvinda(`Undirbý...`)
 
     try {
-      setFramvinda('Hljóðritar og greinir... (getur tekið nokkrar mínútur)')
-      const res = await fetch('/api/hlada-upp', { method: 'POST', body: fd })
-      const data = await res.json()
+      // 2. Búa til lotu
+      const lotaRes = await fetch('/api/lotur', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nafn: nafn || skrá.name.replace(/\.[^/.]+$/, ''),
+          profile,
+        }),
+      })
+      const { session } = await lotaRes.json()
 
-      if (!res.ok) {
-        setVilla(data.villa || 'Villa við vinnslu')
-        setStaða('villa')
-        return
+      // 3. Senda hvern hluta
+      for (let i = 0; i < fjöldi; i++) {
+        setFramvinda(`Hljóðritar hluta ${i + 1} af ${fjöldi}...`)
+        const start = i * CHUNK_BYTES
+        const end = Math.min(start + CHUNK_BYTES, skrá.size)
+        const blob = skrá.slice(start, end, skrá.type || 'audio/webm')
+
+        const fd = new FormData()
+        fd.append('hljod', blob, `hluti-${i}${getExtension(skrá.name)}`)
+        fd.append('sessionId', session.id)
+        fd.append('seq', String(i))
+        fd.append('seconds', String(Math.round((end - start) / skrá.size * estimateDuration(skrá))))
+
+        const res = await fetch('/api/hljod-hluti', { method: 'POST', body: fd })
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.villa || `Hluti ${i + 1} mistókst`)
+        }
+
+        setHlutarFarið(i + 1)
       }
 
+      // 4. Ljúka lotu og búa til lokasamantekt
+      setFramvinda('Skapar lokasamantekt...')
+      await fetch('/api/lotur', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: session.id, aðgerð: 'ljúka' }),
+      })
+
       setStaða('lokið')
-      setTimeout(() => router.push(`/lotur/${data.sessionId}`), 1000)
-    } catch {
-      setVilla('Tenging mistókst. Reyndu aftur.')
+      setTimeout(() => router.push(`/lotur/${session.id}`), 1000)
+    } catch (err) {
+      setVilla(err instanceof Error ? err.message : 'Tenging mistókst. Reyndu aftur.')
       setStaða('villa')
     }
   }
@@ -83,7 +115,6 @@ export default function HlaðaUppClient() {
 
         {staða === 'biðröð' || staða === 'villa' ? (
           <div className="space-y-6">
-            {/* File drop area */}
             <div
               onClick={() => fileRef.current?.click()}
               className={`cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition ${
@@ -161,6 +192,17 @@ export default function HlaðaUppClient() {
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             <p className="font-medium text-gray-900">{framvinda}</p>
+            {hlutarAllt > 1 && (
+              <div className="w-full max-w-xs">
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                    style={{ width: `${(hlutarFarið / hlutarAllt) * 100}%` }}
+                  />
+                </div>
+                <p className="text-sm text-gray-400 mt-2">{hlutarFarið} / {hlutarAllt} hlutar</p>
+              </div>
+            )}
             <p className="text-sm text-gray-400">Loka ekki þessum glugga</p>
           </div>
         ) : (
@@ -173,4 +215,14 @@ export default function HlaðaUppClient() {
       </div>
     </div>
   )
+}
+
+function getExtension(filename: string): string {
+  const ext = filename.split('.').pop()
+  return ext ? `.${ext}` : '.webm'
+}
+
+function estimateDuration(file: File): number {
+  // Rough estimate: ~1MB per minute for compressed audio
+  return Math.round(file.size / (1024 * 1024))
 }
