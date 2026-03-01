@@ -4,6 +4,7 @@ import { subscriptions, type Subscription, type NewSubscription } from './schema
 
 const TRIAL_DAYS = 7
 const TRIAL_MINUTES = 60
+const PAID_MINUTES = 300
 
 export async function getSubscription(userId: string): Promise<Subscription | undefined> {
   const rows = await db

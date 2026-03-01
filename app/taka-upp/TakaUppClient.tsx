@@ -181,8 +181,19 @@ export default function TakaUppClient() {
         {staða === 'taka-upp' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-red-500 animate-pulse" />
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-[3px] h-5">
+                  {[0.45, 0.65, 0.4, 0.7, 0.5].map((dur, i) => (
+                    <span
+                      key={i}
+                      className="w-[3px] rounded-full bg-red-500"
+                      style={{
+                        animation: `waveform ${dur}s ease-in-out infinite alternate`,
+                        animationDelay: `${i * 0.12}s`,
+                      }}
+                    />
+                  ))}
+                </div>
                 <span className="font-semibold text-zinc-100">Tekur upp...</span>
               </div>
               <button

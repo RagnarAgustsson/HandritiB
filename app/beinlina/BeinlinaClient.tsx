@@ -185,8 +185,20 @@ export default function BeinlinaClient() {
         {staða === 'í-gangi' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-indigo-400 animate-pulse" />
+              <div className="flex items-center gap-3">
+                <div className="relative h-5 w-5 flex items-center justify-center">
+                  <span className="absolute h-3 w-3 rounded-full bg-indigo-400" />
+                  {[0, 1, 2].map(i => (
+                    <span
+                      key={i}
+                      className="absolute h-3 w-3 rounded-full border border-indigo-400"
+                      style={{
+                        animation: 'sonar 2.4s ease-out infinite',
+                        animationDelay: `${i * 0.8}s`,
+                      }}
+                    />
+                  ))}
+                </div>
                 <span className="font-semibold text-zinc-100">Í beinlínu</span>
               </div>
               <button
