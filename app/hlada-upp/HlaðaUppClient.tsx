@@ -77,8 +77,9 @@ export default function HlaðaUppClient() {
       const blob = await upload(skrá.name, skrá, {
         access: 'public',
         handleUploadUrl: '/api/blob-upload',
+        multipart: false,
         onUploadProgress: (e) => {
-          setFramvinda(e.percentage)
+          setFramvinda(Math.round(e.percentage))
         },
       })
 
