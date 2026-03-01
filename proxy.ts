@@ -5,6 +5,7 @@ const isPublicRoute = createRouteMatcher([
   '/innskraning(.*)',
   '/nyskraning(.*)',
   '/api/webhooks(.*)',
+  '/api/blob-upload',
   '/skilmalar',
   '/personuvernd',
   '/verdskra',
