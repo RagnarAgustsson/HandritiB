@@ -27,6 +27,7 @@ export default function HlaðaUppClient() {
   const [skrá, setSkrá] = useState<File | null>(null)
   const [lengd, setLengd] = useState(0)
   const [framvinda, setFramvinda] = useState(0)
+  const maxPctRef = useRef(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function velja(e: React.ChangeEvent<HTMLInputElement>) {
@@ -70,6 +71,7 @@ export default function HlaðaUppClient() {
     if (!skrá) return
     setStaða('hleður')
     setFramvinda(0)
+    maxPctRef.current = 0
     setVilla('')
 
     try {
@@ -79,7 +81,11 @@ export default function HlaðaUppClient() {
         handleUploadUrl: '/api/blob-upload',
         multipart: false,
         onUploadProgress: (e) => {
-          setFramvinda(prev => Math.max(prev, Math.min(Math.round(e.percentage), 99)))
+          const pct = Math.min(Math.round(e.percentage), 99)
+          if (pct > maxPctRef.current) {
+            maxPctRef.current = pct
+            setFramvinda(pct)
+          }
         },
       })
 
