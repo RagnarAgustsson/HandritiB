@@ -1,6 +1,8 @@
 import { currentUser, clerkClient } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { isAdmin, addAdmin, removeAdmin, getAuditLog, getAuditLogCount, getAllAdmins, logAction } from '@/lib/db/admin'
+import { getAllSubscriptions } from '@/lib/db/subscriptions'
+import { getAllFreeAccessGrants, grantFreeAccess, revokeFreeAccess } from '@/lib/db/free-access'
 
 async function requireAdmin() {
   const user = await currentUser()
@@ -23,20 +25,29 @@ export async function GET(request: NextRequest) {
 
   const clerk = await clerkClient()
 
-  const [log, total, clerkUsers, adminList] = await Promise.all([
+  const [log, total, clerkUsers, adminList, subs, freeGrants] = await Promise.all([
     getAuditLog(limit, offset),
     getAuditLogCount(),
     clerk.users.getUserList({ limit: 100, orderBy: '-created_at' }),
     getAllAdmins(),
+    getAllSubscriptions(),
+    getAllFreeAccessGrants(),
   ])
 
   const adminIds = new Set(adminList.map(a => a.userId))
+  const subMap = new Map(subs.map(s => [s.userId, s]))
+  const freeMap = new Map(freeGrants.map(g => [g.userId, g]))
 
   const users = clerkUsers.data.map(u => ({
     userId: u.id,
     email: u.emailAddresses[0]?.emailAddress || '',
     lastSeen: u.lastSignInAt ? new Date(u.lastSignInAt).toISOString() : new Date(u.createdAt).toISOString(),
     isAdmin: adminIds.has(u.id),
+    subscription: subMap.get(u.id) ? {
+      status: subMap.get(u.id)!.status,
+      minutesLimit: subMap.get(u.id)!.minutesLimit,
+    } : null,
+    hasFreeAccess: freeMap.has(u.id),
   }))
 
   return NextResponse.json({ log, total, users, page, pages: Math.ceil(total / limit) })
@@ -69,6 +80,12 @@ export async function POST(request: NextRequest) {
     }
     await removeAdmin(targetUserId)
     await logAction(result.userId, result.email, 'admin.uppfaera', `Fjarlægði ${targetEmail} sem stjórnanda`)
+  } else if (action === 'grant-free') {
+    await grantFreeAccess(targetUserId, result.userId, `Veitt af ${result.email}`)
+    await logAction(result.userId, result.email, 'admin.uppfaera', `Veitti ${targetEmail} frítt aðgangsleyfi`)
+  } else if (action === 'revoke-free') {
+    await revokeFreeAccess(targetUserId)
+    await logAction(result.userId, result.email, 'admin.uppfaera', `Afturkallaði frítt aðgangsleyfi ${targetEmail}`)
   }
 
   return NextResponse.json({ ok: true })

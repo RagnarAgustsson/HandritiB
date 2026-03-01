@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Shield, Clock, Users, ChevronLeft, ChevronRight, Loader2, Search, UserPlus } from 'lucide-react'
+import { Shield, Clock, Users, ChevronLeft, ChevronRight, Loader2, Search, UserPlus, Gift } from 'lucide-react'
 
 interface AuditEntry {
   id: string
@@ -17,6 +17,8 @@ interface UserEntry {
   email: string
   lastSeen: string
   isAdmin: boolean
+  subscription: { status: string; minutesLimit: number } | null
+  hasFreeAccess: boolean
 }
 
 const actionLabels: Record<string, string> = {
@@ -27,6 +29,7 @@ const actionLabels: Record<string, string> = {
   'beinlina.hefja': 'Beinlína hafin',
   'beinlina.vista': 'Beinlína vistuð',
   'admin.uppfaera': 'Stjórnandabreyting',
+  'askrift.stofna': 'Ný áskrift',
 }
 
 export default function AdminClient() {
@@ -81,6 +84,19 @@ export default function AdminClient() {
         targetUserId: userId,
         targetEmail: email,
         action: currentlyAdmin ? 'remove' : 'add',
+      }),
+    })
+    fetchData()
+  }
+
+  async function toggleFreeAccess(userId: string, email: string, hasFree: boolean) {
+    await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        targetUserId: userId,
+        targetEmail: email,
+        action: hasFree ? 'revoke-free' : 'grant-free',
       }),
     })
     fetchData()
@@ -223,22 +239,51 @@ export default function AdminClient() {
             ) : (
               users.map(u => (
                 <div key={u.userId}
-                  className="flex items-center justify-between rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-                  <div>
-                    <div className="text-zinc-100 text-sm">{u.email}</div>
-                    <div className="text-xs text-zinc-500 mt-0.5">
-                      Síðast innskráð: {new Date(u.lastSeen).toLocaleDateString('is-IS')}
+                  className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-zinc-100 text-sm">{u.email}</div>
+                      <div className="flex items-center gap-3 text-xs text-zinc-500 mt-0.5">
+                        <span>Síðast: {new Date(u.lastSeen).toLocaleDateString('is-IS')}</span>
+                        {u.subscription && (
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            u.subscription.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' :
+                            u.subscription.status === 'trialing' ? 'bg-amber-500/10 text-amber-400' :
+                            'bg-zinc-500/10 text-zinc-400'
+                          }`}>
+                            {u.subscription.status === 'active' ? 'Virk' :
+                             u.subscription.status === 'trialing' ? 'Prufa' :
+                             u.subscription.status}
+                          </span>
+                        )}
+                        {u.hasFreeAccess && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400">
+                            Frítt
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => toggleFreeAccess(u.userId, u.email, u.hasFreeAccess)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition ${
+                          u.hasFreeAccess
+                            ? 'bg-emerald-500/20 text-emerald-400 hover:bg-red-500/20 hover:text-red-400'
+                            : 'bg-zinc-800 text-zinc-500 hover:bg-emerald-500/20 hover:text-emerald-400'
+                        }`}>
+                        <Gift className="h-3.5 w-3.5" />
+                        {u.hasFreeAccess ? 'Frítt' : 'Veita frítt'}
+                      </button>
+                      <button onClick={() => toggleAdmin(u.userId, u.email, u.isAdmin)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition ${
+                          u.isAdmin
+                            ? 'bg-indigo-500/20 text-indigo-400 hover:bg-red-500/20 hover:text-red-400'
+                            : 'bg-zinc-800 text-zinc-500 hover:bg-indigo-500/20 hover:text-indigo-400'
+                        }`}>
+                        <Shield className="h-3.5 w-3.5" />
+                        {u.isAdmin ? 'Stjórnandi' : 'Stjórnandi'}
+                      </button>
                     </div>
                   </div>
-                  <button onClick={() => toggleAdmin(u.userId, u.email, u.isAdmin)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
-                      u.isAdmin
-                        ? 'bg-indigo-500/20 text-indigo-400 hover:bg-red-500/20 hover:text-red-400'
-                        : 'bg-zinc-800 text-zinc-400 hover:bg-indigo-500/20 hover:text-indigo-400'
-                    }`}>
-                    <Shield className="h-4 w-4" />
-                    {u.isAdmin ? 'Stjórnandi' : 'Gera stjórnanda'}
-                  </button>
                 </div>
               ))
             )}
