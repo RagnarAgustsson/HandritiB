@@ -5,7 +5,7 @@ import { Upload, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst'
-type Staða = 'biðröð' | 'hleður' | 'lokið' | 'villa'
+type Staða = 'biðröð' | 'hleður' | 'vinnur' | 'lokið' | 'villa'
 
 const profileNöfn: Record<Profile, string> = {
   fundur: 'Fundur',
@@ -25,6 +25,7 @@ export default function HlaðaUppClient() {
   const [villa, setVilla] = useState('')
   const [skrá, setSkrá] = useState<File | null>(null)
   const [lengd, setLengd] = useState(0)
+  const [framvinda, setFramvinda] = useState(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function velja(e: React.ChangeEvent<HTMLInputElement>) {
@@ -64,31 +65,54 @@ export default function HlaðaUppClient() {
     }
   }
 
-  async function senda() {
+  function senda() {
     if (!skrá) return
     setStaða('hleður')
+    setFramvinda(0)
     setVilla('')
 
-    try {
-      const fd = new FormData()
-      fd.append('skrá', skrá, skrá.name)
-      fd.append('profile', profile)
-      fd.append('nafn', nafn || skrá.name.replace(/\.[^/.]+$/, ''))
-      if (lengd > 0) fd.append('lengd', String(lengd))
+    const fd = new FormData()
+    fd.append('skrá', skrá, skrá.name)
+    fd.append('profile', profile)
+    fd.append('nafn', nafn || skrá.name.replace(/\.[^/.]+$/, ''))
+    if (lengd > 0) fd.append('lengd', String(lengd))
 
-      const res = await fetch('/api/hljod-skra', { method: 'POST', body: fd })
-      const data = await res.json().catch(() => ({}))
+    const xhr = new XMLHttpRequest()
 
-      if (!res.ok) {
-        throw new Error(data.villa || `Villa ${res.status}`)
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        setFramvinda(Math.round((e.loaded / e.total) * 100))
       }
+    }
 
-      setStaða('lokið')
-      setTimeout(() => router.push(`/lotur/${data.sessionId}`), 1000)
-    } catch (err) {
-      setVilla(err instanceof Error ? err.message : 'Tenging mistókst. Reyndu aftur.')
+    xhr.upload.onload = () => {
+      setFramvinda(100)
+      setStaða('vinnur')
+    }
+
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText)
+        if (xhr.status >= 200 && xhr.status < 300) {
+          setStaða('lokið')
+          setTimeout(() => router.push(`/lotur/${data.sessionId}`), 1000)
+        } else {
+          setVilla(data.villa || `Villa ${xhr.status}`)
+          setStaða('villa')
+        }
+      } catch {
+        setVilla('Óvænt svar frá þjóni')
+        setStaða('villa')
+      }
+    }
+
+    xhr.onerror = () => {
+      setVilla('Tenging mistókst. Reyndu aftur.')
       setStaða('villa')
     }
+
+    xhr.open('POST', '/api/hljod-skra')
+    xhr.send(fd)
   }
 
   return (
@@ -175,8 +199,24 @@ export default function HlaðaUppClient() {
           </div>
         ) : staða === 'hleður' ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <div className="w-full max-w-xs">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-zinc-400">Hleður upp...</span>
+                <span className="text-indigo-400 font-medium">{framvinda}%</span>
+              </div>
+              <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-indigo-500 transition-all duration-300"
+                  style={{ width: `${framvinda}%` }}
+                />
+              </div>
+            </div>
+            <p className="text-sm text-zinc-500 mt-2">Loka ekki þessum glugga</p>
+          </div>
+        ) : staða === 'vinnur' ? (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-            <p className="font-medium text-zinc-100">Hleður upp og þýðir...</p>
+            <p className="font-medium text-zinc-100">Þýðir og tekur saman...</p>
             <p className="text-sm text-zinc-500">Þetta getur tekið nokkrar mínútur — loka ekki þessum glugga</p>
           </div>
         ) : (
