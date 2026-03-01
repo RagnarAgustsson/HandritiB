@@ -132,10 +132,12 @@ export async function POST(request: NextRequest) {
 
           // Generate notes per-chunk with rolling context (like live recording)
           const previousTranscripts: string[] = []
+          const allNotes: string[] = []
           for (let i = 0; i < allChunks.length; i++) {
             send({ step: `Bý til yfirferð (${i + 1}/${allChunks.length})...`, progress: 30 + Math.round((i / allChunks.length) * 25) })
             const { notes, rollingSummary } = await generateNotes(allChunks[i].transcript, session.profile as PromptProfile, previousTranscripts)
             await createNote({ sessionId, chunkId: allChunks[i].id, content: notes, rollingSummary })
+            allNotes.push(notes)
             previousTranscripts.push(allChunks[i].transcript)
           }
 
@@ -155,7 +157,8 @@ export async function POST(request: NextRequest) {
           const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
           await logAction(userId, email, 'skra.stort', `${filename} (${sizeLabel}, ${allChunks.length} hlutar)`)
           if (email && finalSummary) {
-            await sendSummaryEmail(email, session.name, finalSummary).catch(() => {})
+            const yfirferd = allNotes.join('\n\n')
+            await sendSummaryEmail(email, session.name, finalSummary, yfirferd).catch(() => {})
           }
 
           send({ step: 'lokið', progress: 100, sessionId })

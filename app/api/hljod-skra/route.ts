@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
         const email = user?.emailAddresses[0]?.emailAddress || ''
         const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
         await logAction(userId, email, 'skra.hlada', `${filename} (${sizeLabel})`)
-        if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary).catch(() => {})
+        if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary, notes).catch(() => {})
 
         // Done
         send({ step: 'lokið', progress: 100, sessionId: session.id })

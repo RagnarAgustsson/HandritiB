@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { createSession, getUserSessions, updateSession } from '@/lib/db/sessions'
+import { createSession, getUserSessions, updateSession, getSessionNotes } from '@/lib/db/sessions'
 import { generateFinalSummary } from '@/lib/pipeline/summarize'
 import { getSessionChunks } from '@/lib/db/sessions'
 import { logAction } from '@/lib/db/admin'
@@ -58,7 +58,11 @@ export async function PATCH(request: NextRequest) {
     const user = await currentUser()
     const email = user?.emailAddresses[0]?.emailAddress || ''
     await logAction(userId, email, 'lota.ljuka', `Lota ${sessionId}`)
-    if (email && finalSummary) sendSummaryEmail(email, updated.name, finalSummary).catch(() => {})
+    if (email && finalSummary) {
+      const notes = await getSessionNotes(sessionId)
+      const yfirferd = notes.map(n => n.content).join('\n\n')
+      sendSummaryEmail(email, updated.name, finalSummary, yfirferd || undefined).catch(() => {})
+    }
 
     return NextResponse.json({ session: updated })
   }
