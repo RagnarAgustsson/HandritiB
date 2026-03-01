@@ -17,6 +17,7 @@ export default function BeinlinaClient() {
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const dcRef = useRef<RTCDataChannel | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const startTimeRef = useRef<number>(0)
 
   async function byrja() {
     setVilla('')
@@ -78,6 +79,7 @@ export default function BeinlinaClient() {
       const answerSdp = await sdpRes.text()
       await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp })
 
+      startTimeRef.current = Date.now()
       setStaða('í-gangi')
     } catch (err) {
       setVilla(err instanceof Error ? err.message : 'Óþekkt villa')
@@ -108,10 +110,12 @@ export default function BeinlinaClient() {
       .map(m => m.type === 'handriti' ? `[Handriti]: ${m.text}` : m.text)
       .join('\n\n')
 
+    const elapsed = startTimeRef.current > 0 ? Math.round((Date.now() - startTimeRef.current) / 1000) : 0
+
     const res = await fetch('/api/beinlina-vista', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript: fullTranscript, profile: 'fundur' }),
+      body: JSON.stringify({ transcript: fullTranscript, profile: 'fundur', durationSeconds: elapsed }),
     })
     const data = await res.json()
     if (res.ok) {

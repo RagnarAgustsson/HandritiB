@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { processChunk } from '@/lib/pipeline/processChunk'
 import { getSession } from '@/lib/db/sessions'
+import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
+import { recordUsage } from '@/lib/db/usage'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export const maxDuration = 60
@@ -9,6 +11,11 @@ export const maxDuration = 60
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
+
+  const access = await checkTranscriptionAccess(userId)
+  if (!access.allowed) {
+    return NextResponse.json({ villa: access.reason }, { status: 403 })
+  }
 
   const formData = await request.formData()
   const hljod = formData.get('hljod') as File | null
@@ -25,6 +32,7 @@ export async function POST(request: NextRequest) {
   }
 
   const audioBlob = new Blob([await hljod.arrayBuffer()], { type: hljod.type || 'audio/webm' })
+  const durationSeconds = Math.round(parseFloat(formData.get('seconds') as string || '0'))
 
   try {
     const result = await processChunk({
@@ -32,9 +40,16 @@ export async function POST(request: NextRequest) {
       seq,
       audioBlob,
       profile: session.profile as PromptProfile,
-      durationSeconds: Math.round(parseFloat(formData.get('seconds') as string || '0')),
+      durationSeconds,
       filename: hljod.name,
     })
+
+    // Skrá notkun
+    if (durationSeconds > 0) {
+      const periodStart = access.subscription?.currentPeriodStart || new Date()
+      await recordUsage({ userId, sessionId, seconds: durationSeconds, source: 'hljod-hluti', periodStart })
+    }
+
     return NextResponse.json(result)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Óþekkt villa við vinnslu hljóðs'

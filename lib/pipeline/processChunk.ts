@@ -42,7 +42,9 @@ export async function processChunk(input: ProcessChunkInput): Promise<ProcessChu
   await createNote({ sessionId, chunkId: chunk.id, content: notes, rollingSummary })
 
   // 6. Update session total time
+  const totalSeconds = previousChunks.reduce((sum, c) => sum + c.durationSeconds, 0) + durationSeconds
   await updateSession(sessionId, {
+    totalSeconds,
     updatedAt: new Date(),
   })
 

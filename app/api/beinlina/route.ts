@@ -2,6 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { openai } from '@/lib/openai/client'
 import { logAction } from '@/lib/db/admin'
+import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { BEINLINA_INSTRUCTIONS } from '@/lib/pipeline/prompts'
 
 // Issues an ephemeral token so the browser can connect directly to OpenAI Realtime.
@@ -9,6 +10,11 @@ import { BEINLINA_INSTRUCTIONS } from '@/lib/pipeline/prompts'
 export async function POST() {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
+
+  const access = await checkTranscriptionAccess(userId)
+  if (!access.allowed) {
+    return NextResponse.json({ villa: access.reason }, { status: 403 })
+  }
 
   const session = await (openai.beta as any).realtime.sessions.create({
     model: 'gpt-4o-realtime-preview',

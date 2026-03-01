@@ -24,6 +24,7 @@ export default function HlaðaUppClient() {
   const [nafn, setNafn] = useState('')
   const [villa, setVilla] = useState('')
   const [skrá, setSkrá] = useState<File | null>(null)
+  const [lengd, setLengd] = useState(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function velja(e: React.ChangeEvent<HTMLInputElement>) {
@@ -44,7 +45,23 @@ export default function HlaðaUppClient() {
     }
     setVilla('')
     setSkrá(f)
+    setLengd(0)
     if (!nafn) setNafn(f.name.replace(/\.[^/.]+$/, ''))
+
+    // Reyna að greina lengd hljóðskrár
+    try {
+      const url = URL.createObjectURL(f)
+      const audio = new Audio(url)
+      audio.addEventListener('loadedmetadata', () => {
+        if (audio.duration && isFinite(audio.duration)) {
+          setLengd(Math.round(audio.duration))
+        }
+        URL.revokeObjectURL(url)
+      })
+      audio.addEventListener('error', () => URL.revokeObjectURL(url))
+    } catch {
+      // Ef ekki tekst — fallback á 0, server áætlar úr orðafjölda
+    }
   }
 
   async function senda() {
@@ -57,6 +74,7 @@ export default function HlaðaUppClient() {
       fd.append('skrá', skrá, skrá.name)
       fd.append('profile', profile)
       fd.append('nafn', nafn || skrá.name.replace(/\.[^/.]+$/, ''))
+      if (lengd > 0) fd.append('lengd', String(lengd))
 
       const res = await fetch('/api/hljod-skra', { method: 'POST', body: fd })
       const data = await res.json().catch(() => ({}))

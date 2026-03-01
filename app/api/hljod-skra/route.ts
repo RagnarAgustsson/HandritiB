@@ -5,6 +5,8 @@ import { transcribeAudio } from '@/lib/pipeline/transcribe'
 import { generateNotes, generateFinalSummary } from '@/lib/pipeline/summarize'
 import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
+import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
+import { recordUsage } from '@/lib/db/usage'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export const maxDuration = 300
@@ -12,15 +14,24 @@ export const maxDuration = 300
 // OpenAI Whisper/gpt-4o-transcribe accepts up to 25MB per file
 const MAX_BYTES = 24 * 1024 * 1024
 
+// Áætluð orð á mínútu í íslensku tali
+const WORDS_PER_MINUTE = 130
+
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
+
+  const access = await checkTranscriptionAccess(userId)
+  if (!access.allowed) {
+    return NextResponse.json({ villa: access.reason }, { status: 403 })
+  }
 
   try {
     const formData = await request.formData()
     const skrá = formData.get('skrá') as File | null
     const profile = (formData.get('profile') as PromptProfile) || 'fundur'
     const nafn = (formData.get('nafn') as string) || ''
+    const clientDuration = parseInt(formData.get('lengd') as string || '0')
 
     if (!skrá) return NextResponse.json({ villa: 'Engin skrá' }, { status: 400 })
 
@@ -46,13 +57,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ villa: 'Tókst ekki að þýða hljóðið' }, { status: 500 })
     }
 
-    const chunk = await createChunk({ sessionId: session.id, seq: 0, transcript, durationSeconds: 0 })
+    // Áætla lengd ef biðlarinn sendi hana ekki
+    const durationSeconds = clientDuration > 0
+      ? clientDuration
+      : Math.round((transcript.split(/\s+/).length / WORDS_PER_MINUTE) * 60)
+
+    const chunk = await createChunk({ sessionId: session.id, seq: 0, transcript, durationSeconds })
 
     const { notes, rollingSummary } = await generateNotes(transcript, profile, [])
     await createNote({ sessionId: session.id, chunkId: chunk.id, content: notes, rollingSummary })
 
     const finalSummary = await generateFinalSummary([transcript], profile)
-    await updateSession(session.id, { status: 'lokið', finalSummary })
+    await updateSession(session.id, { status: 'lokið', finalSummary, totalSeconds: durationSeconds })
+
+    // Skrá notkun
+    const periodStart = access.subscription?.currentPeriodStart || new Date()
+    await recordUsage({ userId, sessionId: session.id, seconds: durationSeconds, source: 'hljod-skra', periodStart })
 
     const user = await currentUser()
     const email = user?.emailAddresses[0]?.emailAddress || ''
