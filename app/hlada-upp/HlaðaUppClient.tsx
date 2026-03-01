@@ -79,7 +79,7 @@ export default function HlaðaUppClient() {
         handleUploadUrl: '/api/blob-upload',
         multipart: false,
         onUploadProgress: (e) => {
-          setFramvinda(Math.round(e.percentage))
+          setFramvinda(prev => Math.max(prev, Math.min(Math.round(e.percentage), 99)))
         },
       })
 
