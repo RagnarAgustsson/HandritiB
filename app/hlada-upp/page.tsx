@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import HlaðaUppClient from './HlaðaUppClient'
+import UploadTabs from './UploadTabs'
 import UsageBanner from '@/app/components/UsageBanner'
 
 export default async function HlaðaUppPage() {
@@ -11,7 +11,7 @@ export default async function HlaðaUppPage() {
       <div className="mx-auto max-w-2xl px-4 pt-10">
         <UsageBanner />
       </div>
-      <HlaðaUppClient />
+      <UploadTabs />
     </>
   )
 }

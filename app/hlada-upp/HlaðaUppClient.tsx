@@ -167,12 +167,9 @@ export default function HlaðaUppClient() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      <div className="mx-auto max-w-2xl px-4 py-10">
-        <h1 className="text-2xl font-bold text-zinc-100 mb-8">Hlaða upp skrá</h1>
-
+    <div className="space-y-6">
         {staða === 'biðröð' || staða === 'villa' ? (
-          <div className="space-y-6">
+          <>
             <div
               onClick={() => fileRef.current?.click()}
               className={`cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition ${
@@ -247,7 +244,7 @@ export default function HlaðaUppClient() {
               <Upload className="h-5 w-5" />
               Senda til vinnslu
             </button>
-          </div>
+          </>
         ) : staða === 'hleður' ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <div className="w-full max-w-xs">
@@ -288,7 +285,6 @@ export default function HlaðaUppClient() {
             <p className="text-sm text-zinc-500">Fer yfir á niðurstöður...</p>
           </div>
         )}
-      </div>
     </div>
   )
 }
