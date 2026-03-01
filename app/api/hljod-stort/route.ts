@@ -128,13 +128,16 @@ export async function POST(request: NextRequest) {
           }
 
           const allTranscripts = allChunks.map(c => c.transcript)
-          const combinedTranscript = allTranscripts.join('\n\n')
           const totalSeconds = allChunks.reduce((sum, c) => sum + c.durationSeconds, 0)
 
-          // Generate notes
-          send({ step: 'Bý til glósur...', progress: 30 })
-          const { notes, rollingSummary } = await generateNotes(combinedTranscript, session.profile as PromptProfile, [])
-          await createNote({ sessionId, content: notes, rollingSummary })
+          // Generate notes per-chunk with rolling context (like live recording)
+          const previousTranscripts: string[] = []
+          for (let i = 0; i < allChunks.length; i++) {
+            send({ step: `Bý til glósur (${i + 1}/${allChunks.length})...`, progress: 30 + Math.round((i / allChunks.length) * 25) })
+            const { notes, rollingSummary } = await generateNotes(allChunks[i].transcript, session.profile as PromptProfile, previousTranscripts)
+            await createNote({ sessionId, chunkId: allChunks[i].id, content: notes, rollingSummary })
+            previousTranscripts.push(allChunks[i].transcript)
+          }
 
           // Generate final summary
           send({ step: 'Tek saman...', progress: 60 })
@@ -151,7 +154,9 @@ export async function POST(request: NextRequest) {
           const email = user?.emailAddresses[0]?.emailAddress || ''
           const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
           await logAction(userId, email, 'skra.stort', `${filename} (${sizeLabel}, ${allChunks.length} hlutar)`)
-          if (email && finalSummary) sendSummaryEmail(email, session.name, finalSummary).catch(() => {})
+          if (email && finalSummary) {
+            await sendSummaryEmail(email, session.name, finalSummary).catch(() => {})
+          }
 
           send({ step: 'lokið', progress: 100, sessionId })
           controller.close()
