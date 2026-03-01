@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
         'video/mp4', 'video/webm',
       ],
       maximumSizeInBytes: 25 * 1024 * 1024,
+      validUntil: Date.now() + 30 * 60 * 1000, // 30 minutes
     })
 
     return NextResponse.json({ clientToken })

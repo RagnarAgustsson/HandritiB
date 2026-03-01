@@ -76,16 +76,17 @@ export default function HlaðaUppClient() {
 
     try {
       // 1. Get client token from our API
+      const blobPath = `uploads/${Date.now()}-${skrá.name}`
       const tokenRes = await fetch('/api/blob-upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pathname: `uploads/${Date.now()}-${skrá.name}` }),
+        body: JSON.stringify({ pathname: blobPath }),
       })
       const { clientToken, error: tokenError } = await tokenRes.json()
       if (!tokenRes.ok || !clientToken) throw new Error(tokenError || 'Tókst ekki að hefja upphlöðun')
 
       // 2. Upload directly to Vercel Blob (no webhook callback needed)
-      const blob = await put(skrá.name, skrá, {
+      const blob = await put(blobPath, skrá, {
         access: 'public',
         token: clientToken,
         multipart: false,
