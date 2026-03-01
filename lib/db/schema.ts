@@ -60,3 +60,53 @@ export const auditLog = pgTable('audit_log', {
 
 export type Admin = typeof admins.$inferSelect
 export type AuditLogEntry = typeof auditLog.$inferSelect
+
+// ── Áskriftir & Notkun ─────────────────────────────────────
+
+export const subscriptionStatusEnum = pgEnum('subscription_status', [
+  'trialing',
+  'active',
+  'past_due',
+  'canceled',
+  'paused',
+])
+
+export const subscriptions = pgTable('subscriptions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().unique(),
+  paddleSubscriptionId: text('paddle_subscription_id').unique(),
+  paddleCustomerId: text('paddle_customer_id'),
+  status: subscriptionStatusEnum('status').notNull().default('trialing'),
+  planId: text('plan_id'),
+  currentPeriodStart: timestamp('current_period_start'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  trialEndsAt: timestamp('trial_ends_at'),
+  canceledAt: timestamp('canceled_at'),
+  minutesLimit: integer('minutes_limit').notNull().default(60),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const usageRecords = pgTable('usage_records', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull(),
+  sessionId: text('session_id').references(() => sessions.id, { onDelete: 'set null' }),
+  seconds: integer('seconds').notNull().default(0),
+  source: text('source').notNull(),
+  periodStart: timestamp('period_start').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export const freeAccessGrants = pgTable('free_access_grants', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().unique(),
+  grantedBy: text('granted_by').notNull(),
+  reason: text('reason'),
+  expiresAt: timestamp('expires_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+export type Subscription = typeof subscriptions.$inferSelect
+export type NewSubscription = typeof subscriptions.$inferInsert
+export type UsageRecord = typeof usageRecords.$inferSelect
+export type FreeAccessGrant = typeof freeAccessGrants.$inferSelect
