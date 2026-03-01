@@ -11,6 +11,7 @@ export default async function Nav() {
         <Link href="/" className="font-bold text-zinc-100 tracking-tight">Handriti</Link>
         <div className="flex items-center gap-4">
           <Link href="/lotur" className="text-sm text-zinc-400 hover:text-zinc-100 transition">Lotur</Link>
+          <Link href="/askrift" className="text-sm text-zinc-400 hover:text-zinc-100 transition">Áskrift</Link>
           {isAdmin && (
             <Link href="/admin" className="text-sm text-indigo-400 hover:text-indigo-300 transition">Stjórnborð</Link>
           )}

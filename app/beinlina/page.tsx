@@ -1,9 +1,17 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import BeinlinaClient from './BeinlinaClient'
+import UsageBanner from '@/app/components/UsageBanner'
 
 export default async function BeinlinaPage() {
   const { userId } = await auth()
   if (!userId) redirect('/innskraning')
-  return <BeinlinaClient />
+  return (
+    <>
+      <div className="mx-auto max-w-2xl px-4 pt-10">
+        <UsageBanner />
+      </div>
+      <BeinlinaClient />
+    </>
+  )
 }
