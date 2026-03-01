@@ -2,6 +2,7 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { openai } from '@/lib/openai/client'
 import { logAction } from '@/lib/db/admin'
+import { BEINLINA_INSTRUCTIONS } from '@/lib/pipeline/prompts'
 
 // Issues an ephemeral token so the browser can connect directly to OpenAI Realtime.
 // The API key never leaves the server.
@@ -12,16 +13,7 @@ export async function POST() {
   const session = await (openai.beta as any).realtime.sessions.create({
     model: 'gpt-4o-realtime-preview',
     voice: 'alloy',
-    instructions: `Þú heitir Handriti. Samtalið sem þú hlustir á er á ÍSLENSKU. Þú svarar alltaf á íslensku.
-
-EIN REGLA, engar undantekningar: Þú talar EINUNGIS þegar einhver segir bókstaflega orðið "Handriti" í setningunni sinni — t.d. "hvað segir þú um X Handriti" eða "Handriti hvað finnst þér um Y". Ef orðið "Handriti" er ekki sagt: ÞEGI. Algert þögn. Engin viðbrögð. Ekkert hljóð.
-
-Þegar orðið "Handriti" er sagt:
-- Svaraðu því sem var spurt, stuttlega og beint, á íslensku
-- Notaðu allt samhengi samtalsins til að svara vel
-- Farðu þegar aftur í algera þögn eftir svarið
-
-Þegar einhver segir "Takk Handriti": svaraðu einungis "Endilega" og þegi.`,
+    instructions: BEINLINA_INSTRUCTIONS,
     input_audio_transcription: { model: 'whisper-1' },
     turn_detection: {
       type: 'server_vad',
