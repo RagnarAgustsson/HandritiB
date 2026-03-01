@@ -64,16 +64,20 @@ export default function AskriftClient() {
     const paddle = paddleRef.current
     if (!paddle) { setCheckoutError('Paddle.js hleðst ekki — athugaðu client token'); return }
 
-    paddle.Checkout.open({
-      items: [{ priceId, quantity: 1 }],
-      customData: { userId: user.id },
-      customer: { email: user.emailAddresses[0]?.emailAddress || '' },
-      settings: {
-        theme: 'dark',
-        displayMode: 'overlay',
-        successUrl: `${window.location.origin}/askrift?success=true`,
-      },
-    })
+    try {
+      paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customData: { userId: user.id },
+        customer: { email: user.emailAddresses[0]?.emailAddress || '' },
+        settings: {
+          theme: 'dark',
+          displayMode: 'overlay',
+          successUrl: `${window.location.origin}/askrift?success=true`,
+        },
+      })
+    } catch {
+      setCheckoutError('Greiðslukerfi er ekki tilbúið ennþá. Reyndu aftur síðar.')
+    }
   }
 
   if (loading) {
