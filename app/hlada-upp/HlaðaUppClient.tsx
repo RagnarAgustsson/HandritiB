@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { upload } from '@vercel/blob/client'
 import { Upload, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -65,54 +66,51 @@ export default function HlaðaUppClient() {
     }
   }
 
-  function senda() {
+  async function senda() {
     if (!skrá) return
     setStaða('hleður')
     setFramvinda(0)
     setVilla('')
 
-    const fd = new FormData()
-    fd.append('skrá', skrá, skrá.name)
-    fd.append('profile', profile)
-    fd.append('nafn', nafn || skrá.name.replace(/\.[^/.]+$/, ''))
-    if (lengd > 0) fd.append('lengd', String(lengd))
+    try {
+      // 1. Upload to Vercel Blob (bypasses 4.5MB serverless limit)
+      const blob = await upload(skrá.name, skrá, {
+        access: 'public',
+        handleUploadUrl: '/api/blob-upload',
+        onUploadProgress: (e) => {
+          setFramvinda(e.percentage)
+        },
+      })
 
-    const xhr = new XMLHttpRequest()
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        setFramvinda(Math.round((e.loaded / e.total) * 100))
-      }
-    }
-
-    xhr.upload.onload = () => {
+      // 2. Send blob URL + metadata to API for processing
       setFramvinda(100)
       setStaða('vinnur')
-    }
 
-    xhr.onload = () => {
-      try {
-        const data = JSON.parse(xhr.responseText)
-        if (xhr.status >= 200 && xhr.status < 300) {
-          setStaða('lokið')
-          setTimeout(() => router.push(`/lotur/${data.sessionId}`), 1000)
-        } else {
-          setVilla(data.villa || `Villa ${xhr.status}`)
-          setStaða('villa')
-        }
-      } catch {
-        setVilla(`Villa ${xhr.status}: ${xhr.responseText.slice(0, 200)}`)
-        setStaða('villa')
+      const res = await fetch('/api/hljod-skra', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blobUrl: blob.url,
+          filename: skrá.name,
+          profile,
+          nafn: nafn || skrá.name.replace(/\.[^/.]+$/, ''),
+          lengd: lengd > 0 ? String(lengd) : '0',
+          fileSize: String(skrá.size),
+        }),
+      })
+
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok) {
+        throw new Error(data.villa || `Villa ${res.status}`)
       }
-    }
 
-    xhr.onerror = () => {
-      setVilla('Tenging mistókst. Reyndu aftur.')
+      setStaða('lokið')
+      setTimeout(() => router.push(`/lotur/${data.sessionId}`), 1000)
+    } catch (err) {
+      setVilla(err instanceof Error ? err.message : 'Tenging mistókst. Reyndu aftur.')
       setStaða('villa')
     }
-
-    xhr.open('POST', '/api/hljod-skra')
-    xhr.send(fd)
   }
 
   return (
