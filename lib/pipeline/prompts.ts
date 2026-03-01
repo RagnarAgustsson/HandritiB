@@ -133,6 +133,10 @@ ${ISLENSKA_FYRIRMÆLI}
 
 ${profileContext[profile]}
 
+Textinn kemur beint úr sjálfvirkri talgreiningu (gpt-4o-transcribe eða whisper-1).
+Hann getur innihaldið stafsetningarvillur, endurtekningar, brot úr samhengi og rugl í lok sem stafar af þögn í hljóðskránni.
+Hunsa augljósar villur og endurtekningar — einbeittu þér að merkingarbæru efni.
+
 Þú færð texta frá notanda sem inniheldur:
 1. Takmarkað fyrra samhengi (ef til staðar) afmarkað með "---"
 2. Nýjasta hlutann sem á að draga glósur úr, afmarkaðan með "=== NÝJASTI HLUTI ==="
@@ -224,6 +228,10 @@ ${ISLENSKA_FYRIRMÆLI}
 ${profileContext[profile]}
 
 Þú færð samfellda uppskrift eða textasafn úr tali frá notanda.
+Textinn kemur beint úr sjálfvirkri talgreiningu (gpt-4o-transcribe eða whisper-1).
+Hann getur innihaldið stafsetningarvillur, endurtekningar, brot úr samhengi og rugl í lok sem stafar af þögn í hljóðskránni.
+Hunsa augljósar villur og endurtekningar — einbeittu þér að merkingarbæru efni.
+
 Verkefnið er að skrifa vandaða lokasamantekt sem byggir eingöngu á þessu efni.
 
 Snið:

@@ -27,6 +27,7 @@ export default function HlaðaUppClient() {
   const [skrá, setSkrá] = useState<File | null>(null)
   const [lengd, setLengd] = useState(0)
   const [framvinda, setFramvinda] = useState(0)
+  const [skref, setSkref] = useState('')
   const maxPctRef = useRef(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -99,8 +100,9 @@ export default function HlaðaUppClient() {
         },
       })
 
-      // 2. Send blob URL + metadata to API for processing
-      setFramvinda(100)
+      // 3. Send blob URL + metadata to API for processing (SSE stream)
+      setFramvinda(0)
+      setSkref('Hefja vinnslu...')
       setStaða('vinnur')
 
       const res = await fetch('/api/hljod-skra', {
@@ -116,14 +118,48 @@ export default function HlaðaUppClient() {
         }),
       })
 
-      const data = await res.json().catch(() => ({}))
-
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
         throw new Error(data.villa || `Villa ${res.status}`)
       }
 
+      // Read SSE stream
+      const reader = res.body?.getReader()
+      if (!reader) throw new Error('Straumur ekki tiltækur')
+
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let sessionId = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const data = JSON.parse(line.slice(6))
+            if (data.step === 'villa') throw new Error(data.villa)
+            if (data.step === 'lokið') {
+              sessionId = data.sessionId
+            } else {
+              setSkref(data.step)
+              setFramvinda(data.progress)
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message !== line.slice(6)) throw e
+          }
+        }
+      }
+
+      if (!sessionId) throw new Error('Vinnsla skilaði ekki lotu')
+
       setStaða('lokið')
-      setTimeout(() => router.push(`/lotur/${data.sessionId}`), 1000)
+      setTimeout(() => router.push(`/lotur/${sessionId}`), 1000)
     } catch (err) {
       setVilla(err instanceof Error ? err.message : 'Tenging mistókst. Reyndu aftur.')
       setStaða('villa')
@@ -230,9 +266,20 @@ export default function HlaðaUppClient() {
           </div>
         ) : staða === 'vinnur' ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-            <p className="font-medium text-zinc-100">Þýðir og tekur saman...</p>
-            <p className="text-sm text-zinc-500">Þetta getur tekið nokkrar mínútur — loka ekki þessum glugga</p>
+            <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+            <div className="w-full max-w-xs">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-zinc-400">{skref || 'Vinnur...'}</span>
+                <span className="text-indigo-400 font-medium">{framvinda}%</span>
+              </div>
+              <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-indigo-500 transition-all duration-500"
+                  style={{ width: `${framvinda}%` }}
+                />
+              </div>
+            </div>
+            <p className="text-sm text-zinc-500 mt-2">Loka ekki þessum glugga</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 py-16 text-center">

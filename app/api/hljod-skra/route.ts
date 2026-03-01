@@ -15,6 +15,12 @@ export const maxDuration = 300
 // Áætluð orð á mínútu í íslensku tali
 const WORDS_PER_MINUTE = 130
 
+const encoder = new TextEncoder()
+
+function sseEvent(data: object): Uint8Array {
+  return encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+}
+
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
@@ -24,74 +30,113 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ villa: access.reason }, { status: 403 })
   }
 
-  let blobUrl: string | undefined
-
+  let body: Record<string, unknown>
   try {
-    const body = await request.json()
-    blobUrl = body.blobUrl as string
-    const filename = (body.filename as string) || 'hljod.webm'
-    const profile = (body.profile as PromptProfile) || 'fundur'
-    const nafn = (body.nafn as string) || ''
-    const clientDuration = parseInt(body.lengd || '0')
-    const fileSize = parseInt(body.fileSize || '0')
-
-    if (!blobUrl) return NextResponse.json({ villa: 'Engin skrá' }, { status: 400 })
-
-    // Fetch audio from Vercel Blob (private store needs auth)
-    const blobToken = process.env.BLOB_READ_WRITE_TOKEN
-    const blobRes = await fetch(blobUrl, {
-      headers: { Authorization: `Bearer ${blobToken}` },
-    })
-    if (!blobRes.ok) {
-      return NextResponse.json({
-        villa: `Tókst ekki að sækja skrá úr geymslu (${blobRes.status}${blobToken ? '' : ' — BLOB_READ_WRITE_TOKEN vantar'})`,
-      }, { status: 500 })
-    }
-
-    const session = await createSession({
-      userId,
-      name: nafn || filename.replace(/\.[^/.]+$/, '') || 'Upphlöðun',
-      profile,
-      status: 'virkt',
-    })
-
-    const audioBlob = new Blob([await blobRes.arrayBuffer()], { type: blobRes.headers.get('content-type') || 'audio/webm' })
-    const transcript = await transcribeAudio(audioBlob, filename)
-
-    // Clean up blob now that we have the transcript
-    del(blobUrl).catch(() => {})
-
-    if (!transcript) {
-      await updateSession(session.id, { status: 'villa' })
-      return NextResponse.json({ villa: 'Tókst ekki að þýða hljóðið' }, { status: 500 })
-    }
-
-    const durationSeconds = clientDuration > 0
-      ? clientDuration
-      : Math.round((transcript.split(/\s+/).length / WORDS_PER_MINUTE) * 60)
-
-    const chunk = await createChunk({ sessionId: session.id, seq: 0, transcript, durationSeconds })
-
-    const { notes, rollingSummary } = await generateNotes(transcript, profile, [])
-    await createNote({ sessionId: session.id, chunkId: chunk.id, content: notes, rollingSummary })
-
-    const finalSummary = await generateFinalSummary([transcript], profile)
-    await updateSession(session.id, { status: 'lokið', finalSummary, totalSeconds: durationSeconds })
-
-    const periodStart = access.subscription?.currentPeriodStart || new Date()
-    await recordUsage({ userId, sessionId: session.id, seconds: durationSeconds, source: 'hljod-skra', periodStart })
-
-    const user = await currentUser()
-    const email = user?.emailAddresses[0]?.emailAddress || ''
-    const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
-    await logAction(userId, email, 'skra.hlada', `${filename} (${sizeLabel})`)
-    if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary).catch(() => {})
-
-    return NextResponse.json({ sessionId: session.id })
-  } catch (error) {
-    // Clean up blob on error
-    if (blobUrl) del(blobUrl).catch(() => {})
-    const message = error instanceof Error ? error.message : 'Óþekkt villa'
-    return NextResponse.json({ villa: message }, { status: 500 })
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ villa: 'Ógild fyrirspurn' }, { status: 400 })
   }
+
+  const blobUrl = body.blobUrl as string
+  const filename = (body.filename as string) || 'hljod.webm'
+  const profile = (body.profile as PromptProfile) || 'fundur'
+  const nafn = (body.nafn as string) || ''
+  const clientDuration = parseInt((body.lengd as string) || '0')
+  const fileSize = parseInt((body.fileSize as string) || '0')
+
+  if (!blobUrl) return NextResponse.json({ villa: 'Engin skrá' }, { status: 400 })
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (data: object) => controller.enqueue(sseEvent(data))
+
+      try {
+        // 1. Fetch audio from Vercel Blob
+        send({ step: 'Sæki hljóðskrá...', progress: 10 })
+        const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+        const blobRes = await fetch(blobUrl, {
+          headers: { Authorization: `Bearer ${blobToken}` },
+        })
+        if (!blobRes.ok) {
+          send({ step: 'villa', villa: `Tókst ekki að sækja skrá úr geymslu (${blobRes.status})` })
+          controller.close()
+          return
+        }
+
+        // 2. Create session
+        const session = await createSession({
+          userId,
+          name: nafn || filename.replace(/\.[^/.]+$/, '') || 'Upphlöðun',
+          profile,
+          status: 'virkt',
+        })
+
+        // 3. Transcribe
+        send({ step: 'Þýði hljóðskrá...', progress: 25 })
+        const audioBlob = new Blob([await blobRes.arrayBuffer()], {
+          type: blobRes.headers.get('content-type') || 'audio/webm',
+        })
+        const transcript = await transcribeAudio(audioBlob, filename)
+
+        // Clean up blob
+        del(blobUrl).catch(() => {})
+
+        if (!transcript) {
+          await updateSession(session.id, { status: 'villa' })
+          send({ step: 'villa', villa: 'Tókst ekki að þýða hljóðið' })
+          controller.close()
+          return
+        }
+
+        const durationSeconds = clientDuration > 0
+          ? clientDuration
+          : Math.round((transcript.split(/\s+/).length / WORDS_PER_MINUTE) * 60)
+
+        const chunk = await createChunk({ sessionId: session.id, seq: 0, transcript, durationSeconds })
+
+        // 4. Generate notes
+        send({ step: 'Bý til glósur...', progress: 55 })
+        const { notes, rollingSummary } = await generateNotes(transcript, profile, [])
+        await createNote({ sessionId: session.id, chunkId: chunk.id, content: notes, rollingSummary })
+
+        // 5. Generate final summary
+        send({ step: 'Tek saman...', progress: 75 })
+        const finalSummary = await generateFinalSummary([transcript], profile)
+        await updateSession(session.id, { status: 'lokið', finalSummary, totalSeconds: durationSeconds })
+
+        // 6. Usage, logging, email
+        send({ step: 'Geng frá...', progress: 90 })
+        const periodStart = access.subscription?.currentPeriodStart || new Date()
+        await recordUsage({ userId, sessionId: session.id, seconds: durationSeconds, source: 'hljod-skra', periodStart })
+
+        const user = await currentUser()
+        const email = user?.emailAddresses[0]?.emailAddress || ''
+        const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
+        await logAction(userId, email, 'skra.hlada', `${filename} (${sizeLabel})`)
+        if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary).catch(() => {})
+
+        // Done
+        send({ step: 'lokið', progress: 100, sessionId: session.id })
+        controller.close()
+      } catch (error) {
+        // Clean up blob on error
+        del(blobUrl).catch(() => {})
+        const message = error instanceof Error ? error.message : 'Óþekkt villa'
+        try {
+          send({ step: 'villa', villa: message })
+        } catch {
+          // controller may already be closed
+        }
+        controller.close()
+      }
+    },
+  })
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+    },
+  })
 }
