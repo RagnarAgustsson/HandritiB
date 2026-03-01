@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { upload } from '@vercel/blob/client'
+import { put } from '@vercel/blob/client'
 import { Upload, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
@@ -75,10 +75,19 @@ export default function HlaðaUppClient() {
     setVilla('')
 
     try {
-      // 1. Upload to Vercel Blob (bypasses 4.5MB serverless limit)
-      const blob = await upload(skrá.name, skrá, {
+      // 1. Get client token from our API
+      const tokenRes = await fetch('/api/blob-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pathname: `uploads/${Date.now()}-${skrá.name}` }),
+      })
+      const { clientToken, error: tokenError } = await tokenRes.json()
+      if (!tokenRes.ok || !clientToken) throw new Error(tokenError || 'Tókst ekki að hefja upphlöðun')
+
+      // 2. Upload directly to Vercel Blob (no webhook callback needed)
+      const blob = await put(skrá.name, skrá, {
         access: 'public',
-        handleUploadUrl: '/api/blob-upload',
+        token: clientToken,
         multipart: false,
         onUploadProgress: (e) => {
           const pct = Math.min(Math.round(e.percentage), 99)

@@ -1,35 +1,28 @@
-import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
+import { generateClientTokenFromReadWriteToken } from '@vercel/blob/client'
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Generate a client token for direct blob upload — no webhook callback needed
 export async function POST(request: NextRequest) {
-  const body = (await request.json()) as HandleUploadBody
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Ekki innskráður' }, { status: 401 })
 
   try {
-    const jsonResponse = await handleUpload({
-      body,
-      request,
-      onBeforeGenerateToken: async () => {
-        const { userId } = await auth()
-        if (!userId) throw new Error('Ekki innskráður')
+    const { pathname } = await request.json()
 
-        return {
-          allowedContentTypes: [
-            'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a',
-            'audio/wav', 'audio/webm', 'audio/ogg', 'audio/flac',
-            'video/mp4', 'video/webm',
-          ],
-          maximumSizeInBytes: 25 * 1024 * 1024, // 25MB — OpenAI limit
-        }
-      },
-      onUploadCompleted: async () => {
-        // Nothing needed — the client will trigger processing via /api/hljod-skra
-      },
+    const clientToken = await generateClientTokenFromReadWriteToken({
+      pathname: pathname || `uploads/${userId}/${Date.now()}`,
+      allowedContentTypes: [
+        'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/m4a', 'audio/x-m4a',
+        'audio/wav', 'audio/webm', 'audio/ogg', 'audio/flac',
+        'video/mp4', 'video/webm',
+      ],
+      maximumSizeInBytes: 25 * 1024 * 1024,
     })
 
-    return NextResponse.json(jsonResponse)
+    return NextResponse.json({ clientToken })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Upload villa'
-    return NextResponse.json({ error: message }, { status: 400 })
+    const message = error instanceof Error ? error.message : 'Token villa'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
