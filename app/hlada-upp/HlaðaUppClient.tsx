@@ -101,7 +101,7 @@ export default function HlaðaUppClient() {
           setStaða('villa')
         }
       } catch {
-        setVilla('Óvænt svar frá þjóni')
+        setVilla(`Villa ${xhr.status}: ${xhr.responseText.slice(0, 200)}`)
         setStaða('villa')
       }
     }
