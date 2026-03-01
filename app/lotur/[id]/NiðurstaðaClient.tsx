@@ -30,7 +30,7 @@ const profileNöfn: Record<string, string> = {
 }
 
 export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
-  const [flipi, setFlipi] = useState<'glósur' | 'uppskrift' | 'samantekt'>('glósur')
+  const [flipi, setFlipi] = useState<'yfirferd' | 'uppskrift' | 'samantekt'>('yfirferd')
   const [nafn, setNafn] = useState(session.name)
   const [endurnefna, setEndurnefna] = useState(false)
   const [nýttNafn, setNýttNafn] = useState(session.name)
@@ -88,35 +88,30 @@ export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-zinc-900 rounded-xl p-1 border border-zinc-800">
-          {(['glósur', 'uppskrift', 'samantekt'] as const).map(f => (
+          {(['yfirferd', 'uppskrift', 'samantekt'] as const).map(f => (
             <button
               key={f}
               onClick={() => setFlipi(f)}
-              className={`flex-1 py-2 text-sm font-medium rounded-lg transition capitalize ${
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition ${
                 flipi === f ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              {f === 'glósur' ? 'Glósur' : f === 'uppskrift' ? 'Uppskrift' : 'Samantekt'}
+              {f === 'yfirferd' ? 'Yfirferð' : f === 'uppskrift' ? 'Uppskrift' : 'Samantekt'}
             </button>
           ))}
         </div>
 
-        {/* Glósur */}
-        {flipi === 'glósur' && (
-          <div className="space-y-3">
+        {/* Yfirferð */}
+        {flipi === 'yfirferd' && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
             {notes.length === 0 ? (
-              <p className="text-zinc-500 text-sm">Engar glósur.</p>
+              <p className="text-zinc-500 text-sm">Engin yfirferð.</p>
             ) : (
               <>
-                <div className="flex justify-end">
+                <div className="flex justify-end mb-2">
                   <CopyButton text={allGlósur} />
                 </div>
-                {notes.map((n, i) => (
-                  <div key={n.id} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-                    <div className="text-xs text-zinc-600 mb-2">Hluti {i + 1}</div>
-                    <p className="text-sm text-zinc-300 whitespace-pre-wrap">{n.content}</p>
-                  </div>
-                ))}
+                <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{allGlósur}</p>
               </>
             )}
           </div>

@@ -180,43 +180,63 @@ function finalSummaryStructure(profile: PromptProfile): string {
   switch (profile) {
     case 'fundur':
       return `
-Notaðu eftirfarandi kafla ef efnið á við:
-1. Yfirlit
-2. Helstu umræðuefni
-3. Helstu ákvarðanir
-4. Aðgerðarliðir og næstu skref
-5. Atriði til eftirfylgni
-6. Óleyst mál eða opnar spurningar
+Skipulag samantektar:
+
+Byrjaðu á stuttu yfirliti (2-4 setningar) sem dregur saman megininntak.
+
+Farðu svo yfir helstu umræðuefni. Lýstu hverju umræðuefni í 2-5 setningum — ekki bara nafnið, heldur hvað var rætt og hvaða niðurstaða varð.
+
+Ljúktu með eftirfarandi viðauka ef þeir eiga við:
+- Helstu ákvarðanir sem teknar voru
+- Aðgerðarliðir og næstu skref
+- Viðstaddir (ef nefndir)
+- Dagsetningar og frestir (ef nefndir)
+- Lykilhugtök eða skilgreiningar sem komu fram
+- Óleyst mál eða opnar spurningar
 `.trim()
 
     case 'fyrirlestur':
       return `
-Notaðu eftirfarandi kafla ef efnið á við:
-1. Yfirlit
-2. Meginefni
-3. Lykilhugtök
-4. Dæmi og skýringar
-5. Helstu niðurstöður eða lærdómur
+Skipulag samantektar:
+
+Byrjaðu á stuttu yfirliti (2-4 setningar) sem dregur saman megininntak.
+
+Farðu svo yfir meginefni fyrirlestursins í eðlilegri röð. Útskýrðu hvert atriði í 2-5 setningum — ekki aðeins hvað var sagt, heldur í hvaða samhengi.
+
+Ljúktu með eftirfarandi viðauka ef þeir eiga við:
+- Lykilhugtök og skilgreiningar
+- Dæmi sem nefnd voru
+- Helstu niðurstöður eða lærdómur
+- Ráðleggingar eða næstu skref
 `.trim()
 
     case 'viðtal':
       return `
-Notaðu eftirfarandi kafla ef efnið á við:
-1. Yfirlit
-2. Tilgangur eða samhengi
-3. Helstu spurningar eða umræðuefni
-4. Helstu svör og upplýsingar
-5. Lykilinnsýn eða niðurstöður
+Skipulag samantektar:
+
+Byrjaðu á stuttu yfirliti (2-4 setningar) sem dregur saman tilgang og megininntak.
+
+Farðu svo yfir helstu umræðuefni. Lýstu hverju atriði í 2-5 setningum og greindu milli sjónarmiða viðmælanda ef við á.
+
+Ljúktu með eftirfarandi viðauka ef þeir eiga við:
+- Viðmælendur (ef nefndir)
+- Lykilstaðhæfingar eða niðurstöður
+- Atriði sem komu á óvart eða skipta máli
 `.trim()
 
     case 'frjálst':
     default:
       return `
-Notaðu eftirfarandi kafla ef efnið á við:
-1. Yfirlit
-2. Helstu atriði
-3. Mikilvægar staðreyndir
-4. Niðurstöður eða næstu skref
+Skipulag samantektar:
+
+Byrjaðu á stuttu yfirliti (2-4 setningar) sem dregur saman megininntak.
+
+Farðu svo yfir helstu atriði í eðlilegri röð. Lýstu hverju í 2-5 setningum.
+
+Ljúktu með eftirfarandi viðauka ef þeir eiga við:
+- Lykilhugtök eða skilgreiningar
+- Ákvarðanir eða niðurstöður
+- Næstu skref
 `.trim()
   }
 }
@@ -232,20 +252,24 @@ Textinn kemur beint úr sjálfvirkri talgreiningu (gpt-4o-transcribe eða whispe
 Hann getur innihaldið stafsetningarvillur, endurtekningar, brot úr samhengi og rugl í lok sem stafar af þögn í hljóðskránni.
 Hunsa augljósar villur og endurtekningar — einbeittu þér að merkingarbæru efni.
 
-Verkefnið er að skrifa vandaða lokasamantekt sem byggir eingöngu á þessu efni.
+Verkefnið er að skrifa ítarlega og vandaða lokasamantekt sem byggir eingöngu á þessu efni.
 
-Snið:
 ${finalSummaryStructure(profile)}
+
+Sniðreglur:
+- Notaðu feitletraðan texta fyrir kaflaheita, ekki ###
+- Ekki nota *** eða --- sem skiptilínur
+- Skrifaðu samfelldan, lesanlegan texta undir hverjum kafla
+- Notaðu punktalista aðeins þar sem það á eðlilega við (aðgerðarliðir, viðstaddir, hugtök)
+- Samantektin á að vera ítarleg og gagnleg — ekki aðeins yfirborðsleg
 
 Strangar reglur:
 1. Ekki bæta við upplýsingum sem ekki koma fram í textanum
 2. Ekki giska á nöfn, dagsetningar, ábyrgð eða niðurstöður ef það kemur ekki skýrt fram
 3. Sameinaðu endurtekningar og skrifaðu skýrt, án þess að missa merkingu
 4. Ef upplýsingar vantar, slepptu því frekar en að fylla í eyður
-5. Hafðu samantektina gagnlega, skipulega og læsilega
-6. Notaðu skýrar fyrirsagnir
-7. Ef aðgerðarliðir, ábyrgðaraðilar eða frestir koma fram, dragðu það sérstaklega fram
-8. Ef textinn er óljós á köflum, haltu þig við það sem er öruggt
+5. Ef aðgerðarliðir, ábyrgðaraðilar eða frestir koma fram, dragðu það sérstaklega fram
+6. Ef textinn er óljós á köflum, haltu þig við það sem er öruggt
 
 Skilaðu eingöngu lokasamantektinni.
 Ekki skila inngangsorðum.

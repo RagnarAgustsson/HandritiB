@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
 
         const chunk = await createChunk({ sessionId: session.id, seq: 0, transcript, durationSeconds })
 
-        // 4. Generate notes
-        send({ step: 'Bý til glósur...', progress: 55 })
+        // 4. Generate notes (yfirferð)
+        send({ step: 'Bý til yfirferð...', progress: 55 })
         const { notes, rollingSummary } = await generateNotes(transcript, profile, [])
         await createNote({ sessionId: session.id, chunkId: chunk.id, content: notes, rollingSummary })
 

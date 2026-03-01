@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
           // Generate notes per-chunk with rolling context (like live recording)
           const previousTranscripts: string[] = []
           for (let i = 0; i < allChunks.length; i++) {
-            send({ step: `Bý til glósur (${i + 1}/${allChunks.length})...`, progress: 30 + Math.round((i / allChunks.length) * 25) })
+            send({ step: `Bý til yfirferð (${i + 1}/${allChunks.length})...`, progress: 30 + Math.round((i / allChunks.length) * 25) })
             const { notes, rollingSummary } = await generateNotes(allChunks[i].transcript, session.profile as PromptProfile, previousTranscripts)
             await createNote({ sessionId, chunkId: allChunks[i].id, content: notes, rollingSummary })
             previousTranscripts.push(allChunks[i].transcript)
