@@ -37,8 +37,10 @@ export async function POST(request: NextRequest) {
 
     if (!blobUrl) return NextResponse.json({ villa: 'Engin skrá' }, { status: 400 })
 
-    // Fetch audio from Vercel Blob
-    const blobRes = await fetch(blobUrl)
+    // Fetch audio from Vercel Blob (private store needs auth)
+    const blobRes = await fetch(blobUrl, {
+      headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
+    })
     if (!blobRes.ok) {
       return NextResponse.json({ villa: 'Tókst ekki að sækja skrá úr geymslu' }, { status: 500 })
     }
