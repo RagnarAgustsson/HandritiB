@@ -87,7 +87,7 @@ export default function HlaðaUppClient() {
 
       // 2. Upload directly to Vercel Blob (no webhook callback needed)
       const blob = await put(blobPath, skrá, {
-        access: 'public',
+        access: 'private',
         token: clientToken,
         multipart: false,
         onUploadProgress: (e) => {
