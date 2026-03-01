@@ -10,6 +10,7 @@ import { recordUsage } from '@/lib/db/usage'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export const maxDuration = 300
+export const config = { api: { bodyParser: { sizeLimit: '25mb' } } }
 
 // OpenAI Whisper/gpt-4o-transcribe accepts up to 25MB per file
 const MAX_BYTES = 24 * 1024 * 1024
