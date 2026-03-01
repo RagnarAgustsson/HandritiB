@@ -49,23 +49,31 @@ export default function AskriftClient() {
       .catch(() => setLoading(false))
   }, [])
 
+  const [checkoutError, setCheckoutError] = useState('')
+
   async function openCheckout() {
-    const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID
-    if (!priceId || !user) return
+    setCheckoutError('')
+    try {
+      const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID
+      if (!priceId) { setCheckoutError('Verð vantar (NEXT_PUBLIC_PADDLE_PRICE_ID)'); return }
+      if (!user) { setCheckoutError('Notandi ekki hlaðinn'); return }
 
-    const paddle = await getPaddle()
-    if (!paddle) return
+      const paddle = await getPaddle()
+      if (!paddle) { setCheckoutError('Paddle.js hleðst ekki — athugaðu client token'); return }
 
-    paddle.Checkout.open({
-      items: [{ priceId, quantity: 1 }],
-      customData: { userId: user.id },
-      customer: { email: user.emailAddresses[0]?.emailAddress || '' },
-      settings: {
-        theme: 'dark',
-        displayMode: 'overlay',
-        successUrl: `${window.location.origin}/askrift?success=true`,
-      },
-    })
+      paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customData: { userId: user.id },
+        customer: { email: user.emailAddresses[0]?.emailAddress || '' },
+        settings: {
+          theme: 'dark',
+          displayMode: 'overlay',
+          successUrl: `${window.location.origin}/askrift?success=true`,
+        },
+      })
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : 'Óþekkt villa við checkout')
+    }
   }
 
   if (loading) {
@@ -174,6 +182,12 @@ export default function AskriftClient() {
           )}
 
           {/* Aðgerðir */}
+          {checkoutError && (
+            <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-400">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {checkoutError}
+            </div>
+          )}
           <div className="flex flex-col gap-3 pt-2">
             {(sub.status === 'trialing' || sub.status === 'canceled' || !sub.paddleSubscriptionId) && (
               <button
