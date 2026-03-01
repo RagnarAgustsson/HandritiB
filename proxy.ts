@@ -5,6 +5,9 @@ const isPublicRoute = createRouteMatcher([
   '/innskraning(.*)',
   '/nyskraning(.*)',
   '/api/webhooks(.*)',
+  '/skilmalar',
+  '/personuvernd',
+  '/verdskra',
 ])
 
 export default clerkMiddleware(async (auth, request) => {
