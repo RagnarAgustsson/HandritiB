@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { Loader2, CreditCard, Clock, Zap, CheckCircle, AlertCircle } from 'lucide-react'
 import { getPaddle } from '@/app/components/PaddleLoader'
+import type { Paddle } from '@paddle/paddle-js'
 
 interface SubscriptionData {
   status: string
@@ -41,39 +42,38 @@ export default function AskriftClient() {
   const { user } = useUser()
   const [data, setData] = useState<AskriftResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [checkoutError, setCheckoutError] = useState('')
+  const paddleRef = useRef<Paddle | null>(null)
 
   useEffect(() => {
     fetch('/api/askrift')
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false) })
       .catch(() => setLoading(false))
+
+    // Pre-load Paddle so it's ready on click (avoids popup blocker)
+    getPaddle().then(p => { if (p) paddleRef.current = p })
   }, [])
 
-  const [checkoutError, setCheckoutError] = useState('')
-
-  async function openCheckout() {
+  function openCheckout() {
     setCheckoutError('')
-    try {
-      const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID
-      if (!priceId) { setCheckoutError('Verð vantar (NEXT_PUBLIC_PADDLE_PRICE_ID)'); return }
-      if (!user) { setCheckoutError('Notandi ekki hlaðinn'); return }
+    const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID
+    if (!priceId) { setCheckoutError('Verð vantar (NEXT_PUBLIC_PADDLE_PRICE_ID)'); return }
+    if (!user) { setCheckoutError('Notandi ekki hlaðinn'); return }
 
-      const paddle = await getPaddle()
-      if (!paddle) { setCheckoutError('Paddle.js hleðst ekki — athugaðu client token'); return }
+    const paddle = paddleRef.current
+    if (!paddle) { setCheckoutError('Paddle.js hleðst ekki — athugaðu client token'); return }
 
-      paddle.Checkout.open({
-        items: [{ priceId, quantity: 1 }],
-        customData: { userId: user.id },
-        customer: { email: user.emailAddresses[0]?.emailAddress || '' },
-        settings: {
-          theme: 'dark',
-          displayMode: 'overlay',
-          successUrl: `${window.location.origin}/askrift?success=true`,
-        },
-      })
-    } catch (err) {
-      setCheckoutError(err instanceof Error ? err.message : 'Óþekkt villa við checkout')
-    }
+    paddle.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      customData: { userId: user.id },
+      customer: { email: user.emailAddresses[0]?.emailAddress || '' },
+      settings: {
+        theme: 'dark',
+        displayMode: 'overlay',
+        successUrl: `${window.location.origin}/askrift?success=true`,
+      },
+    })
   }
 
   if (loading) {
