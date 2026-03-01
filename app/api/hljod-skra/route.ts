@@ -38,11 +38,14 @@ export async function POST(request: NextRequest) {
     if (!blobUrl) return NextResponse.json({ villa: 'Engin skrá' }, { status: 400 })
 
     // Fetch audio from Vercel Blob (private store needs auth)
+    const blobToken = process.env.BLOB_READ_WRITE_TOKEN
     const blobRes = await fetch(blobUrl, {
-      headers: { Authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` },
+      headers: { Authorization: `Bearer ${blobToken}` },
     })
     if (!blobRes.ok) {
-      return NextResponse.json({ villa: 'Tókst ekki að sækja skrá úr geymslu' }, { status: 500 })
+      return NextResponse.json({
+        villa: `Tókst ekki að sækja skrá úr geymslu (${blobRes.status}${blobToken ? '' : ' — BLOB_READ_WRITE_TOKEN vantar'})`,
+      }, { status: 500 })
     }
 
     const session = await createSession({
