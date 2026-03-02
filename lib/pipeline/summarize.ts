@@ -35,6 +35,7 @@ export async function generateNotes(
 
   const response = await openai.chat.completions.create({
     model: CHAT_MODEL,
+    store: false,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },
@@ -68,6 +69,7 @@ export async function generateFinalSummary(
 
   const response = await openai.chat.completions.create({
     model: CHAT_MODEL,
+    store: false,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userMessage },

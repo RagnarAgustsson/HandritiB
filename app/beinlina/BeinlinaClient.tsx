@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Zap, Square, Loader2, AlertCircle, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import EphemeralResults from '../components/EphemeralResults'
 
 type Staða = 'biðröð' | 'tengist' | 'í-gangi' | 'vistar' | 'lokið' | 'villa'
 type Message = { type: 'user' | 'handriti'; text: string }
@@ -13,6 +14,8 @@ export default function BeinlinaClient() {
   const [messages, setMessages] = useState<Message[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [summary, setSummary] = useState('')
+  const [tímabundið, setTímabundið] = useState(false)
+  const [ephResult, setEphResult] = useState<{ transcript: string; yfirferd: string; samantekt: string } | null>(null)
 
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const dcRef = useRef<RTCDataChannel | null>(null)
@@ -115,12 +118,16 @@ export default function BeinlinaClient() {
     const res = await fetch('/api/beinlina-vista', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript: fullTranscript, profile: 'fundur', durationSeconds: elapsed }),
+      body: JSON.stringify({ transcript: fullTranscript, profile: 'fundur', durationSeconds: elapsed, ephemeral: tímabundið }),
     })
     const data = await res.json()
     if (res.ok) {
-      setSessionId(data.sessionId)
-      setSummary(data.finalSummary || '')
+      if (data.ephemeral) {
+        setEphResult({ transcript: data.transcript, yfirferd: data.yfirferd, samantekt: data.samantekt })
+      } else {
+        setSessionId(data.sessionId)
+        setSummary(data.finalSummary || '')
+      }
       setStaða('lokið')
     } else {
       setVilla(data.villa || 'Villa við vistun')
@@ -163,6 +170,19 @@ export default function BeinlinaClient() {
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 {villa}
               </div>
+            )}
+
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={tímabundið}
+                onChange={e => setTímabundið(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-zinc-400">Tímabundin lota — niðurstöður vistast ekki</span>
+            </label>
+            {tímabundið && (
+              <p className="text-xs text-amber-400/70 ml-7">Niðurstöður vistast ekki í kerfinu en eru sendar í tölvupósti.</p>
             )}
 
             <button
@@ -242,7 +262,11 @@ export default function BeinlinaClient() {
           </div>
         )}
 
-        {staða === 'lokið' && (
+        {staða === 'lokið' && ephResult && (
+          <EphemeralResults transcript={ephResult.transcript} yfirferd={ephResult.yfirferd} samantekt={ephResult.samantekt} />
+        )}
+
+        {staða === 'lokið' && !ephResult && (
           <div className="space-y-6">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-zinc-600 mb-3">Samantekt</div>

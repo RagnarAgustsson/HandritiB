@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Copy, Check, ArrowLeft, Pencil } from 'lucide-react'
+import { Copy, Check, ArrowLeft, Pencil, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import type { Session, Chunk, Note } from '@/lib/db/schema'
 
 interface Props {
@@ -26,14 +27,23 @@ function CopyButton({ text }: { text: string }) {
 }
 
 const profileNöfn: Record<string, string> = {
-  fundur: 'Fundur', fyrirlestur: 'Fyrirlestur', viðtal: 'Viðtal', frjálst: 'Frjálst',
+  fundur: 'Fundur', fyrirlestur: 'Fyrirlestur', viðtal: 'Viðtal', frjálst: 'Frjálst', stjórnarfundur: 'Stjórnarfundur',
 }
 
 export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
+  const router = useRouter()
   const [flipi, setFlipi] = useState<'yfirferd' | 'uppskrift' | 'samantekt'>('yfirferd')
   const [nafn, setNafn] = useState(session.name)
   const [endurnefna, setEndurnefna] = useState(false)
   const [nýttNafn, setNýttNafn] = useState(session.name)
+  const [erAðEyða, setErAðEyða] = useState(false)
+
+  async function eyðaLotu() {
+    if (!confirm('Ertu viss? Þetta eyðir lotu, uppskrift, yfirferð og samantekt varanlega.')) return
+    setErAðEyða(true)
+    await fetch(`/api/lotur?sessionId=${session.id}`, { method: 'DELETE' })
+    router.push('/lotur')
+  }
 
   async function vistaEndurnefna() {
     if (!nýttNafn.trim()) return
@@ -78,6 +88,14 @@ export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
                 className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-zinc-800 text-zinc-500 transition"
               >
                 <Pencil className="h-4 w-4" />
+              </button>
+              <button
+                onClick={eyðaLotu}
+                disabled={erAðEyða}
+                className="opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition"
+                title="Eyða lotu"
+              >
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           )}

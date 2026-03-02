@@ -45,3 +45,8 @@ export async function getSessionNotes(sessionId: string) {
 export async function getSessionChunks(sessionId: string) {
   return db.select().from(chunks).where(eq(chunks.sessionId, sessionId)).orderBy(chunks.seq)
 }
+
+export async function deleteSession(id: string) {
+  const [deleted] = await db.delete(sessions).where(eq(sessions.id, id)).returning()
+  return deleted
+}

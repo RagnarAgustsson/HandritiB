@@ -1,6 +1,6 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { createSession, getUserSessions, updateSession, getSessionNotes } from '@/lib/db/sessions'
+import { createSession, getUserSessions, updateSession, getSessionNotes, getSession, deleteSession } from '@/lib/db/sessions'
 import { generateFinalSummary } from '@/lib/pipeline/summarize'
 import { getSessionChunks } from '@/lib/db/sessions'
 import { logAction } from '@/lib/db/admin'
@@ -78,4 +78,26 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json({ villa: 'Óþekkt aðgerð' }, { status: 400 })
+}
+
+export async function DELETE(request: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
+
+  const { searchParams } = new URL(request.url)
+  const sessionId = searchParams.get('sessionId')
+  if (!sessionId) return NextResponse.json({ villa: 'Vantar sessionId' }, { status: 400 })
+
+  const session = await getSession(sessionId)
+  if (!session || session.userId !== userId) {
+    return NextResponse.json({ villa: 'Lota finnst ekki' }, { status: 404 })
+  }
+
+  await deleteSession(sessionId)
+
+  const user = await currentUser()
+  const email = user?.emailAddresses[0]?.emailAddress || ''
+  await logAction(userId, email, 'lota.eyda', `Lota ${sessionId}`)
+
+  return NextResponse.json({ ok: true })
 }

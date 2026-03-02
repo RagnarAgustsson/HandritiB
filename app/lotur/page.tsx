@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getUserSessions } from '@/lib/db/sessions'
 import { Mic, ChevronRight } from 'lucide-react'
+import EyðaHnappur from './EyðaHnappur'
 
 const profileNöfn: Record<string, string> = {
   fundur: 'Fundur',
@@ -40,11 +41,8 @@ export default async function LoturPage() {
         ) : (
           <div className="space-y-2">
             {lotur.map(lot => (
-              <Link
-                key={lot.id}
-                href={`/lotur/${lot.id}`}
-                className="flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 hover:border-zinc-700 hover:bg-zinc-800/80 transition"
-              >
+              <div key={lot.id} className="group relative flex items-center gap-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4 hover:border-zinc-700 hover:bg-zinc-800/80 transition">
+                <Link href={`/lotur/${lot.id}`} className="absolute inset-0 z-0" />
                 <div className="shrink-0 text-zinc-600">
                   <Mic className="h-5 w-5" />
                 </div>
@@ -54,7 +52,8 @@ export default async function LoturPage() {
                     {profileNöfn[lot.profile]} · {new Date(lot.createdAt).toLocaleDateString('is-IS')}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="relative z-10 flex items-center gap-2">
+                  <EyðaHnappur sessionId={lot.id} />
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     lot.status === 'lokið' ? 'bg-emerald-500/10 text-emerald-400' :
                     lot.status === 'virkt' ? 'bg-indigo-500/10 text-indigo-400' :
@@ -64,7 +63,7 @@ export default async function LoturPage() {
                   </span>
                   <ChevronRight className="h-4 w-4 text-zinc-700" />
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

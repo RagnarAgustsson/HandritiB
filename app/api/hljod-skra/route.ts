@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
   const nafn = (body.nafn as string) || ''
   const clientDuration = parseInt((body.lengd as string) || '0')
   const fileSize = parseInt((body.fileSize as string) || '0')
+  const ephemeral = body.ephemeral === true
 
   if (!blobUrl) return NextResponse.json({ villa: 'Engin skrá' }, { status: 400 })
 
@@ -63,13 +64,17 @@ export async function POST(request: NextRequest) {
           return
         }
 
-        // 2. Create session
-        const session = await createSession({
-          userId,
-          name: nafn || filename.replace(/\.[^/.]+$/, '') || 'Upphlöðun',
-          profile,
-          status: 'virkt',
-        })
+        // 2. Create session (skip for ephemeral)
+        let sessionId: string | null = null
+        if (!ephemeral) {
+          const session = await createSession({
+            userId,
+            name: nafn || filename.replace(/\.[^/.]+$/, '') || 'Upphlöðun',
+            profile,
+            status: 'virkt',
+          })
+          sessionId = session.id
+        }
 
         // 3. Transcribe
         send({ step: 'Þýði hljóðskrá...', progress: 25 })
@@ -82,7 +87,7 @@ export async function POST(request: NextRequest) {
         del(blobUrl).catch(() => {})
 
         if (!transcript) {
-          await updateSession(session.id, { status: 'villa' })
+          if (sessionId) await updateSession(sessionId, { status: 'villa' })
           send({ step: 'villa', villa: 'Tókst ekki að þýða hljóðið' })
           controller.close()
           return
@@ -92,31 +97,42 @@ export async function POST(request: NextRequest) {
           ? clientDuration
           : Math.round((transcript.split(/\s+/).length / WORDS_PER_MINUTE) * 60)
 
-        const chunk = await createChunk({ sessionId: session.id, seq: 0, transcript, durationSeconds })
+        if (!ephemeral && sessionId) {
+          await createChunk({ sessionId, seq: 0, transcript, durationSeconds })
+        }
 
         // 4. Generate notes (yfirferð)
         send({ step: 'Bý til yfirferð...', progress: 55 })
-        const { notes, rollingSummary } = await generateNotes(transcript, profile, [])
-        await createNote({ sessionId: session.id, chunkId: chunk.id, content: notes, rollingSummary })
+        const { notes } = await generateNotes(transcript, profile, [])
+        if (!ephemeral && sessionId) {
+          await createNote({ sessionId, content: notes })
+        }
 
         // 5. Generate final summary
         send({ step: 'Tek saman...', progress: 75 })
         const finalSummary = await generateFinalSummary([transcript], profile)
-        await updateSession(session.id, { status: 'lokið', finalSummary, totalSeconds: durationSeconds })
+        if (!ephemeral && sessionId) {
+          await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds: durationSeconds })
+        }
 
         // 6. Usage, logging, email
         send({ step: 'Geng frá...', progress: 90 })
         const periodStart = access.subscription?.currentPeriodStart || new Date()
-        await recordUsage({ userId, sessionId: session.id, seconds: durationSeconds, source: 'hljod-skra', periodStart })
+        await recordUsage({ userId, sessionId, seconds: durationSeconds, source: 'hljod-skra', periodStart })
 
         const user = await currentUser()
         const email = user?.emailAddresses[0]?.emailAddress || ''
         const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
-        await logAction(userId, email, 'skra.hlada', `${filename} (${sizeLabel})`)
+        await logAction(userId, email, 'skra.hlada', `${filename} (${sizeLabel})${ephemeral ? ' [tímabundið]' : ''}`)
         if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary, notes).catch(() => {})
 
         // Done
-        send({ step: 'lokið', progress: 100, sessionId: session.id })
+        send({
+          step: 'lokið',
+          progress: 100,
+          sessionId,
+          ...(ephemeral && { ephemeral: true, transcript, yfirferd: notes, samantekt: finalSummary }),
+        })
         controller.close()
       } catch (error) {
         // Clean up blob on error

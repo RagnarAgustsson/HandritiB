@@ -4,12 +4,14 @@ import { createChunk, createNote, getSessionChunks, updateSession } from '@/lib/
 import type { PromptProfile } from './prompts'
 
 interface ProcessChunkInput {
-  sessionId: string
+  sessionId: string | null
   seq: number
   audioBlob: Blob
   profile: PromptProfile
   durationSeconds?: number
   filename?: string
+  ephemeral?: boolean
+  previousTranscripts?: string[]
 }
 
 interface ProcessChunkResult {
@@ -20,33 +22,37 @@ interface ProcessChunkResult {
 }
 
 export async function processChunk(input: ProcessChunkInput): Promise<ProcessChunkResult> {
-  const { sessionId, seq, audioBlob, profile, durationSeconds = 0, filename } = input
+  const { sessionId, seq, audioBlob, profile, durationSeconds = 0, filename, ephemeral = false, previousTranscripts: suppliedContext } = input
 
   // 1. Transcribe
   const transcript = await transcribeAudio(audioBlob, filename)
   if (!transcript) return { transcript: '', notes: '', rollingSummary: '', chunkId: '' }
 
-  // 2. Save chunk
-  const chunk = await createChunk({ sessionId, seq, transcript, durationSeconds })
+  let chunkId = ''
+  let previousTranscripts: string[]
 
-  // 3. Get previous transcripts for context
-  const previousChunks = await getSessionChunks(sessionId)
-  const previousTranscripts = previousChunks
-    .filter(c => c.id !== chunk.id)
-    .map(c => c.transcript)
+  if (ephemeral || !sessionId) {
+    previousTranscripts = suppliedContext || []
+  } else {
+    const chunk = await createChunk({ sessionId, seq, transcript, durationSeconds })
+    chunkId = chunk.id
 
-  // 4. Generate notes
+    const previousChunks = await getSessionChunks(sessionId)
+    previousTranscripts = previousChunks
+      .filter(c => c.id !== chunkId)
+      .map(c => c.transcript)
+  }
+
+  // Generate notes
   const { notes, rollingSummary } = await generateNotes(transcript, profile, previousTranscripts)
 
-  // 5. Save note
-  await createNote({ sessionId, chunkId: chunk.id, content: notes, rollingSummary })
+  if (!ephemeral && sessionId) {
+    await createNote({ sessionId, chunkId: chunkId || undefined, content: notes, rollingSummary })
 
-  // 6. Update session total time
-  const totalSeconds = previousChunks.reduce((sum, c) => sum + c.durationSeconds, 0) + durationSeconds
-  await updateSession(sessionId, {
-    totalSeconds,
-    updatedAt: new Date(),
-  })
+    const allChunks = await getSessionChunks(sessionId)
+    const totalSeconds = allChunks.reduce((sum, c) => sum + c.durationSeconds, 0)
+    await updateSession(sessionId, { totalSeconds, updatedAt: new Date() })
+  }
 
-  return { transcript, notes, rollingSummary, chunkId: chunk.id }
+  return { transcript, notes, rollingSummary, chunkId }
 }

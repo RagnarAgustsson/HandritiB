@@ -5,7 +5,7 @@ import { getSubscription, createTrialSubscription } from './subscriptions'
 
 export async function recordUsage(params: {
   userId: string
-  sessionId: string
+  sessionId: string | null
   seconds: number
   source: string
   periodStart: Date

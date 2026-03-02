@@ -21,14 +21,27 @@ export async function POST(request: NextRequest) {
   const hljod = formData.get('hljod') as File | null
   const sessionId = formData.get('sessionId') as string | null
   const seq = parseInt(formData.get('seq') as string || '0')
+  const ephemeral = formData.get('ephemeral') === 'true'
+  const profile = (formData.get('profile') as PromptProfile) || 'fundur'
 
-  if (!hljod || !sessionId) {
+  if (!hljod || (!ephemeral && !sessionId)) {
     return NextResponse.json({ villa: 'Vantar hljóð eða lotunúmer' }, { status: 400 })
   }
 
-  const session = await getSession(sessionId)
-  if (!session || session.userId !== userId) {
-    return NextResponse.json({ villa: 'Lota finnst ekki' }, { status: 404 })
+  let sessionProfile: PromptProfile = profile
+  if (!ephemeral && sessionId) {
+    const session = await getSession(sessionId)
+    if (!session || session.userId !== userId) {
+      return NextResponse.json({ villa: 'Lota finnst ekki' }, { status: 404 })
+    }
+    sessionProfile = session.profile as PromptProfile
+  }
+
+  // Parse previous transcripts for ephemeral context
+  let previousTranscripts: string[] | undefined
+  const prevJson = formData.get('previousTranscripts') as string | null
+  if (ephemeral && prevJson) {
+    try { previousTranscripts = JSON.parse(prevJson) } catch { /* */ }
   }
 
   const audioBlob = new Blob([await hljod.arrayBuffer()], { type: hljod.type || 'audio/webm' })
@@ -36,18 +49,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await processChunk({
-      sessionId,
+      sessionId: ephemeral ? null : sessionId,
       seq,
       audioBlob,
-      profile: session.profile as PromptProfile,
+      profile: sessionProfile,
       durationSeconds,
       filename: hljod.name,
+      ephemeral,
+      previousTranscripts,
     })
 
     // Skrá notkun
     if (durationSeconds > 0) {
       const periodStart = access.subscription?.currentPeriodStart || new Date()
-      await recordUsage({ userId, sessionId, seconds: durationSeconds, source: 'hljod-hluti', periodStart })
+      await recordUsage({ userId, sessionId: ephemeral ? null : sessionId, seconds: durationSeconds, source: 'hljod-hluti', periodStart })
     }
 
     return NextResponse.json(result)

@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { put } from '@vercel/blob/client'
 import { Upload, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import EphemeralResults from '../components/EphemeralResults'
 
 type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst' | 'stjórnarfundur'
 type Staða = 'biðröð' | 'hleður' | 'vinnur' | 'lokið' | 'villa'
@@ -29,6 +30,8 @@ export default function HlaðaUppClient() {
   const [lengd, setLengd] = useState(0)
   const [framvinda, setFramvinda] = useState(0)
   const [skref, setSkref] = useState('')
+  const [tímabundið, setTímabundið] = useState(false)
+  const [ephResult, setEphResult] = useState<{ transcript: string; yfirferd: string; samantekt: string } | null>(null)
   const maxPctRef = useRef(0)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -116,6 +119,7 @@ export default function HlaðaUppClient() {
           nafn: nafn || skrá.name.replace(/\.[^/.]+$/, ''),
           lengd: lengd > 0 ? String(lengd) : '0',
           fileSize: String(skrá.size),
+          ephemeral: tímabundið,
         }),
       })
 
@@ -147,6 +151,9 @@ export default function HlaðaUppClient() {
             if (data.step === 'villa') throw new Error(data.villa)
             if (data.step === 'lokið') {
               sessionId = data.sessionId
+              if (data.ephemeral) {
+                setEphResult({ transcript: data.transcript, yfirferd: data.yfirferd, samantekt: data.samantekt })
+              }
             } else {
               setSkref(data.step)
               setFramvinda(data.progress)
@@ -157,10 +164,12 @@ export default function HlaðaUppClient() {
         }
       }
 
-      if (!sessionId) throw new Error('Vinnsla skilaði ekki lotu')
+      if (!tímabundið && !sessionId) throw new Error('Vinnsla skilaði ekki lotu')
 
       setStaða('lokið')
-      setTimeout(() => router.push(`/lotur/${sessionId}`), 1000)
+      if (!tímabundið && sessionId) {
+        setTimeout(() => router.push(`/lotur/${sessionId}`), 1000)
+      }
     } catch (err) {
       setVilla(err instanceof Error ? err.message : 'Tenging mistókst. Reyndu aftur.')
       setStaða('villa')
@@ -226,6 +235,19 @@ export default function HlaðaUppClient() {
               </div>
             </div>
 
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={tímabundið}
+                onChange={e => setTímabundið(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-zinc-400">Tímabundin lota — niðurstöður vistast ekki</span>
+            </label>
+            {tímabundið && (
+              <p className="text-xs text-amber-400/70 ml-7">Niðurstöður vistast ekki í kerfinu en eru sendar í tölvupósti.</p>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">Nafn (valfrjálst)</label>
               <input
@@ -279,6 +301,8 @@ export default function HlaðaUppClient() {
             </div>
             <p className="text-sm text-zinc-500 mt-2">Loka ekki þessum glugga</p>
           </div>
+        ) : ephResult ? (
+          <EphemeralResults transcript={ephResult.transcript} yfirferd={ephResult.yfirferd} samantekt={ephResult.samantekt} />
         ) : (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <CheckCircle className="h-8 w-8 text-emerald-400" />

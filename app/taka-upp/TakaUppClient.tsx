@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Mic, Square, Loader2, AlertCircle } from 'lucide-react'
+import { Mic, Square, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import EphemeralResults from '../components/EphemeralResults'
 
 type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst' | 'stjórnarfundur'
-type Staða = 'biðröð' | 'taka-upp' | 'hleður' | 'villa'
+type Staða = 'biðröð' | 'taka-upp' | 'hleður' | 'lokið' | 'villa'
 
 const HLUTI_TIMI_MS = 20_000 // 20 sek per hluta
 const CHUNK_TYPE = 'audio/webm;codecs=opus'
@@ -27,35 +28,47 @@ export default function TakaUppClient() {
   const [samantekt, setSamantekt] = useState('')
   const [villa, setVilla] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [tímabundið, setTímabundið] = useState(false)
+  const [ephResult, setEphResult] = useState<{ transcript: string; yfirferd: string; samantekt: string } | null>(null)
 
   const recorderRef = useRef<MediaRecorder | null>(null)
   const seqRef = useRef(0)
   const eventSourceRef = useRef<EventSource | null>(null)
   const chunksRef = useRef<Blob[]>([])
+  const ephTranscriptsRef = useRef<string[]>([])
+  const ephNotesRef = useRef<string[]>([])
 
   async function byrjaUpptöku() {
     setVilla('')
     setGlósur([])
     setSamantekt('')
+    setEphResult(null)
     seqRef.current = 0
+    ephTranscriptsRef.current = []
+    ephNotesRef.current = []
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    const res = await fetch('/api/lotur', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nafn: nafn || `${profileNöfn[profile]} ${new Date().toLocaleDateString('is-IS')}`, profile }),
-    })
-    const { session } = await res.json()
-    setSessionId(session.id)
 
-    // Start SSE stream
-    const es = new EventSource(`/api/straumur?sessionId=${session.id}`)
-    es.onmessage = (e) => {
-      const data = JSON.parse(e.data)
-      if (data.tegund === 'glosa') setGlósur(prev => [...prev, data.efni])
-      if (data.tegund === 'samantekt') setSamantekt(data.efni)
+    let sid: string | null = null
+    if (!tímabundið) {
+      const res = await fetch('/api/lotur', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nafn: nafn || `${profileNöfn[profile]} ${new Date().toLocaleDateString('is-IS')}`, profile }),
+      })
+      const { session } = await res.json()
+      sid = session.id
+      setSessionId(sid)
+
+      // Start SSE stream
+      const es = new EventSource(`/api/straumur?sessionId=${session.id}`)
+      es.onmessage = (e) => {
+        const data = JSON.parse(e.data)
+        if (data.tegund === 'glosa') setGlósur(prev => [...prev, data.efni])
+        if (data.tegund === 'samantekt') setSamantekt(data.efni)
+      }
+      eventSourceRef.current = es
     }
-    eventSourceRef.current = es
 
     const mimeType = MediaRecorder.isTypeSupported(CHUNK_TYPE) ? CHUNK_TYPE : 'audio/webm'
     const recorder = new MediaRecorder(stream, { mimeType })
@@ -70,7 +83,7 @@ export default function TakaUppClient() {
       if (chunksRef.current.length === 0) return
       const blob = new Blob(chunksRef.current, { type: mimeType })
       chunksRef.current = []
-      await sendHluti(blob, session.id, seqRef.current++)
+      await sendHluti(blob, sid, seqRef.current++)
     }
 
     recorder.start()
@@ -91,15 +104,29 @@ export default function TakaUppClient() {
     ;(recorder as any)._interval = interval
   }
 
-  async function sendHluti(blob: Blob, sid: string, seq: number) {
+  async function sendHluti(blob: Blob, sid: string | null, seq: number) {
     const fd = new FormData()
     fd.append('hljod', blob, 'hluti.webm')
-    fd.append('sessionId', sid)
+    if (sid) fd.append('sessionId', sid)
     fd.append('seq', String(seq))
     fd.append('seconds', String(HLUTI_TIMI_MS / 1000))
 
+    if (tímabundið) {
+      fd.append('ephemeral', 'true')
+      fd.append('profile', profile)
+      fd.append('previousTranscripts', JSON.stringify(ephTranscriptsRef.current))
+    }
+
     try {
-      await fetch('/api/hljod-hluti', { method: 'POST', body: fd })
+      const res = await fetch('/api/hljod-hluti', { method: 'POST', body: fd })
+      if (tímabundið && res.ok) {
+        const data = await res.json()
+        if (data.transcript) {
+          ephTranscriptsRef.current.push(data.transcript)
+          ephNotesRef.current.push(data.notes || '')
+          setGlósur(prev => [...prev, data.notes || data.transcript])
+        }
+      }
     } catch {
       setVilla('Villa við sendingu hljóðs. Reyni aftur...')
     }
@@ -115,7 +142,40 @@ export default function TakaUppClient() {
     }
     eventSourceRef.current?.close()
 
-    if (sessionId) {
+    // Wait briefly for last chunk to finish processing
+    await new Promise(r => setTimeout(r, 500))
+
+    if (tímabundið) {
+      const combinedTranscript = ephTranscriptsRef.current.join('\n\n')
+      if (!combinedTranscript) {
+        setStaða('biðröð')
+        return
+      }
+      try {
+        const res = await fetch('/api/beinlina-vista', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transcript: combinedTranscript,
+            profile,
+            nafn: nafn || `${profileNöfn[profile]} ${new Date().toLocaleDateString('is-IS')}`,
+            durationSeconds: ephTranscriptsRef.current.length * (HLUTI_TIMI_MS / 1000),
+            ephemeral: true,
+          }),
+        })
+        const data = await res.json()
+        if (res.ok && data.ephemeral) {
+          setEphResult({ transcript: data.transcript, yfirferd: data.yfirferd, samantekt: data.samantekt })
+          setStaða('lokið')
+        } else {
+          setVilla(data.villa || 'Villa við samantekt')
+          setStaða('villa')
+        }
+      } catch {
+        setVilla('Tenging mistókst')
+        setStaða('villa')
+      }
+    } else if (sessionId) {
       await fetch('/api/lotur', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -168,6 +228,19 @@ export default function TakaUppClient() {
                 className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={tímabundið}
+                onChange={e => setTímabundið(e.target.checked)}
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-zinc-400">Tímabundin lota — niðurstöður vistast ekki</span>
+            </label>
+            {tímabundið && (
+              <p className="text-xs text-amber-400/70 ml-7">Niðurstöður vistast ekki í kerfinu en eru sendar í tölvupósti.</p>
+            )}
 
             <button
               onClick={byrjaUpptöku}
@@ -243,8 +316,12 @@ export default function TakaUppClient() {
         {staða === 'hleður' && (
           <div className="flex items-center gap-3 text-zinc-400">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Gengur úr skugga um lokasamantekt...</span>
+            <span>{tímabundið ? 'Bý til samantekt...' : 'Gengur úr skugga um lokasamantekt...'}</span>
           </div>
+        )}
+
+        {staða === 'lokið' && ephResult && (
+          <EphemeralResults transcript={ephResult.transcript} yfirferd={ephResult.yfirferd} samantekt={ephResult.samantekt} />
         )}
       </div>
     </div>
