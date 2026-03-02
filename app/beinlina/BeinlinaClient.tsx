@@ -145,15 +145,15 @@ export default function BeinlinaClient() {
         {(staða === 'biðröð' || staða === 'villa') && (
           <div className="space-y-6">
             <p className="text-zinc-500 text-sm">
-              Handriti hlustir í þögn og skráir samtalið. Hér er hvernig þú talar við það:
+              Handriti hlustir í þögn og skráir samtalið. Segðu <strong className="text-zinc-300">"Halló Handriti"</strong> til að tala við það:
             </p>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4 space-y-3">
               <div className="flex items-start gap-3">
                 <span className="text-indigo-400 font-mono text-sm shrink-0 mt-0.5">→</span>
                 <div>
-                  <p className="text-sm font-medium text-zinc-200">"Hvað segir þú um X, Handriti?"</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">Handriti svarar spurningunni með öllu samhengi samtalsins í huga</p>
+                  <p className="text-sm font-medium text-zinc-200">"Halló Handriti, hvað segir þú um X?"</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">Handriti svarar spurningunni með samhengi samtalsins í huga</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -231,8 +231,8 @@ export default function BeinlinaClient() {
             </div>
 
             <div className="flex gap-4 text-xs text-zinc-600 flex-wrap">
-              <span><span className="text-zinc-500">"Hvað segir þú um X, Handriti?"</span> — spyrja</span>
-              <span><span className="text-zinc-500">"Takk Handriti"</span> — halda áfram</span>
+              <span><span className="text-zinc-500">"Halló Handriti, ...?"</span> — spyrja</span>
+              <span><span className="text-zinc-500">"Takk Handriti"</span> — þegja</span>
             </div>
 
             <div className="space-y-3 min-h-32">
