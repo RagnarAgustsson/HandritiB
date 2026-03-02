@@ -1,6 +1,6 @@
 import { pgTable, text, integer, timestamp, pgEnum } from 'drizzle-orm/pg-core'
 
-export const profileEnum = pgEnum('profile', ['fundur', 'fyrirlestur', 'viðtal', 'frjálst'])
+export const profileEnum = pgEnum('profile', ['fundur', 'fyrirlestur', 'viðtal', 'frjálst', 'stjórnarfundur'])
 export const statusEnum = pgEnum('status', ['virkt', 'lokið', 'villa'])
 
 export const sessions = pgTable('sessions', {
