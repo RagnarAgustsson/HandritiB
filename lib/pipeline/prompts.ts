@@ -24,7 +24,7 @@ Ef eitthvað er óskýrt, haltu þig við það sem hægt er að lesa úr textan
 
 // ── Snið (profile) ─────────────────────────────────────────────────
 
-export type PromptProfile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst'
+export type PromptProfile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst' | 'stjórnarfundur'
 
 const profileContext: Record<PromptProfile, string> = {
   fundur: `
@@ -75,6 +75,34 @@ Dragðu fram:
 3. Niðurstöður eða næstu skref ef þau koma fram
 
 Skrifaðu á skipulegan, læsilegan og hnitmiðaðan hátt.
+`.trim(),
+
+  stjórnarfundur: `
+Þetta er formleg stjórnarfundargerð (fundargerð stjórnar félags).
+
+Stjórnarfundargerð er lagalegt skjal samkvæmt lögum um einkahlutafélög nr. 138/1994 (46. gr.) og lögum um hlutafélög nr. 2/1995 (70. gr.).
+Hún þarf að vera nákvæm, hlutlæg og ítarleg.
+
+Forgangsraðaðu eftirfarandi:
+1. Grunnupplýsingar fundar: dagsetning, tímasetning, fundarstaður, fundarnúmer ef nefnt
+2. Viðstaddir stjórnarmenn og hverjir forföllust
+3. Fundarstjóri og fundarritari ef nefndir
+4. Gestir eða starfsmenn sem sitja fundinn ef nefndir
+5. Dagskráratriði í þeirri röð sem þau komu fyrir
+6. Ítarleg lýsing á umræðum undir hverju dagskráratriði
+7. Ákvarðanir sem teknar voru — orðaðar nákvæmlega eins og þær komu fram
+8. Niðurstaða atkvæðagreiðslu ef hún fór fram, og hverjir greiddu atkvæði með eða á móti
+9. Sérálit eða bókanir stjórnarmanna eða framkvæmdastjóra sem eru ósammála ákvörðun
+10. Tilgreining ef stjórnarmaður vék af fundi vegna hagsmunaárekstra og undir hvaða dagskrárliði
+11. Gögn sem lögð voru fram undir einstökum dagskrárliðum
+12. Óleyst mál eða opnar spurningar sem vísað er til næsta fundar
+13. Aðgerðarliðir, ábyrgðaraðilar og frestir
+14. Tímasetning fundarloka
+15. Dagsetning næsta fundar ef nefnd
+
+Skrifaðu á formlegu, nákvæmu og hlutlægu máli.
+Sérhver ákvörðun skal orðuð skýrt og ótvírætt.
+Notaðu vandaða og rétta íslensku sem hæfir lagalegu skjali.
 `.trim(),
 }
 
@@ -222,6 +250,36 @@ Ljúktu með eftirfarandi viðauka ef þeir eiga við:
 - Viðmælendur (ef nefndir)
 - Lykilstaðhæfingar eða niðurstöður
 - Atriði sem komu á óvart eða skipta máli
+`.trim()
+
+    case 'stjórnarfundur':
+      return `
+Skipulag stjórnarfundargerðar:
+
+Byrjaðu á formlegum haus sem inniheldur (ef upplýsingarnar koma fram í textanum):
+- Heiti félags
+- Fundarnúmer (raðtala)
+- Dagsetning og tímasetning (byrjun og lok)
+- Fundarstaður
+- Fundarstjóri og fundarritari
+- Viðstaddir stjórnarmenn
+- Forföll og varamenn ef við á
+- Gestir eða starfsmenn sem sitja fundinn
+
+Farðu svo yfir hvert dagskráratriði í þeirri röð sem það kom fyrir:
+- Númeraðu dagskráratriði (1, 2, 3, ...)
+- Undir hverju atriði: lýstu gögnum sem lögð voru fram, umræðum sem áttu sér stað og ákvörðun sem tekin var
+- Orðaðu ákvarðanir nákvæmlega og ótvírætt — þetta er lagalega bindandi skráning
+- Tilgreindu niðurstöðu atkvæðagreiðslu ef hún fór fram (fjöldi með/á móti, nöfn ef nefnd)
+- Tilgreindu ef stjórnarmaður vék af fundi vegna hagsmunaárekstra
+- Skráðu sérálit eða bókanir stjórnarmanna eða framkvæmdastjóra sem eru ósammála
+
+Ljúktu með eftirfarandi viðauka ef þeir eiga við:
+- Samantekt ákvarðana (allar ákvarðanir í stuttu yfirliti)
+- Aðgerðarliðir: verkefni, ábyrgðaraðili og frestur
+- Óleyst mál eða opnar spurningar sem vísað er til næsta fundar
+- Dagsetning og tími næsta stjórnarfundar ef nefnd
+- Tímasetning fundarloka
 `.trim()
 
     case 'frjálst':

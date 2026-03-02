@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Mic, Square, Loader2, AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst'
+type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst' | 'stjórnarfundur'
 type Staða = 'biðröð' | 'taka-upp' | 'hleður' | 'villa'
 
 const HLUTI_TIMI_MS = 20_000 // 20 sek per hluta
@@ -15,6 +15,7 @@ const profileNöfn: Record<Profile, string> = {
   fyrirlestur: 'Fyrirlestur',
   viðtal: 'Viðtal',
   frjálst: 'Frjálst',
+  stjórnarfundur: 'Stjórnarfundur',
 }
 
 export default function TakaUppClient() {

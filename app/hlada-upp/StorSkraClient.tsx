@@ -6,7 +6,7 @@ import { put } from '@vercel/blob/client'
 import { Upload, Loader2, AlertCircle, CheckCircle, FlaskConical } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst'
+type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst' | 'stjórnarfundur'
 type Staða = 'biðröð' | 'klippir' | 'hleður' | 'vinnur' | 'lokið' | 'villa'
 
 const profileNöfn: Record<Profile, string> = {
@@ -14,6 +14,7 @@ const profileNöfn: Record<Profile, string> = {
   fyrirlestur: 'Fyrirlestur',
   viðtal: 'Viðtal',
   frjálst: 'Frjálst',
+  stjórnarfundur: 'Stjórnarfundur',
 }
 
 const LEYFÐAR_ENDINGAR = ['.mp3', '.mp4', '.m4a', '.wav', '.webm', '.ogg', '.flac']

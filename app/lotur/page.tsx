@@ -9,6 +9,7 @@ const profileNöfn: Record<string, string> = {
   fyrirlestur: 'Fyrirlestur',
   viðtal: 'Viðtal',
   frjálst: 'Frjálst',
+  stjórnarfundur: 'Stjórnarfundur',
 }
 
 const statusMerki: Record<string, string> = {
