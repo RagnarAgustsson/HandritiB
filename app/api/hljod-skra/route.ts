@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
         const transcript = await transcribeAudio(audioBlob, filename)
 
         // Clean up blob
-        del(blobUrl).catch(() => {})
+        del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
 
         if (!transcript) {
           if (sessionId) await updateSession(sessionId, { status: 'villa' })
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         controller.close()
       } catch (error) {
         // Clean up blob on error
-        del(blobUrl).catch(() => {})
+        del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
         const message = error instanceof Error ? error.message : 'Óþekkt villa'
         try {
           send({ step: 'villa', villa: message })

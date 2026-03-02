@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       const transcript = await transcribeAudio(audioBlob, filename)
 
       // Clean up blob
-      del(blobUrl).catch(() => {})
+      del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
 
       if (!transcript) {
         return NextResponse.json({ villa: `Tókst ekki að þýða hluta ${seq}` }, { status: 500 })
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ ok: true, transcript, durationSeconds })
     } catch (error) {
-      del(blobUrl).catch(() => {})
+      del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
       const message = error instanceof Error ? error.message : 'Óþekkt villa'
       return NextResponse.json({ villa: message }, { status: 500 })
     }
