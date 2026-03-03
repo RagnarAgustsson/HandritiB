@@ -4,7 +4,7 @@ import { isAdmin, addAdmin, removeAdmin, getAuditLog, getAuditLogCount, getAllAd
 import { getAllSubscriptions } from '@/lib/db/subscriptions'
 import { getAllFreeAccessGrants, grantFreeAccess, revokeFreeAccess } from '@/lib/db/free-access'
 import { getContactMessages } from '@/lib/db/contacts'
-import { getActiveSessions } from '@/lib/db/sessions'
+import { getActiveSessions, closeSession } from '@/lib/db/sessions'
 
 async function requireAdmin() {
   const user = await currentUser()
@@ -97,6 +97,11 @@ export async function POST(request: NextRequest) {
   } else if (action === 'revoke-free') {
     await revokeFreeAccess(targetUserId)
     await logAction(result.userId, result.email, 'admin.uppfaera', `Afturkallaði frítt aðgangsleyfi ${targetEmail}`)
+  } else if (action === 'close-session') {
+    const sessionId = typeof targetUserId === 'string' ? targetUserId : ''
+    if (!sessionId) return NextResponse.json({ villa: 'Lotu-ID vantar' }, { status: 400 })
+    await closeSession(sessionId)
+    await logAction(result.userId, result.email, 'admin.uppfaera', `Lokaði lotu ${sessionId}`)
   }
 
   return NextResponse.json({ ok: true })

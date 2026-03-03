@@ -1,4 +1,4 @@
-import { eq, desc } from 'drizzle-orm'
+import { eq, desc, and, gt } from 'drizzle-orm'
 import { db } from './client'
 import { sessions, chunks, notes, type NewSession } from './schema'
 
@@ -52,5 +52,13 @@ export async function deleteSession(id: string) {
 }
 
 export async function getActiveSessions() {
-  return db.select().from(sessions).where(eq(sessions.status, 'virkt')).orderBy(desc(sessions.createdAt))
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000)
+  return db.select().from(sessions).where(
+    and(eq(sessions.status, 'virkt'), gt(sessions.createdAt, cutoff))
+  ).orderBy(desc(sessions.createdAt))
+}
+
+export async function closeSession(id: string) {
+  const [updated] = await db.update(sessions).set({ status: 'lokið', updatedAt: new Date() }).where(eq(sessions.id, id)).returning()
+  return updated
 }

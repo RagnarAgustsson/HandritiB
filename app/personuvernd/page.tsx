@@ -19,8 +19,8 @@ export default function PersonuverndPage() {
             <p>
               Ábyrgðaraðili fyrir vinnslu persónuupplýsinga er Cognia ehf.
               (netfang:{' '}
-              <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
-                hallo@handriti.is
+              <a href="mailto:handriti@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
+                handriti@gmail.com
               </a>
               ). Hægt er að hafa samband varðandi allar fyrirspurnir sem varða persónuvernd.
             </p>
@@ -127,8 +127,8 @@ export default function PersonuverndPage() {
             </ul>
             <p className="mt-3">
               Til að nýta réttindi þín skaltu senda tölvupóst á{' '}
-              <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
-                hallo@handriti.is
+              <a href="mailto:handriti@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
+                handriti@gmail.com
               </a>
               . Við munum svara beiðni þinni innan 30 daga.
             </p>
@@ -184,8 +184,8 @@ export default function PersonuverndPage() {
               Ef þú hefur spurningar um persónuvernd eða vilt nýta réttindi þín:<br />
               Cognia ehf.<br />
               Netfang:{' '}
-              <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
-                hallo@handriti.is
+              <a href="mailto:handriti@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
+                handriti@gmail.com
               </a>
             </p>
             <ContactForm />

@@ -19,7 +19,7 @@ export default function SkilmalarPage() {
             <p>
               Handriti (hér eftir „þjónustan") er hugbúnaður sem veitir gervigreindarstudda
               hljóðritun og samantekt á íslensku tali. Þjónustan er rekin af Cognia ehf.
-              (netfang: hallo@handriti.is), hér eftir „rekstraraðili".
+              (netfang: handriti@gmail.com), hér eftir „rekstraraðili".
             </p>
             <p className="mt-2">
               Með því að nota þjónustuna samþykkir þú þessa skilmála í heild sinni. Ef þú
@@ -95,7 +95,7 @@ export default function SkilmalarPage() {
             <p>
               Notandi getur óskað eftir endurgreiðslu innan <strong>14 daga</strong> frá
               greiðslu ef þjónustan uppfyllir ekki væntingar. Endurgreiðslubeiðnir skulu
-              sendar á hallo@handriti.is. Eftir 14 daga er greiðsla óafturkræf fyrir
+              sendar á handriti@gmail.com. Eftir 14 daga er greiðsla óafturkræf fyrir
               viðkomandi tímabil.
             </p>
             <p className="mt-2">
@@ -186,8 +186,8 @@ export default function SkilmalarPage() {
             <p>
               Cognia ehf.<br />
               Netfang:{' '}
-              <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
-                hallo@handriti.is
+              <a href="mailto:handriti@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
+                handriti@gmail.com
               </a>
             </p>
             <ContactForm />
