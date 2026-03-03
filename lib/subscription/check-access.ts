@@ -58,3 +58,17 @@ export async function checkTranscriptionAccess(userId: string): Promise<AccessRe
 
   return { allowed: true, subscription: sub, usage }
 }
+
+/**
+ * Beinlína aðgangur — aðeins admin, free access, eða virk borgandi áskrift.
+ * Trial notendur fá ekki aðgang.
+ */
+export async function checkBeinlinaAccess(userId: string): Promise<{ allowed: boolean }> {
+  if (await isAdmin(userId)) return { allowed: true }
+  if (await hasFreeAccess(userId)) return { allowed: true }
+
+  const sub = await getSubscription(userId)
+  if (sub && sub.status === 'active') return { allowed: true }
+
+  return { allowed: false }
+}

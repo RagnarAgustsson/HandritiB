@@ -43,7 +43,7 @@ export default function Home() {
               <Zap className="h-6 w-6 text-violet-400" />
             </div>
             <div>
-              <div className="font-semibold text-zinc-100">Beinlína</div>
+              <div className="font-semibold text-zinc-100">Beinlína <span className="text-xs font-normal text-violet-400">(Beta)</span></div>
               <div className="text-sm text-zinc-400">Talaðu beint við Handriti í rauntíma</div>
             </div>
           </Link>
