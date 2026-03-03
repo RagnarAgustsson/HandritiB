@@ -32,14 +32,14 @@ export default function PersonuverndPage() {
 
             <h3 className="font-medium text-zinc-200 mt-4 mb-2">2.1 Notandaupplýsingar</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Nafn og netfang (frá innskráningarþjónustu Clerk)</li>
-              <li>Notandanúmer (Clerk user ID)</li>
+              <li>Nafn og netfang (frá innskráningarþjónustu)</li>
+              <li>Notandanúmer</li>
               <li>Innskráningarsaga og tímasetningar</li>
             </ul>
 
             <h3 className="font-medium text-zinc-200 mt-4 mb-2">2.2 Hljóðgögn og uppskriftir</h3>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Hljóðskrár sem notandi hleður upp eða hljóðritar — þessar eru sendar beint til OpenAI til vinnslu og eru <strong>ekki vistaðar varanlega</strong> á þjónum okkar</li>
+              <li>Hljóðskrár sem notandi hleður upp eða hljóðritar — þessar eru sendar til vinnslu og eru <strong>ekki vistaðar varanlega</strong> á þjónum okkar</li>
               <li>Uppskriftir (transcripts) — textaútgáfa hljóðsins, vistuð í gagnagrunni</li>
               <li>Samantektir og glósur búnar til af gervigreind</li>
             </ul>
@@ -48,7 +48,7 @@ export default function PersonuverndPage() {
             <ul className="list-disc pl-5 space-y-1">
               <li>Fjöldi mínútna sem hljóðritaðar eru (til notkunarmælinga og innheimtu)</li>
               <li>Aðgerðaskrá (audit log) — hvaða aðgerðir notandi framkvæmir</li>
-              <li>Áskriftarstaða og greiðsluupplýsingar (unnið af Paddle)</li>
+              <li>Áskriftarstaða og greiðsluupplýsingar (unnið af greiðsluþjónustu)</li>
             </ul>
           </section>
 
@@ -68,54 +68,21 @@ export default function PersonuverndPage() {
             </p>
           </section>
 
-          {/* 4. Þriðju aðilar */}
+          {/* 4. Varðveisla */}
           <section>
-            <h2 className="text-lg font-semibold text-zinc-100 mb-3">4. Þriðju aðilar og vinnsluaðilar</h2>
-            <p>Eftirfarandi þriðju aðilar fá aðgang að gögnum sem hluti af þjónustuveitingu:</p>
-
-            <div className="mt-3 space-y-3">
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-                <div className="font-medium text-zinc-200">OpenAI</div>
-                <div className="text-zinc-400 mt-1">Hljóðvinnsla (speech-to-text) og gervigreindarsamantekt. Gögn eru send til OpenAI API og eru ekki notuð til þjálfunar samkvæmt API-skilmálum þeirra. Við notum <code className="text-zinc-300">store: false</code> á öllum API-köllum sem þýðir að OpenAI geymir hvorki inntak né úttak kalla okkar — ekki einu sinni tímabundið til eftirlits (zero data retention).</div>
-              </div>
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-                <div className="font-medium text-zinc-200">Clerk</div>
-                <div className="text-zinc-400 mt-1">Auðkenning og innskráning. Geymir nafn, netfang og innskráningarsögu.</div>
-              </div>
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-                <div className="font-medium text-zinc-200">Neon (PostgreSQL)</div>
-                <div className="text-zinc-400 mt-1">Gagnagrunnshýsing. Uppskriftir, samantektir og notkunargögn eru geymd í dulkóðuðum gagnagrunni.</div>
-              </div>
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-                <div className="font-medium text-zinc-200">Paddle</div>
-                <div className="text-zinc-400 mt-1">Greiðsluvinnsla sem viðurkenndur söluaðili (Merchant of Record). Paddle safnar og varðveitir greiðsluupplýsingar í samræmi við eigin persónuverndarstefnu.</div>
-              </div>
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-                <div className="font-medium text-zinc-200">Resend</div>
-                <div className="text-zinc-400 mt-1">Sendingar á samantektum í tölvupósti. Fær aðgang að netfangi notanda og efni samantektar.</div>
-              </div>
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
-                <div className="font-medium text-zinc-200">Vercel</div>
-                <div className="text-zinc-400 mt-1">Vefhýsing og keyrsla hugbúnaðar. Aðgangur að serverless keyrslu og umferðargögnum.</div>
-              </div>
-            </div>
-          </section>
-
-          {/* 5. Varðveisla */}
-          <section>
-            <h2 className="text-lg font-semibold text-zinc-100 mb-3">5. Varðveisla gagna</h2>
+            <h2 className="text-lg font-semibold text-zinc-100 mb-3">4. Varðveisla gagna</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Hljóðskrár:</strong> Sendar beint til OpenAI og ekki geymdar varanlega á okkar þjónum. Hljóðskrár sem hlaðið er upp eru eytt úr tímabundinni geymslu strax eftir vinnslu.</li>
+              <li><strong>Hljóðskrár:</strong> Sendar til vinnslu og ekki geymdar varanlega á okkar þjónum. Hljóðskrár sem hlaðið er upp eru eytt úr tímabundinni geymslu strax eftir vinnslu.</li>
               <li><strong>Uppskriftir og samantektir:</strong> Geymdar þar til notandi eyðir þeim. Notandi getur eytt hverri lotu sjálfur í lotuyfirliti.</li>
               <li><strong>Tímabundnar lotur:</strong> Ef notandi velur &ldquo;tímabundna lotu&rdquo; eru niðurstöður aldrei vistaðar í gagnagrunn. Þær birtast eingöngu á skjá og eru sendar í tölvupóst notanda. Þegar glugganum er lokað hverfa gögnin.</li>
               <li><strong>Notkunargögn:</strong> Geymd á meðan áskrift er virk og í allt að 12 mánuði eftir uppsögn (vegna innheimtu og bókhalds)</li>
-              <li><strong>Notandaupplýsingar:</strong> Geymdar hjá Clerk þar til notandi eyðir reikningi sínum</li>
+              <li><strong>Notandaupplýsingar:</strong> Geymdar hjá innskráningarþjónustu þar til notandi eyðir reikningi sínum</li>
             </ul>
           </section>
 
-          {/* 6. Réttindi notenda */}
+          {/* 5. Réttindi notenda */}
           <section>
-            <h2 className="text-lg font-semibold text-zinc-100 mb-3">6. Réttindi notenda (GDPR)</h2>
+            <h2 className="text-lg font-semibold text-zinc-100 mb-3">5. Réttindi notenda (GDPR)</h2>
             <p>Samkvæmt persónuverndarlögum átt þú rétt á:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li><strong>Aðgangsrétti:</strong> Að fá upplýsingar um hvaða gögn eru geymd um þig</li>
@@ -138,13 +105,13 @@ export default function PersonuverndPage() {
             </p>
           </section>
 
-          {/* 7. Vafrakökur */}
+          {/* 6. Vafrakökur */}
           <section>
-            <h2 className="text-lg font-semibold text-zinc-100 mb-3">7. Vafrakökur (cookies)</h2>
+            <h2 className="text-lg font-semibold text-zinc-100 mb-3">6. Vafrakökur (cookies)</h2>
             <p>Handriti notar eftirfarandi vafrakökur:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
-              <li><strong>Lotukökur (Clerk):</strong> Nauðsynlegar fyrir innskráningu og auðkenningu. Þessar kökur eru tæknilega nauðsynlegar og krefjast ekki sérstaks samþykkis.</li>
-              <li><strong>Greiðslukökur (Paddle):</strong> Notaðar við greiðsluferli. Settar af Paddle og háðar persónuverndarstefnu þeirra.</li>
+              <li><strong>Lotukökur:</strong> Nauðsynlegar fyrir innskráningu og auðkenningu. Þessar kökur eru tæknilega nauðsynlegar og krefjast ekki sérstaks samþykkis.</li>
+              <li><strong>Greiðslukökur:</strong> Notaðar við greiðsluferli. Settar af greiðsluþjónustu og háðar persónuverndarstefnu þeirra.</li>
             </ul>
             <p className="mt-2">
               Handriti notar <strong>ekki</strong> greiningarkökur (analytics), auglýsingakökur
@@ -152,24 +119,24 @@ export default function PersonuverndPage() {
             </p>
           </section>
 
-          {/* 8. Öryggi */}
+          {/* 7. Öryggi */}
           <section>
-            <h2 className="text-lg font-semibold text-zinc-100 mb-3">8. Öryggi og tæknilegar ráðstafanir</h2>
+            <h2 className="text-lg font-semibold text-zinc-100 mb-3">7. Öryggi og tæknilegar ráðstafanir</h2>
             <p>Við leggjum áherslu á öryggi gagna:</p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li>Öll samskipti fara um HTTPS dulkóðaða tengingu</li>
               <li>Gagnagrunnur er dulkóðaður í hvíld (encryption at rest)</li>
-              <li>Aðgangsstýring er í höndum Clerk með öruggri auðkenningu</li>
-              <li>API-lyklar og viðkvæmar upplýsingar eru geymdar í umhverfisbreytum, aldrei í frumkóða</li>
-              <li>OpenAI API-köll nota <code className="text-zinc-300">store: false</code> — engin gögn geymd hjá OpenAI, ekki einu sinni til eftirlits (zero data retention)</li>
-              <li>Hljóðskrár eru eytt úr tímabundinni geymslu (Vercel Blob) strax eftir vinnslu</li>
+              <li>Örugg aðgangsstýring og auðkenning</li>
+              <li>Viðkvæmar upplýsingar eru geymdar í umhverfisbreytum, aldrei í frumkóða</li>
+              <li>Hljóðvinnsluþjónusta geymir engin gögn — hvorki inntak né úttak (zero data retention)</li>
+              <li>Hljóðskrár eru eytt úr tímabundinni geymslu strax eftir vinnslu</li>
               <li>Notendur geta eytt lotum sínum hvenær sem er, og valið tímabundnar lotur sem vistast aldrei í kerfinu</li>
             </ul>
           </section>
 
-          {/* 9. Breytingar */}
+          {/* 8. Breytingar */}
           <section>
-            <h2 className="text-lg font-semibold text-zinc-100 mb-3">9. Breytingar á stefnu</h2>
+            <h2 className="text-lg font-semibold text-zinc-100 mb-3">8. Breytingar á stefnu</h2>
             <p>
               Rekstraraðili áskilur sér rétt til að uppfæra þessa persónuverndarstefnu.
               Verulegar breytingar verða tilkynntar notendum í tölvupósti eða með tilkynningu
