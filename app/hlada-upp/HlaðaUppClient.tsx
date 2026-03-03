@@ -40,13 +40,12 @@ export default function HlaðaUppClient() {
     if (!f) return
     const ext = '.' + f.name.split('.').pop()?.toLowerCase()
     if (!LEYFÐAR_ENDINGAR.includes(ext)) {
-      setVilla(`Ólögleg skráarending. Leyfðar: ${LEYFÐAR_ENDINGAR.join(', ')}`)
+      setVilla(`Skráargerð ekki studd. Leyfðar: ${LEYFÐAR_ENDINGAR.join(', ')}`)
       return
     }
     if (f.size > MAX_MB * 1024 * 1024) {
       setVilla(
-        `Skráin er of stór (${(f.size / 1024 / 1024).toFixed(0)}MB). ` +
-        `Hámark er ${MAX_MB}MB vegna takmarkana OpenAI. ` +
+        `Skráin er of stór (${(f.size / 1024 / 1024).toFixed(0)}MB). Hámark er ${MAX_MB}MB. ` +
         `Þjappaðu skránni eða notaðu "Taka upp" í beinni fyrir lengri fundi.`
       )
       return
@@ -164,7 +163,7 @@ export default function HlaðaUppClient() {
         }
       }
 
-      if (!tímabundið && !sessionId) throw new Error('Vinnsla skilaði ekki lotu')
+      if (!tímabundið && !sessionId) throw new Error('Úps, eitthvað fór úrskeiðis. Reyndu aftur.')
 
       setStaða('lokið')
       if (!tímabundið && sessionId) {
@@ -307,7 +306,7 @@ export default function HlaðaUppClient() {
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <CheckCircle className="h-8 w-8 text-emerald-400" />
             <p className="font-medium text-zinc-100">Vinnslu lokið!</p>
-            <p className="text-sm text-zinc-500">Fer yfir á niðurstöður...</p>
+            <p className="text-sm text-zinc-500">Sæki niðurstöður...</p>
           </div>
         )}
     </div>

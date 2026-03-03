@@ -11,7 +11,7 @@ export default function EyðaHnappur({ sessionId }: { sessionId: string }) {
   async function eyða(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    if (!confirm('Ertu viss? Þetta eyðir lotu og öllum gögnum hennar varanlega.')) return
+    if (!confirm('Ertu viss? Þetta eyðir lotunni og öllu sem henni fylgir varanlega.')) return
     setErAðEyða(true)
     await fetch(`/api/lotur?sessionId=${sessionId}`, { method: 'DELETE' })
     router.refresh()

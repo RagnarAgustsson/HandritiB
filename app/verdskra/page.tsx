@@ -9,7 +9,7 @@ const features = {
   trial: [
     'Hljóðritun á íslensku',
     'Sjálfvirk samantekt og glósur',
-    'Beinlína (realtime) samtalsaðstoð',
+    'Samtalsaðstoð í rauntíma',
     'Samantekt send í tölvupóst',
     'Takmarkað prufutímabil',
   ],
@@ -29,7 +29,7 @@ export default function VerdskraPage() {
         <div className="text-center mb-12">
           <h1 className="text-2xl font-bold text-zinc-100 mb-3">Verðskrá</h1>
           <p className="text-zinc-400">
-            Byrjaðu með ókeypis prufutímabili. Uppfærðu þegar þú ert tilbúin/n.
+            Byrjaðu með ókeypis prufutímabili. Uppfærðu þegar þér hentar.
           </p>
         </div>
 

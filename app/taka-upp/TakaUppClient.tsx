@@ -128,7 +128,7 @@ export default function TakaUppClient() {
         }
       }
     } catch {
-      setVilla('Villa við sendingu hljóðs. Reyni aftur...')
+      setVilla('Villa við sendingu hljóðs. Reynir aftur...')
     }
   }
 
@@ -307,7 +307,7 @@ export default function TakaUppClient() {
             {glósur.length === 0 && (
               <div className="flex items-center gap-2 text-zinc-500 text-sm">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Bíð eftir fyrsta hluta...
+                Hlustandi...
               </div>
             )}
           </div>
@@ -316,7 +316,7 @@ export default function TakaUppClient() {
         {staða === 'hleður' && (
           <div className="flex items-center gap-3 text-zinc-400">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span>{tímabundið ? 'Bý til samantekt...' : 'Gengur úr skugga um lokasamantekt...'}</span>
+            <span>{tímabundið ? 'Bý til samantekt...' : 'Geng frá samantekt...'}</span>
           </div>
         )}
 

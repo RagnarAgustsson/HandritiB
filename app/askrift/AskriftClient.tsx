@@ -58,11 +58,11 @@ export default function AskriftClient() {
   function openCheckout() {
     setCheckoutError('')
     const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID
-    if (!priceId) { setCheckoutError('Verð vantar (NEXT_PUBLIC_PADDLE_PRICE_ID)'); return }
+    if (!priceId) { setCheckoutError('Verð vantar. Hafðu samband við þjónustuver.'); return }
     if (!user) { setCheckoutError('Notandi ekki hlaðinn'); return }
 
     const paddle = paddleRef.current
-    if (!paddle) { setCheckoutError('Paddle.js hleðst ekki — athugaðu client token'); return }
+    if (!paddle) { setCheckoutError('Greiðslukerfi óaðgengilegt. Reyndu aftur síðar.'); return }
 
     try {
       paddle.Checkout.open({

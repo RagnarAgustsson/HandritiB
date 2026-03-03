@@ -39,7 +39,7 @@ export default function StorSkraClient() {
     if (!f) return
     const ext = '.' + f.name.split('.').pop()?.toLowerCase()
     if (!LEYFÐAR_ENDINGAR.includes(ext)) {
-      setVilla(`Ólögleg skráarending. Leyfðar: ${LEYFÐAR_ENDINGAR.join(', ')}`)
+      setVilla(`Skráargerð ekki studd. Leyfðar: ${LEYFÐAR_ENDINGAR.join(', ')}`)
       return
     }
     if (f.size > MAX_MB * 1024 * 1024) {
@@ -81,7 +81,7 @@ export default function StorSkraClient() {
         }),
       })
       const startData = await startRes.json()
-      if (!startRes.ok) throw new Error(startData.villa || 'Tókst ekki að búa til lotu')
+      if (!startRes.ok) throw new Error(startData.villa || 'Villa kom upp. Reyndu aftur.')
       const sessionId = startData.sessionId as string | undefined
       const collectedTranscripts: string[] = []
       const collectedDurations: number[] = []
@@ -105,7 +105,7 @@ export default function StorSkraClient() {
           body: JSON.stringify({ pathname: blobPath }),
         })
         const { clientToken, error: tokenError } = await tokenRes.json()
-        if (!tokenRes.ok || !clientToken) throw new Error(tokenError || 'Tókst ekki að fá upload token')
+        if (!tokenRes.ok || !clientToken) throw new Error(tokenError || 'Villa við undirbúning upphleðslu. Reyndu aftur.')
 
         const blob = await put(blobPath, hluti, {
           access: 'private',
@@ -134,7 +134,7 @@ export default function StorSkraClient() {
           }),
         })
         const trData = await trRes.json()
-        if (!trRes.ok) throw new Error(trData.villa || `Villa við þýðingu hluta ${i + 1}`)
+        if (!trRes.ok) throw new Error(trData.villa || `Villa við umritun hluta ${i + 1}`)
         if (trData.transcript) {
           collectedTranscripts.push(trData.transcript)
           collectedDurations.push(trData.durationSeconds || 0)
@@ -202,7 +202,7 @@ export default function StorSkraClient() {
         }
       }
 
-      if (!tímabundið && !finalSessionId) throw new Error('Vinnsla skilaði ekki lotu')
+      if (!tímabundið && !finalSessionId) throw new Error('Úps, eitthvað fór úrskeiðis. Reyndu aftur.')
 
       setStaða('lokið')
       if (!tímabundið && finalSessionId) {
@@ -336,7 +336,7 @@ export default function StorSkraClient() {
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <CheckCircle className="h-8 w-8 text-emerald-400" />
           <p className="font-medium text-zinc-100">Vinnslu lokið!</p>
-          <p className="text-sm text-zinc-500">Fer yfir á niðurstöður...</p>
+          <p className="text-sm text-zinc-500">Sæki niðurstöður...</p>
         </div>
       )}
     </div>

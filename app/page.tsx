@@ -31,7 +31,7 @@ export default function Home() {
             </div>
             <div>
               <div className="font-semibold text-zinc-100">Hlaða upp skrá</div>
-              <div className="text-sm text-zinc-400">Sendu hljóðskrá og fáðu alla samantekt</div>
+              <div className="text-sm text-zinc-400">Sendu hljóðskrá og fáðu samantekt</div>
             </div>
           </Link>
 
@@ -44,7 +44,7 @@ export default function Home() {
             </div>
             <div>
               <div className="font-semibold text-zinc-100">Beinlína</div>
-              <div className="text-sm text-zinc-400">Talaðu beint við AI með GPT Realtime</div>
+              <div className="text-sm text-zinc-400">Talaðu beint við Handriti í rauntíma</div>
             </div>
           </Link>
         </div>
