@@ -19,6 +19,7 @@ interface UserEntry {
   isAdmin: boolean
   subscription: { status: string; minutesLimit: number } | null
   hasFreeAccess: boolean
+  usedMinutes: number
 }
 
 interface ContactMsg {
@@ -310,6 +311,15 @@ export default function AdminClient() {
                         {u.hasFreeAccess && (
                           <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-500/10 text-emerald-400">
                             Frítt
+                          </span>
+                        )}
+                        {!u.isAdmin && !u.hasFreeAccess && u.subscription && (
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            u.usedMinutes >= u.subscription.minutesLimit
+                              ? 'bg-red-500/10 text-red-400'
+                              : 'bg-zinc-500/10 text-zinc-400'
+                          }`}>
+                            {u.usedMinutes}/{u.subscription.minutesLimit} mín
                           </span>
                         )}
                       </div>

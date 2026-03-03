@@ -5,6 +5,7 @@ import { getAllSubscriptions } from '@/lib/db/subscriptions'
 import { getAllFreeAccessGrants, grantFreeAccess, revokeFreeAccess } from '@/lib/db/free-access'
 import { getContactMessages } from '@/lib/db/contacts'
 import { getActiveSessions, closeSession } from '@/lib/db/sessions'
+import { getUsageForPeriod } from '@/lib/db/usage'
 
 async function requireAdmin() {
   const user = await currentUser()
@@ -42,17 +43,32 @@ export async function GET(request: NextRequest) {
   const subMap = new Map(subs.map(s => [s.userId, s]))
   const freeMap = new Map(freeGrants.map(g => [g.userId, g]))
 
-  const users = clerkUsers.data.map(u => ({
-    userId: u.id,
-    email: u.emailAddresses[0]?.emailAddress || '',
-    lastSeen: u.lastSignInAt ? new Date(u.lastSignInAt).toISOString() : new Date(u.createdAt).toISOString(),
-    isAdmin: adminIds.has(u.id),
-    subscription: subMap.get(u.id) ? {
-      status: subMap.get(u.id)!.status,
-      minutesLimit: subMap.get(u.id)!.minutesLimit,
-    } : null,
-    hasFreeAccess: freeMap.has(u.id),
-  }))
+  // Compute usage per user with subscription (parallel queries)
+  const usageEntries = await Promise.all(
+    subs.map(async s => {
+      const periodStart = s.currentPeriodStart || s.createdAt
+      const usedSeconds = await getUsageForPeriod(s.userId, periodStart)
+      return [s.userId, usedSeconds] as const
+    })
+  )
+  const usageMap = new Map(usageEntries)
+
+  const users = clerkUsers.data.map(u => {
+    const sub = subMap.get(u.id)
+    const usedSeconds = usageMap.get(u.id) || 0
+    return {
+      userId: u.id,
+      email: u.emailAddresses[0]?.emailAddress || '',
+      lastSeen: u.lastSignInAt ? new Date(u.lastSignInAt).toISOString() : new Date(u.createdAt).toISOString(),
+      isAdmin: adminIds.has(u.id),
+      subscription: sub ? {
+        status: sub.status,
+        minutesLimit: sub.minutesLimit,
+      } : null,
+      hasFreeAccess: freeMap.has(u.id),
+      usedMinutes: Math.round(usedSeconds / 60),
+    }
+  })
 
   // Map active sessions to include user email from Clerk
   const clerkMap = new Map(clerkUsers.data.map(u => [u.id, u.emailAddresses[0]?.emailAddress || '']))
