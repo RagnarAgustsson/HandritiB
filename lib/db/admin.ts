@@ -2,7 +2,7 @@ import { eq, desc, sql } from 'drizzle-orm'
 import { db } from './client'
 import { admins, auditLog } from './schema'
 
-const SEED_EMAIL = 'ragnara@gmail.com'
+const SEED_EMAIL = process.env.ADMIN_SEED_EMAIL || ''
 
 // ── Admin ────────────────────────────────────────────────────
 

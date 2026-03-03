@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Shield, Clock, Users, ChevronLeft, ChevronRight, Loader2, Search, UserPlus, Gift } from 'lucide-react'
+import { Shield, Clock, Users, ChevronLeft, ChevronRight, Loader2, Search, UserPlus, Gift, MessageSquare, Radio } from 'lucide-react'
 
 interface AuditEntry {
   id: string
@@ -21,6 +21,22 @@ interface UserEntry {
   hasFreeAccess: boolean
 }
 
+interface ContactMsg {
+  id: string
+  email: string
+  message: string
+  createdAt: string
+}
+
+interface ActiveSession {
+  id: string
+  userId: string
+  email: string
+  name: string
+  profile: string
+  createdAt: string
+}
+
 const actionLabels: Record<string, string> = {
   'lota.stofna': 'Ný lota',
   'lota.ljuka': 'Lotu lokið',
@@ -35,9 +51,11 @@ const actionLabels: Record<string, string> = {
 export default function AdminClient() {
   const [log, setLog] = useState<AuditEntry[]>([])
   const [users, setUsers] = useState<UserEntry[]>([])
+  const [messages, setMessages] = useState<ContactMsg[]>([])
+  const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([])
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
-  const [tab, setTab] = useState<'log' | 'users'>('log')
+  const [tab, setTab] = useState<'log' | 'users' | 'messages' | 'sessions'>('log')
   const [loading, setLoading] = useState(true)
   const [searchEmail, setSearchEmail] = useState('')
   const [searchResult, setSearchResult] = useState<UserEntry | null>(null)
@@ -50,6 +68,8 @@ export default function AdminClient() {
     const data = await res.json()
     setLog(data.log)
     setUsers(data.users)
+    setMessages(data.messages || [])
+    setActiveSessions(data.activeSessions || [])
     setPages(data.pages)
     setLoading(false)
   }
@@ -107,7 +127,7 @@ export default function AdminClient() {
       <div className="mx-auto max-w-4xl px-4 py-10">
         <h1 className="text-2xl font-bold text-zinc-100 mb-8">Stjórnborð</h1>
 
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <button onClick={() => setTab('log')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition ${
               tab === 'log' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-zinc-200'
@@ -119,6 +139,28 @@ export default function AdminClient() {
               tab === 'users' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-zinc-200'
             }`}>
             <Users className="h-4 w-4" /> Notendur
+          </button>
+          <button onClick={() => setTab('messages')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition ${
+              tab === 'messages' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-zinc-200'
+            }`}>
+            <MessageSquare className="h-4 w-4" /> Skilaboð
+            {messages.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-indigo-500/20 text-indigo-400">
+                {messages.length}
+              </span>
+            )}
+          </button>
+          <button onClick={() => setTab('sessions')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition ${
+              tab === 'sessions' ? 'bg-indigo-500/20 text-indigo-400' : 'text-zinc-400 hover:text-zinc-200'
+            }`}>
+            <Radio className="h-4 w-4" /> Virkar lotur
+            {activeSessions.length > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/20 text-emerald-400">
+                {activeSessions.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -181,7 +223,7 @@ export default function AdminClient() {
               </>
             )}
           </div>
-        ) : (
+        ) : tab === 'users' ? (
           <div className="space-y-4">
             <form onSubmit={searchUser} className="flex gap-2">
               <div className="relative flex-1">
@@ -288,6 +330,53 @@ export default function AdminClient() {
               ))
             )}
             </div>
+          </div>
+        ) : tab === 'messages' ? (
+          <div className="space-y-2">
+            {messages.length === 0 ? (
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-12 text-center text-zinc-500">
+                Engin skilaboð enn.
+              </div>
+            ) : (
+              messages.map(msg => (
+                <div key={msg.id} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm text-zinc-100">{msg.email}</div>
+                    <div className="text-xs text-zinc-500">
+                      {new Date(msg.createdAt).toLocaleString('is-IS')}
+                    </div>
+                  </div>
+                  <p className="text-sm text-zinc-400 whitespace-pre-wrap">{msg.message}</p>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {activeSessions.length === 0 ? (
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-12 text-center text-zinc-500">
+                Engar virkar lotur.
+              </div>
+            ) : (
+              activeSessions.map(s => (
+                <div key={s.id} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-zinc-100">{s.name}</div>
+                      <div className="flex items-center gap-3 text-xs text-zinc-500 mt-0.5">
+                        <span>{s.email}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400">
+                          {s.profile}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-zinc-500">
+                      {new Date(s.createdAt).toLocaleString('is-IS')}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>

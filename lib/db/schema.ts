@@ -106,7 +106,17 @@ export const freeAccessGrants = pgTable('free_access_grants', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+// ── Tengiliðaskilaboð ─────────────────────────────────────
+
+export const contactMessages = pgTable('contact_messages', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text('email').notNull(),
+  message: text('message').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 export type Subscription = typeof subscriptions.$inferSelect
 export type NewSubscription = typeof subscriptions.$inferInsert
 export type UsageRecord = typeof usageRecords.$inferSelect
 export type FreeAccessGrant = typeof freeAccessGrants.$inferSelect
+export type ContactMessage = typeof contactMessages.$inferSelect

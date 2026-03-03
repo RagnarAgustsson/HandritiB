@@ -206,8 +206,8 @@ export default function AskriftClient() {
             {sub.paddleSubscriptionId && sub.status === 'active' && (
               <p className="text-sm text-zinc-500 text-center">
                 Til að breyta eða segja upp áskrift, hafðu samband á{' '}
-                <a href="mailto:ragnara@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
-                  ragnara@gmail.com
+                <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
+                  hallo@handriti.is
                 </a>
               </p>
             )}

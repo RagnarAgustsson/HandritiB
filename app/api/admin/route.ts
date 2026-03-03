@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isAdmin, addAdmin, removeAdmin, getAuditLog, getAuditLogCount, getAllAdmins, logAction } from '@/lib/db/admin'
 import { getAllSubscriptions } from '@/lib/db/subscriptions'
 import { getAllFreeAccessGrants, grantFreeAccess, revokeFreeAccess } from '@/lib/db/free-access'
+import { getContactMessages } from '@/lib/db/contacts'
+import { getActiveSessions } from '@/lib/db/sessions'
 
 async function requireAdmin() {
   const user = await currentUser()
@@ -25,13 +27,15 @@ export async function GET(request: NextRequest) {
 
   const clerk = await clerkClient()
 
-  const [log, total, clerkUsers, adminList, subs, freeGrants] = await Promise.all([
+  const [log, total, clerkUsers, adminList, subs, freeGrants, messages, activeSessions] = await Promise.all([
     getAuditLog(limit, offset),
     getAuditLogCount(),
     clerk.users.getUserList({ limit: 100, orderBy: '-created_at' }),
     getAllAdmins(),
     getAllSubscriptions(),
     getAllFreeAccessGrants(),
+    getContactMessages(),
+    getActiveSessions(),
   ])
 
   const adminIds = new Set(adminList.map(a => a.userId))
@@ -50,7 +54,14 @@ export async function GET(request: NextRequest) {
     hasFreeAccess: freeMap.has(u.id),
   }))
 
-  return NextResponse.json({ log, total, users, page, pages: Math.ceil(total / limit) })
+  // Map active sessions to include user email from Clerk
+  const clerkMap = new Map(clerkUsers.data.map(u => [u.id, u.emailAddresses[0]?.emailAddress || '']))
+  const activeSessionsWithEmail = activeSessions.map(s => ({
+    ...s,
+    email: clerkMap.get(s.userId) || s.userId,
+  }))
+
+  return NextResponse.json({ log, total, users, page, pages: Math.ceil(total / limit), messages, activeSessions: activeSessionsWithEmail })
 }
 
 export async function POST(request: NextRequest) {

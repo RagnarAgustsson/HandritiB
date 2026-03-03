@@ -1,3 +1,5 @@
+import ContactForm from '@/app/components/ContactForm'
+
 export const metadata = {
   title: 'Skilmálar — Handriti',
   description: 'Notkunarskilmálar Handriti',
@@ -16,8 +18,8 @@ export default function SkilmalarPage() {
             <h2 className="text-lg font-semibold text-zinc-100 mb-3">1. Almennt</h2>
             <p>
               Handriti (hér eftir „þjónustan") er hugbúnaður sem veitir gervigreindarstudda
-              hljóðritun og samantekt á íslensku tali. Þjónustan er rekin af Ragnari Ágústssyni
-              (kt. -, netfang: ragnara@gmail.com), hér eftir „rekstraraðili".
+              hljóðritun og samantekt á íslensku tali. Þjónustan er rekin af Cognia ehf.
+              (netfang: hallo@handriti.is), hér eftir „rekstraraðili".
             </p>
             <p className="mt-2">
               Með því að nota þjónustuna samþykkir þú þessa skilmála í heild sinni. Ef þú
@@ -93,7 +95,7 @@ export default function SkilmalarPage() {
             <p>
               Notandi getur óskað eftir endurgreiðslu innan <strong>14 daga</strong> frá
               greiðslu ef þjónustan uppfyllir ekki væntingar. Endurgreiðslubeiðnir skulu
-              sendar á ragnara@gmail.com. Eftir 14 daga er greiðsla óafturkræf fyrir
+              sendar á hallo@handriti.is. Eftir 14 daga er greiðsla óafturkræf fyrir
               viðkomandi tímabil.
             </p>
             <p className="mt-2">
@@ -182,12 +184,13 @@ export default function SkilmalarPage() {
           <section className="border-t border-zinc-800 pt-6">
             <h2 className="text-lg font-semibold text-zinc-100 mb-3">Tengiliðaupplýsingar</h2>
             <p>
-              Ragnar Ágústsson<br />
+              Cognia ehf.<br />
               Netfang:{' '}
-              <a href="mailto:ragnara@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
-                ragnara@gmail.com
+              <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
+                hallo@handriti.is
               </a>
             </p>
+            <ContactForm />
           </section>
         </div>
       </div>

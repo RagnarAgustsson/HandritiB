@@ -1,3 +1,5 @@
+import ContactForm from '@/app/components/ContactForm'
+
 export const metadata = {
   title: 'Persónuvernd — Handriti',
   description: 'Persónuverndarstefna Handriti',
@@ -15,10 +17,10 @@ export default function PersonuverndPage() {
           <section>
             <h2 className="text-lg font-semibold text-zinc-100 mb-3">1. Ábyrgðaraðili</h2>
             <p>
-              Ábyrgðaraðili fyrir vinnslu persónuupplýsinga er Ragnar Ágústsson
+              Ábyrgðaraðili fyrir vinnslu persónuupplýsinga er Cognia ehf.
               (netfang:{' '}
-              <a href="mailto:ragnara@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
-                ragnara@gmail.com
+              <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
+                hallo@handriti.is
               </a>
               ). Hægt er að hafa samband varðandi allar fyrirspurnir sem varða persónuvernd.
             </p>
@@ -125,8 +127,8 @@ export default function PersonuverndPage() {
             </ul>
             <p className="mt-3">
               Til að nýta réttindi þín skaltu senda tölvupóst á{' '}
-              <a href="mailto:ragnara@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
-                ragnara@gmail.com
+              <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
+                hallo@handriti.is
               </a>
               . Við munum svara beiðni þinni innan 30 daga.
             </p>
@@ -180,12 +182,13 @@ export default function PersonuverndPage() {
             <h2 className="text-lg font-semibold text-zinc-100 mb-3">Tengiliðaupplýsingar</h2>
             <p>
               Ef þú hefur spurningar um persónuvernd eða vilt nýta réttindi þín:<br />
-              Ragnar Ágústsson<br />
+              Cognia ehf.<br />
               Netfang:{' '}
-              <a href="mailto:ragnara@gmail.com" className="text-indigo-400 hover:text-indigo-300 underline">
-                ragnara@gmail.com
+              <a href="mailto:hallo@handriti.is" className="text-indigo-400 hover:text-indigo-300 underline">
+                hallo@handriti.is
               </a>
             </p>
+            <ContactForm />
           </section>
         </div>
       </div>

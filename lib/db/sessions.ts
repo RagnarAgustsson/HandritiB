@@ -50,3 +50,7 @@ export async function deleteSession(id: string) {
   const [deleted] = await db.delete(sessions).where(eq(sessions.id, id)).returning()
   return deleted
 }
+
+export async function getActiveSessions() {
+  return db.select().from(sessions).where(eq(sessions.status, 'virkt')).orderBy(desc(sessions.createdAt))
+}
