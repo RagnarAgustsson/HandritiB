@@ -9,16 +9,15 @@ const features = {
   trial: [
     'Hljóðritun á íslensku',
     'Sjálfvirk samantekt og glósur',
-    'Samtalsaðstoð í rauntíma',
     'Samantekt send í tölvupóst',
-    'Takmarkað prufutímabil',
+    '60 mínútur í 7 daga',
   ],
   paid: [
-    'Allt í prufuáætlun',
-    'Fleiri mínútur á mánuði',
-    'Forgangsþjónusta',
-    'Engin takmörkun á lotum',
-    'Aðgangur að nýjum eiginleikum',
+    'Hljóðritun á íslensku',
+    'Sjálfvirk samantekt og glósur',
+    'Samtalsaðstoð í rauntíma (Beta)',
+    'Samantekt send í tölvupóst',
+    'Og margt fleira...',
   ],
 }
 
