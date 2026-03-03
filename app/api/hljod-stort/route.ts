@@ -10,7 +10,6 @@ import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile, validateBlobUrl, safeErrorMessage } from '@/lib/pipeline/validate'
-import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export const maxDuration = 300
 
@@ -126,7 +125,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ villa: 'Vantar sessionId' }, { status: 400 })
     }
 
-    let sessionProfile: PromptProfile = validateProfile(body.profile)
+    let sessionProfile = validateProfile(body.profile)
     let sessionName = nafn
 
     if (!ephemeral && sessionId) {
@@ -134,7 +133,7 @@ export async function POST(request: NextRequest) {
       if (!session || session.userId !== userId) {
         return NextResponse.json({ villa: 'Lota finnst ekki' }, { status: 404 })
       }
-      sessionProfile = session.profile as PromptProfile
+      sessionProfile = validateProfile(session.profile)
       sessionName = session.name
     }
 

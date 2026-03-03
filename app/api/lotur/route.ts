@@ -5,7 +5,7 @@ import { generateFinalSummary } from '@/lib/pipeline/summarize'
 import { getSessionChunks } from '@/lib/db/sessions'
 import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
-import type { PromptProfile } from '@/lib/pipeline/prompts'
+import { validateProfile } from '@/lib/pipeline/validate'
 
 export async function GET() {
   const { userId } = await auth()
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   const session = await createSession({
     userId,
     name: nafn || 'Óskilgreind lota',
-    profile: (profile as PromptProfile) || 'fundur',
+    profile: validateProfile(profile),
     status: 'virkt',
   })
 
@@ -55,7 +55,7 @@ export async function PATCH(request: NextRequest) {
 
     let finalSummary = ''
     if (transcripts.length > 0) {
-      finalSummary = await generateFinalSummary(transcripts, (session.profile || 'fundur') as PromptProfile)
+      finalSummary = await generateFinalSummary(transcripts, validateProfile(session.profile))
     }
 
     const updated = await updateSession(sessionId, { status: 'lokið', finalSummary })
