@@ -72,9 +72,9 @@ export default function PersonuverndPage() {
           <section>
             <h2 className="text-lg font-semibold text-zinc-100 mb-3">4. Varðveisla gagna</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Hljóðskrár:</strong> Sendar til vinnslu og ekki geymdar varanlega á okkar þjónum. Hljóðskrár sem hlaðið er upp eru eytt úr tímabundinni geymslu strax eftir vinnslu.</li>
+              <li><strong>Hljóðskrár:</strong> Sendar til vinnslu og ekki geymdar varanlega á okkar þjónum. Hljóðskrám sem hlaðið er upp er eytt úr tímabundinni geymslu strax eftir vinnslu.</li>
               <li><strong>Uppskriftir og samantektir:</strong> Geymdar þar til notandi eyðir þeim. Notandi getur eytt hverri lotu sjálfur í lotuyfirliti.</li>
-              <li><strong>Tímabundnar lotur:</strong> Ef notandi velur &ldquo;tímabundna lotu&rdquo; eru niðurstöður aldrei vistaðar í gagnagrunn. Þær birtast eingöngu á skjá og eru sendar í tölvupóst notanda. Þegar glugganum er lokað hverfa gögnin.</li>
+              <li><strong>Tímabundnar lotur:</strong> Ef notandi velur &ldquo;tímabundna lotu&rdquo; eru niðurstöður aldrei vistaðar í gagnagrunn. Þær birtast eingöngu á skjá og eru sendar í tölvupósti notanda. Þegar glugganum er lokað hverfa gögnin.</li>
               <li><strong>Notkunargögn:</strong> Geymd á meðan áskrift er virk og í allt að 12 mánuði eftir uppsögn (vegna innheimtu og bókhalds)</li>
               <li><strong>Notandaupplýsingar:</strong> Geymdar hjá innskráningarþjónustu þar til notandi eyðir reikningi sínum</li>
             </ul>
@@ -87,7 +87,7 @@ export default function PersonuverndPage() {
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li><strong>Aðgangsrétti:</strong> Að fá upplýsingar um hvaða gögn eru geymd um þig</li>
               <li><strong>Leiðréttingarrétti:</strong> Að fá rangar upplýsingar leiðréttar</li>
-              <li><strong>Eyðingarrétti:</strong> Að biðja um að gögn þín séu eytt („réttur til að gleymast")</li>
+              <li><strong>Eyðingarrétti:</strong> Að biðja um að gögnum þínum sé eytt („réttur til að gleymast")</li>
               <li><strong>Flutningsrétti:</strong> Að fá gögn þín afhent á véllæsilegu formi</li>
               <li><strong>Andmælarétti:</strong> Að andmæla vinnslu gagna sem byggir á lögmætum hagsmunum</li>
               <li><strong>Takmörkunarrétti:</strong> Að biðja um takmörkun á vinnslu gagna í ákveðnum tilvikum</li>
@@ -129,7 +129,7 @@ export default function PersonuverndPage() {
               <li>Örugg aðgangsstýring og auðkenning</li>
               <li>Viðkvæmar upplýsingar eru geymdar í umhverfisbreytum, aldrei í frumkóða</li>
               <li>Hljóðvinnsluþjónusta geymir engin gögn — hvorki inntak né úttak (zero data retention)</li>
-              <li>Hljóðskrár eru eytt úr tímabundinni geymslu strax eftir vinnslu</li>
+              <li>Hljóðskrám er eytt úr tímabundinni geymslu strax eftir vinnslu</li>
               <li>Notendur geta eytt lotum sínum hvenær sem er, og valið tímabundnar lotur sem vistast aldrei í kerfinu</li>
             </ul>
           </section>
