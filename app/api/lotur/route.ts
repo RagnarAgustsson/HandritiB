@@ -43,14 +43,19 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json()
   const { sessionId, aðgerð } = body
 
+  // Eigandaprófun — tryggja að notandi eigi lotuna
+  const session = await getSession(sessionId)
+  if (!session || session.userId !== userId) {
+    return NextResponse.json({ villa: 'Lota finnst ekki' }, { status: 404 })
+  }
+
   if (aðgerð === 'ljúka') {
     const chunks = await getSessionChunks(sessionId)
     const transcripts = chunks.map(c => c.transcript).filter(Boolean)
 
     let finalSummary = ''
     if (transcripts.length > 0) {
-      const session = await import('@/lib/db/sessions').then(m => m.getSession(sessionId))
-      finalSummary = await generateFinalSummary(transcripts, (session?.profile || 'fundur') as PromptProfile)
+      finalSummary = await generateFinalSummary(transcripts, (session.profile || 'fundur') as PromptProfile)
     }
 
     const updated = await updateSession(sessionId, { status: 'lokið', finalSummary })
@@ -68,7 +73,8 @@ export async function PATCH(request: NextRequest) {
   }
 
   if (aðgerð === 'endurnefna' && body.nafn) {
-    const updated = await updateSession(sessionId, { name: body.nafn })
+    const nafnStr = String(body.nafn).slice(0, 500)
+    const updated = await updateSession(sessionId, { name: nafnStr })
 
     const user = await currentUser()
     const email = user?.emailAddresses[0]?.emailAddress || ''

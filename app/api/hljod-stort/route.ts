@@ -9,6 +9,7 @@ import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
+import { validateProfile, validateBlobUrl, safeErrorMessage } from '@/lib/pipeline/validate'
 import type { PromptProfile } from '@/lib/pipeline/prompts'
 
 export const maxDuration = 300
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ephemeral: true })
     }
 
-    const profile = (body.profile as PromptProfile) || 'fundur'
+    const profile = validateProfile(body.profile)
     const nafn = (body.nafn as string) || 'Stór skrá'
 
     const session = await createSession({
@@ -62,6 +63,10 @@ export async function POST(request: NextRequest) {
 
     if ((!ephemeral && !sessionId) || !blobUrl || seq === undefined) {
       return NextResponse.json({ villa: 'Vantar blobUrl eða seq' }, { status: 400 })
+    }
+
+    if (!validateBlobUrl(blobUrl)) {
+      return NextResponse.json({ villa: 'Ógild skrá' }, { status: 400 })
     }
 
     // Verify ownership (skip for ephemeral)
@@ -103,8 +108,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, transcript, durationSeconds })
     } catch (error) {
       del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
-      const message = error instanceof Error ? error.message : 'Óþekkt villa'
-      return NextResponse.json({ villa: message }, { status: 500 })
+      return NextResponse.json({ villa: safeErrorMessage(error) }, { status: 500 })
     }
   }
 
@@ -122,7 +126,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ villa: 'Vantar sessionId' }, { status: 400 })
     }
 
-    let sessionProfile: PromptProfile = (body.profile as PromptProfile) || 'fundur'
+    let sessionProfile: PromptProfile = validateProfile(body.profile)
     let sessionName = nafn
 
     if (!ephemeral && sessionId) {
@@ -207,7 +211,7 @@ export async function POST(request: NextRequest) {
           })
           controller.close()
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Óþekkt villa'
+          const message = safeErrorMessage(error)
           try { send({ step: 'villa', villa: message }) } catch { /* */ }
           controller.close()
         }

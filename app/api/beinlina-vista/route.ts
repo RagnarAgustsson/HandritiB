@@ -5,16 +5,23 @@ import { generateNotes, generateFinalSummary } from '@/lib/pipeline/summarize'
 import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { getSubscription, createTrialSubscription } from '@/lib/db/subscriptions'
+import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
-import type { PromptProfile } from '@/lib/pipeline/prompts'
+import { validateProfile } from '@/lib/pipeline/validate'
 
 // Save a completed Realtime session transcript to the database
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
 
+  const access = await checkTranscriptionAccess(userId)
+  if (!access.allowed) {
+    return NextResponse.json({ villa: access.reason }, { status: 403 })
+  }
+
   const body = await request.json()
-  const { transcript, profile = 'fundur', nafn, durationSeconds = 0, ephemeral: isEphemeral = false } = body
+  const { transcript, profile: rawProfile, nafn, durationSeconds = 0, ephemeral: isEphemeral = false } = body
+  const profile = validateProfile(rawProfile)
 
   if (!transcript || typeof transcript !== 'string') {
     return NextResponse.json({ villa: 'Vantar uppskrift' }, { status: 400 })
@@ -28,7 +35,7 @@ export async function POST(request: NextRequest) {
     const session = await createSession({
       userId,
       name: sessionName,
-      profile: profile as PromptProfile,
+      profile,
       status: 'virkt',
     })
     sessionId = session.id
@@ -36,8 +43,8 @@ export async function POST(request: NextRequest) {
     await createChunk({ sessionId, seq: 0, transcript, durationSeconds: duration })
   }
 
-  const { notes: yfirferd } = await generateNotes(transcript, profile as PromptProfile, [])
-  const finalSummary = await generateFinalSummary([transcript], profile as PromptProfile)
+  const { notes: yfirferd } = await generateNotes(transcript, profile, [])
+  const finalSummary = await generateFinalSummary([transcript], profile)
 
   if (!isEphemeral && sessionId) {
     await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds: duration })

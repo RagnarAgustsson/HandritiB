@@ -4,7 +4,7 @@ import { processChunk } from '@/lib/pipeline/processChunk'
 import { getSession } from '@/lib/db/sessions'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
-import type { PromptProfile } from '@/lib/pipeline/prompts'
+import { validateProfile, safeErrorMessage } from '@/lib/pipeline/validate'
 
 export const maxDuration = 60
 
@@ -22,19 +22,19 @@ export async function POST(request: NextRequest) {
   const sessionId = formData.get('sessionId') as string | null
   const seq = parseInt(formData.get('seq') as string || '0')
   const ephemeral = formData.get('ephemeral') === 'true'
-  const profile = (formData.get('profile') as PromptProfile) || 'fundur'
+  const profile = validateProfile(formData.get('profile'))
 
   if (!hljod || (!ephemeral && !sessionId)) {
     return NextResponse.json({ villa: 'Vantar hljóð eða lotunúmer' }, { status: 400 })
   }
 
-  let sessionProfile: PromptProfile = profile
+  let sessionProfile = profile
   if (!ephemeral && sessionId) {
     const session = await getSession(sessionId)
     if (!session || session.userId !== userId) {
       return NextResponse.json({ villa: 'Lota finnst ekki' }, { status: 404 })
     }
-    sessionProfile = session.profile as PromptProfile
+    sessionProfile = validateProfile(session.profile)
   }
 
   // Parse previous transcripts for ephemeral context
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result)
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Óþekkt villa við vinnslu hljóðs'
+    const message = safeErrorMessage(error)
     return NextResponse.json({ villa: message }, { status: 500 })
   }
 }

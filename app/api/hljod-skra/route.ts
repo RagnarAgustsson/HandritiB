@@ -8,7 +8,7 @@ import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
-import type { PromptProfile } from '@/lib/pipeline/prompts'
+import { validateProfile, validateBlobUrl, safeErrorMessage } from '@/lib/pipeline/validate'
 
 export const maxDuration = 300
 
@@ -39,13 +39,15 @@ export async function POST(request: NextRequest) {
 
   const blobUrl = body.blobUrl as string
   const filename = (body.filename as string) || 'hljod.webm'
-  const profile = (body.profile as PromptProfile) || 'fundur'
+  const profile = validateProfile(body.profile)
   const nafn = (body.nafn as string) || ''
   const clientDuration = parseInt((body.lengd as string) || '0')
   const fileSize = parseInt((body.fileSize as string) || '0')
   const ephemeral = body.ephemeral === true
 
-  if (!blobUrl) return NextResponse.json({ villa: 'Engin skrá' }, { status: 400 })
+  if (!blobUrl || !validateBlobUrl(blobUrl)) {
+    return NextResponse.json({ villa: 'Ógild skrá' }, { status: 400 })
+  }
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         // Clean up blob on error
         del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
-        const message = error instanceof Error ? error.message : 'Óþekkt villa'
+        const message = safeErrorMessage(error)
         try {
           send({ step: 'villa', villa: message })
         } catch {
