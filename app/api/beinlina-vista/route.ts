@@ -8,6 +8,15 @@ import { getSubscription, createTrialSubscription } from '@/lib/db/subscriptions
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile } from '@/lib/pipeline/validate'
+import type { Locale } from '@/i18n/config'
+import { locales, defaultLocale } from '@/i18n/config'
+
+function validateLocale(input: unknown): Locale {
+  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
+    return input as Locale
+  }
+  return defaultLocale
+}
 
 // Save a completed Realtime session transcript to the database
 export async function POST(request: NextRequest) {
@@ -22,6 +31,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { transcript, profile: rawProfile, nafn, durationSeconds = 0, ephemeral: isEphemeral = false } = body
   const profile = validateProfile(rawProfile)
+  const locale = validateLocale(body.locale)
 
   if (!transcript || typeof transcript !== 'string') {
     return NextResponse.json({ villa: 'Vantar uppskrift' }, { status: 400 })
@@ -37,14 +47,15 @@ export async function POST(request: NextRequest) {
       name: sessionName,
       profile,
       status: 'virkt',
+      locale,
     })
     sessionId = session.id
 
     await createChunk({ sessionId, seq: 0, transcript, durationSeconds: duration })
   }
 
-  const { notes: yfirferd } = await generateNotes(transcript, profile, [])
-  const finalSummary = await generateFinalSummary([transcript], profile)
+  const { notes: yfirferd } = await generateNotes(transcript, profile, [], locale)
+  const finalSummary = await generateFinalSummary([transcript], profile, locale)
 
   if (!isEphemeral && sessionId) {
     await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds: duration })
@@ -61,7 +72,7 @@ export async function POST(request: NextRequest) {
   const user = await currentUser()
   const email = user?.emailAddresses[0]?.emailAddress || ''
   await logAction(userId, email, 'beinlina.vista', `${sessionId || 'tímabundið'}${isEphemeral ? ' [tímabundið]' : ''}`)
-  if (email && finalSummary) sendSummaryEmail(email, sessionName, finalSummary, yfirferd).catch(() => {})
+  if (email && finalSummary) sendSummaryEmail(email, sessionName, finalSummary, yfirferd, locale).catch(() => {})
 
   return NextResponse.json({
     sessionId,

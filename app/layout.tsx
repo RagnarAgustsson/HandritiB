@@ -1,16 +1,9 @@
 import type { Metadata } from 'next'
-import { ClerkProvider } from '@clerk/nextjs'
-import { isIS } from '@clerk/localizations'
-import Nav from './components/Nav'
-import Footer from './components/Footer'
-import PaddleLoader from './components/PaddleLoader'
-import IOSInstallPrompt from './components/IOSInstallPrompt'
-import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Handriti',
-  description: 'Íslenskur hljóðritari og samantektarforrit',
+  description: 'Handriti — AI transcription and summary',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
@@ -23,18 +16,5 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <ClerkProvider localization={isIS}>
-      <html lang="is">
-        <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased flex flex-col">
-          <Nav />
-          <PaddleLoader />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <IOSInstallPrompt />
-          <Analytics />
-        </body>
-      </html>
-    </ClerkProvider>
-  )
+  return children
 }

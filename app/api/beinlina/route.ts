@@ -1,13 +1,22 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@/lib/openai/client'
 import { logAction } from '@/lib/db/admin'
 import { checkBeinlinaAccess } from '@/lib/subscription/check-access'
-import { BEINLINA_INSTRUCTIONS } from '@/lib/pipeline/prompts'
+import { getBeinlinaInstructions } from '@/lib/pipeline/prompts'
+import type { Locale } from '@/i18n/config'
+import { locales, defaultLocale } from '@/i18n/config'
+
+function validateLocale(input: unknown): Locale {
+  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
+    return input as Locale
+  }
+  return defaultLocale
+}
 
 // Issues an ephemeral token so the browser can connect directly to OpenAI Realtime.
 // The API key never leaves the server.
-export async function POST() {
+export async function POST(request: NextRequest) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
 
@@ -16,10 +25,20 @@ export async function POST() {
     return NextResponse.json({ villa: 'Aðeins fyrir áskrifendur' }, { status: 403 })
   }
 
+  let locale: Locale = defaultLocale
+  try {
+    const body = await request.json()
+    locale = validateLocale(body.locale)
+  } catch {
+    // No body or invalid JSON — use default locale
+  }
+
+  const instructions = getBeinlinaInstructions(locale)
+
   const session = await (openai.beta as any).realtime.sessions.create({
     model: 'gpt-4o-realtime-preview',
     voice: 'alloy',
-    instructions: BEINLINA_INSTRUCTIONS,
+    instructions,
     input_audio_transcription: { model: 'whisper-1' },
     turn_detection: {
       type: 'server_vad',

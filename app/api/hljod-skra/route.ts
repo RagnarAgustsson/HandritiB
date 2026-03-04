@@ -9,6 +9,8 @@ import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile, validateBlobUrl, safeErrorMessage } from '@/lib/pipeline/validate'
+import type { Locale } from '@/i18n/config'
+import { locales, defaultLocale } from '@/i18n/config'
 
 export const maxDuration = 300
 
@@ -19,6 +21,13 @@ const encoder = new TextEncoder()
 
 function sseEvent(data: object): Uint8Array {
   return encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+}
+
+function validateLocale(input: unknown): Locale {
+  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
+    return input as Locale
+  }
+  return defaultLocale
 }
 
 export async function POST(request: NextRequest) {
@@ -44,6 +53,7 @@ export async function POST(request: NextRequest) {
   const clientDuration = parseInt((body.lengd as string) || '0')
   const fileSize = parseInt((body.fileSize as string) || '0')
   const ephemeral = body.ephemeral === true
+  const locale = validateLocale(body.locale)
 
   if (!blobUrl || !validateBlobUrl(blobUrl)) {
     return NextResponse.json({ villa: 'Ógild skrá' }, { status: 400 })
@@ -55,13 +65,13 @@ export async function POST(request: NextRequest) {
 
       try {
         // 1. Fetch audio from Vercel Blob
-        send({ step: 'Sæki hljóðskrá...', progress: 10 })
+        send({ step: 'fetching', progress: 10 })
         const blobToken = process.env.BLOB_READ_WRITE_TOKEN
         const blobRes = await fetch(blobUrl, {
           headers: { Authorization: `Bearer ${blobToken}` },
         })
         if (!blobRes.ok) {
-          send({ step: 'villa', villa: `Tókst ekki að sækja skrá úr geymslu (${blobRes.status})` })
+          send({ step: 'error', villa: `Tókst ekki að sækja skrá úr geymslu (${blobRes.status})` })
           controller.close()
           return
         }
@@ -74,23 +84,24 @@ export async function POST(request: NextRequest) {
             name: nafn || filename.replace(/\.[^/.]+$/, '') || 'Upphlöðun',
             profile,
             status: 'virkt',
+            locale,
           })
           sessionId = session.id
         }
 
         // 3. Transcribe
-        send({ step: 'Þýði hljóðskrá...', progress: 25 })
+        send({ step: 'transcribing', progress: 25 })
         const audioBlob = new Blob([await blobRes.arrayBuffer()], {
           type: blobRes.headers.get('content-type') || 'audio/webm',
         })
-        const transcript = await transcribeAudio(audioBlob, filename)
+        const transcript = await transcribeAudio(audioBlob, filename, locale)
 
         // Clean up blob
         del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
 
         if (!transcript) {
           if (sessionId) await updateSession(sessionId, { status: 'villa' })
-          send({ step: 'villa', villa: 'Tókst ekki að þýða hljóðið' })
+          send({ step: 'error', villa: 'Tókst ekki að þýða hljóðið' })
           controller.close()
           return
         }
@@ -104,21 +115,21 @@ export async function POST(request: NextRequest) {
         }
 
         // 4. Generate notes (yfirferð)
-        send({ step: 'Bý til yfirferð...', progress: 55 })
-        const { notes } = await generateNotes(transcript, profile, [])
+        send({ step: 'generating_notes', progress: 55 })
+        const { notes } = await generateNotes(transcript, profile, [], locale)
         if (!ephemeral && sessionId) {
           await createNote({ sessionId, content: notes })
         }
 
         // 5. Generate final summary
-        send({ step: 'Tek saman...', progress: 75 })
-        const finalSummary = await generateFinalSummary([transcript], profile)
+        send({ step: 'summarizing', progress: 75 })
+        const finalSummary = await generateFinalSummary([transcript], profile, locale)
         if (!ephemeral && sessionId) {
           await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds: durationSeconds })
         }
 
         // 6. Usage, logging, email
-        send({ step: 'Geng frá...', progress: 90 })
+        send({ step: 'sending_email', progress: 90 })
         const periodStart = access.subscription?.currentPeriodStart || new Date()
         await recordUsage({ userId, sessionId, seconds: durationSeconds, source: 'hljod-skra', periodStart })
 
@@ -126,11 +137,11 @@ export async function POST(request: NextRequest) {
         const email = user?.emailAddresses[0]?.emailAddress || ''
         const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
         await logAction(userId, email, 'skra.hlada', `${filename} (${sizeLabel})${ephemeral ? ' [tímabundið]' : ''}`)
-        if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary, notes).catch(() => {})
+        if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary, notes, locale).catch(() => {})
 
         // Done
         send({
-          step: 'lokið',
+          step: 'done',
           progress: 100,
           sessionId,
           ...(ephemeral && { ephemeral: true, transcript, yfirferd: notes, samantekt: finalSummary }),
@@ -141,7 +152,7 @@ export async function POST(request: NextRequest) {
         del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
         const message = safeErrorMessage(error)
         try {
-          send({ step: 'villa', villa: message })
+          send({ step: 'error', villa: message })
         } catch {
           // controller may already be closed
         }

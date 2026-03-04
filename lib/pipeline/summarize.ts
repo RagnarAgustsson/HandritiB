@@ -6,6 +6,7 @@ import {
   sanitizeTranscriptParts,
   type PromptProfile,
 } from './prompts'
+import type { Locale } from '@/i18n/config'
 
 const CHAT_MODEL = process.env.OPENAI_MODEL || 'gpt-4o'
 
@@ -22,15 +23,24 @@ interface NotesResult {
 export async function generateNotes(
   transcript: string,
   profile: PromptProfile,
-  previousTranscripts: string[]
+  previousTranscripts: string[],
+  locale: Locale = 'is'
 ): Promise<NotesResult> {
-  const systemPrompt = buildNotesSystemPrompt(profile)
+  const systemPrompt = buildNotesSystemPrompt(profile, locale)
+
+  // Locale-aware section marker
+  const sectionMarker: Record<Locale, string> = {
+    is: '=== NÝJASTI HLUTI ===',
+    nb: '=== NYESTE DEL ===',
+    da: '=== NYESTE DEL ===',
+    sv: '=== SENASTE DELEN ===',
+  }
 
   // Byggja user message: fyrra samhengi + nýjasti hluti
   const context = buildContextBlock(previousTranscripts, 2)
   const parts: string[] = []
   if (context) parts.push(context)
-  parts.push(`=== NÝJASTI HLUTI ===\n${(transcript ?? '').trim()}`)
+  parts.push(`${sectionMarker[locale] || sectionMarker.is}\n${(transcript ?? '').trim()}`)
   const userMessage = parts.join('\n\n---\n\n')
 
   const response = await openai.chat.completions.create({
@@ -59,9 +69,10 @@ export async function generateNotes(
 
 export async function generateFinalSummary(
   allTranscripts: string[],
-  profile: PromptProfile
+  profile: PromptProfile,
+  locale: Locale = 'is'
 ): Promise<string> {
-  const systemPrompt = buildFinalSummarySystemPrompt(profile)
+  const systemPrompt = buildFinalSummarySystemPrompt(profile, locale)
 
   // Gögnin fara í user message
   const cleanTranscripts = sanitizeTranscriptParts(allTranscripts)

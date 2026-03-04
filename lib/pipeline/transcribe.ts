@@ -1,4 +1,5 @@
 import { openai } from '@/lib/openai/client'
+import type { Locale } from '@/i18n/config'
 
 // gpt-4o-transcribe er mun betri en whisper-1 fyrir íslensku —
 // skilur samhengi, leiðréttir sjálfkrafa og þekkir fleiri orð.
@@ -6,20 +7,50 @@ import { openai } from '@/lib/openai/client'
 const PRIMARY_MODEL = process.env.OPENAI_TRANSCRIBE_MODEL || 'gpt-4o-transcribe'
 const FALLBACK_MODEL = 'whisper-1'
 
+// ── Per-locale transcription prompts ─────────────────────────────
+
 const ISLENSKA_PROMPT = `Þetta er íslenskt tal. Skráðu nákvæmlega það sem sagt er á vandaðri íslensku.
 Notaðu rétta stafsetningu, greinarmerk og fallbeygingu.
 Leiðréttu talmálsvillur en breyttu ekki merkingu eða orðavali.
 Íslenskar orðmyndir: þ, ð, æ, ö, á, é, í, ó, ú, ý.`
 
+const NORSK_PROMPT = `Dette er norsk tale. Skriv ned nøyaktig det som blir sagt på korrekt norsk bokmål.
+Bruk riktig rettskrivning, tegnsetting og bøyning.
+Rett talespråksfeil, men ikke endre mening eller ordvalg.`
+
+const DANSK_PROMPT = `Dette er dansk tale. Skriv ned nøjagtigt det, der bliver sagt, på korrekt dansk.
+Brug korrekt retskrivning, tegnsætning og bøjning.
+Ret talesprogsfejl, men ændr ikke mening eller ordvalg.`
+
+const SVENSK_PROMPT = `Detta är svenskt tal. Skriv ned exakt det som sägs på korrekt svenska.
+Använd korrekt stavning, interpunktion och böjning.
+Rätta talspråksfel men ändra inte innebörd eller ordval.`
+
+// Map locale → OpenAI language code
+const LANGUAGE_MAP: Record<Locale, string> = {
+  is: 'is',
+  nb: 'no',
+  da: 'da',
+  sv: 'sv',
+}
+
+// Map locale → transcription prompt
+const PROMPT_MAP: Record<Locale, string> = {
+  is: ISLENSKA_PROMPT,
+  nb: NORSK_PROMPT,
+  da: DANSK_PROMPT,
+  sv: SVENSK_PROMPT,
+}
+
 /**
- * Fjarlægja ISLENSKA_PROMPT ef Whisper endurvarpar honum í úttakið.
+ * Fjarlægja transcription prompt ef Whisper endurvarpar honum í úttakið.
+ * Tekur við promptinu sem var notað svo hægt sé að bera kennsl á leak
+ * óháð tungumáli.
  */
-function stripPromptLeak(text: string): string {
-  // Taka fyrstu 2 línur úr prompt til samanburðar (nóg til að bera kennsl á)
-  const promptStart = ISLENSKA_PROMPT.split('\n')[0]
+function stripPromptLeak(text: string, prompt: string): string {
+  const promptStart = prompt.split('\n')[0]
   if (text.includes(promptStart)) {
-    // Fjarlægja allt sem líkist promptinu
-    for (const line of ISLENSKA_PROMPT.split('\n')) {
+    for (const line of prompt.split('\n')) {
       const trimmed = line.trim()
       if (trimmed) text = text.replace(trimmed, '')
     }
@@ -111,17 +142,19 @@ function stripHallucination(text: string): string {
   return text
 }
 
-export async function transcribeAudio(audioBlob: Blob, filename = 'hljod.webm'): Promise<string> {
+export async function transcribeAudio(audioBlob: Blob, filename = 'hljod.webm', locale: Locale = 'is'): Promise<string> {
   const file = new File([audioBlob], filename, { type: audioBlob.type || 'audio/webm' })
+  const language = LANGUAGE_MAP[locale] || 'is'
+  const prompt = PROMPT_MAP[locale] || ISLENSKA_PROMPT
 
   try {
     const result = await openai.audio.transcriptions.create({
       file,
       model: PRIMARY_MODEL,
-      language: 'is',
-      prompt: ISLENSKA_PROMPT,
+      language,
+      prompt,
     })
-    return stripHallucination(stripPromptLeak(result.text.trim()))
+    return stripHallucination(stripPromptLeak(result.text.trim(), prompt))
   } catch (error) {
     // Fall back to whisper-1 for files exceeding gpt-4o-transcribe's 1400s limit
     const msg = error instanceof Error ? error.message : ''
@@ -129,17 +162,17 @@ export async function transcribeAudio(audioBlob: Blob, filename = 'hljod.webm'):
       const result = await openai.audio.transcriptions.create({
         file,
         model: FALLBACK_MODEL,
-        language: 'is',
-        prompt: ISLENSKA_PROMPT,
+        language,
+        prompt,
       })
-      return stripHallucination(stripPromptLeak(result.text.trim()))
+      return stripHallucination(stripPromptLeak(result.text.trim(), prompt))
     }
     throw error
   }
 }
 
-export async function transcribeBuffer(buffer: Buffer, filename = 'hljod.webm'): Promise<string> {
+export async function transcribeBuffer(buffer: Buffer, filename = 'hljod.webm', locale: Locale = 'is'): Promise<string> {
   const ab = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer
   const blob = new Blob([ab], { type: 'audio/webm' })
-  return transcribeAudio(blob, filename)
+  return transcribeAudio(blob, filename, locale)
 }

@@ -6,6 +6,15 @@ import { getSessionChunks } from '@/lib/db/sessions'
 import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { validateProfile } from '@/lib/pipeline/validate'
+import type { Locale } from '@/i18n/config'
+import { locales, defaultLocale } from '@/i18n/config'
+
+function validateLocale(input: unknown): Locale {
+  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
+    return input as Locale
+  }
+  return defaultLocale
+}
 
 export async function GET() {
   const { userId } = await auth()
@@ -21,12 +30,14 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json()
   const { nafn, profile } = body
+  const locale = validateLocale(body.locale)
 
   const session = await createSession({
     userId,
     name: nafn || 'Óskilgreind lota',
     profile: validateProfile(profile),
     status: 'virkt',
+    locale,
   })
 
   const user = await currentUser()
@@ -53,9 +64,12 @@ export async function PATCH(request: NextRequest) {
     const chunks = await getSessionChunks(sessionId)
     const transcripts = chunks.map(c => c.transcript).filter(Boolean)
 
+    // Read locale from the session
+    const sessionLocale = validateLocale((session as Record<string, unknown>).locale)
+
     let finalSummary = ''
     if (transcripts.length > 0) {
-      finalSummary = await generateFinalSummary(transcripts, validateProfile(session.profile))
+      finalSummary = await generateFinalSummary(transcripts, validateProfile(session.profile), sessionLocale)
     }
 
     const updated = await updateSession(sessionId, { status: 'lokið', finalSummary })
@@ -66,7 +80,7 @@ export async function PATCH(request: NextRequest) {
     if (email && finalSummary) {
       const notes = await getSessionNotes(sessionId)
       const yfirferd = notes.map(n => n.content).join('\n\n')
-      sendSummaryEmail(email, updated.name, finalSummary, yfirferd || undefined).catch(() => {})
+      sendSummaryEmail(email, updated.name, finalSummary, yfirferd || undefined, sessionLocale).catch(() => {})
     }
 
     return NextResponse.json({ session: updated })

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
+import { useTranslations } from 'next-intl'
 
 interface UsageData {
   usedMinutes: number
@@ -11,6 +12,8 @@ interface UsageData {
 }
 
 export default function UsageBanner() {
+  const t = useTranslations('usage')
+  const tc = useTranslations('common')
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [freeAccess, setFreeAccess] = useState(false)
 
@@ -40,9 +43,9 @@ export default function UsageBanner() {
       'border-zinc-800 bg-zinc-900'
     }`}>
       <div className="flex justify-between text-xs mb-1.5">
-        <span className="text-zinc-400">Notkun</span>
+        <span className="text-zinc-400">{t('label')}</span>
         <span className={isBlocked ? 'text-red-400' : isWarning ? 'text-amber-400' : 'text-zinc-400'}>
-          {usage.usedMinutes} / {usage.limitMinutes} mín
+          {usage.usedMinutes} / {usage.limitMinutes} {tc('min')}
         </span>
       </div>
       <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
@@ -54,8 +57,8 @@ export default function UsageBanner() {
         />
       </div>
       {isBlocked && (
-        <Link href="/askrift" className="text-xs text-red-400 hover:text-red-300 mt-2 block">
-          Uppfærðu áskrift til að halda áfram →
+        <Link href="/subscription" className="text-xs text-red-400 hover:text-red-300 mt-2 block">
+          {t('upgradeLink')}
         </Link>
       )}
     </div>

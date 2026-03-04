@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 const STORAGE_KEY = 'handriti-install-dismissed'
 
@@ -20,6 +21,7 @@ function isStandalone(): boolean {
 }
 
 export default function IOSInstallPrompt() {
+  const t = useTranslations('ios')
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -43,19 +45,19 @@ export default function IOSInstallPrompt() {
       <div className="mx-auto max-w-sm rounded-2xl border border-zinc-800 bg-zinc-900 p-4 shadow-xl">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
-            <p className="font-medium text-zinc-100 text-sm">Bættu Handriti á heimaskjáinn</p>
+            <p className="font-medium text-zinc-100 text-sm">{t('addToHome')}</p>
             <p className="text-xs text-zinc-400 mt-1">
-              Ýttu á{' '}
+              {t('tapOn')}{' '}
               <span className="inline-flex items-center justify-center w-5 h-5 rounded border border-zinc-700 bg-zinc-800 text-zinc-300 text-[10px] align-middle mx-0.5">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
               </span>
-              {' '}og veldu <strong className="text-zinc-200">«Setja á heimaskjá»</strong>
+              {' '}{t('addAction')}
             </p>
           </div>
           <button
             onClick={dismiss}
             className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition shrink-0"
-            aria-label="Loka"
+            aria-label={t('close')}
           >
             <X className="h-4 w-4" />
           </button>
