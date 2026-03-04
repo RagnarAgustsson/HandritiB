@@ -5,6 +5,10 @@ import { getUserSessions } from '@/lib/db/sessions'
 import { Mic, ChevronRight } from 'lucide-react'
 import EyðaHnappur from './EyðaHnappur'
 
+const LOCALE_DATE: Record<string, string> = {
+  is: 'is-IS', nb: 'nb-NO', da: 'da-DK', sv: 'sv-SE',
+}
+
 const profileTranslationKey: Record<string, string> = {
   'fundur': 'fundur',
   'fyrirlestur': 'fyrirlestur',
@@ -58,7 +62,7 @@ export default async function LoturPage({ params }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-zinc-100 truncate">{lot.name}</div>
                   <div className="text-sm text-zinc-500">
-                    {tp(profileTranslationKey[lot.profile] || lot.profile)} · {new Date(lot.createdAt).toLocaleDateString('is-IS')}
+                    {tp(profileTranslationKey[lot.profile] || lot.profile)} · {new Date(lot.createdAt).toLocaleDateString(LOCALE_DATE[locale] || 'is-IS')}
                   </div>
                 </div>
                 <div className="relative z-10 flex items-center gap-2">
