@@ -9,6 +9,7 @@ export const sessions = pgTable('sessions', {
   name: text('name').notNull().default('Óskráð lota'),
   profile: profileEnum('profile').notNull().default('fundur'),
   status: statusEnum('status').notNull().default('virkt'),
+  locale: text('locale').notNull().default('is'),
   finalSummary: text('final_summary'),
   totalSeconds: integer('total_seconds').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),

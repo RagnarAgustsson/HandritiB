@@ -10,6 +10,8 @@ import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile, validateBlobUrl, safeErrorMessage } from '@/lib/pipeline/validate'
+import type { Locale } from '@/i18n/config'
+import { locales, defaultLocale } from '@/i18n/config'
 
 export const maxDuration = 300
 
@@ -18,6 +20,13 @@ const WORDS_PER_MINUTE = 130
 
 function sseEvent(data: object): Uint8Array {
   return encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
+}
+
+function validateLocale(input: unknown): Locale {
+  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
+    return input as Locale
+  }
+  return defaultLocale
 }
 
 export async function POST(request: NextRequest) {
@@ -41,12 +50,14 @@ export async function POST(request: NextRequest) {
 
     const profile = validateProfile(body.profile)
     const nafn = (body.nafn as string) || 'Stór skrá'
+    const locale = validateLocale(body.locale)
 
     const session = await createSession({
       userId,
       name: nafn,
       profile,
       status: 'virkt',
+      locale,
     })
 
     return NextResponse.json({ sessionId: session.id })
@@ -59,6 +70,7 @@ export async function POST(request: NextRequest) {
     const seq = body.seq as number
     const filename = (body.filename as string) || 'chunk.webm'
     const ephemeral = body.ephemeral === true
+    const locale = validateLocale(body.locale)
 
     if ((!ephemeral && !sessionId) || !blobUrl || seq === undefined) {
       return NextResponse.json({ villa: 'Vantar blobUrl eða seq' }, { status: 400 })
@@ -69,11 +81,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify ownership (skip for ephemeral)
+    let sessionLocale = locale
     if (!ephemeral) {
       const session = await getSession(sessionId!)
       if (!session || session.userId !== userId) {
         return NextResponse.json({ villa: 'Lota finnst ekki' }, { status: 404 })
       }
+      sessionLocale = validateLocale((session as Record<string, unknown>).locale)
     }
 
     try {
@@ -90,7 +104,7 @@ export async function POST(request: NextRequest) {
         type: blobRes.headers.get('content-type') || 'audio/webm',
       })
 
-      const transcript = await transcribeAudio(audioBlob, filename)
+      const transcript = await transcribeAudio(audioBlob, filename, sessionLocale)
 
       // Clean up blob
       del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
@@ -120,6 +134,7 @@ export async function POST(request: NextRequest) {
     const ephemeral = body.ephemeral === true
     const clientTranscripts = (body.transcripts as string[]) || []
     const clientDurations = (body.durations as number[]) || []
+    const locale = validateLocale(body.locale)
 
     if (!ephemeral && !sessionId) {
       return NextResponse.json({ villa: 'Vantar sessionId' }, { status: 400 })
@@ -127,6 +142,7 @@ export async function POST(request: NextRequest) {
 
     let sessionProfile = validateProfile(body.profile)
     let sessionName = nafn
+    let sessionLocale = locale
 
     if (!ephemeral && sessionId) {
       const session = await getSession(sessionId)
@@ -135,6 +151,7 @@ export async function POST(request: NextRequest) {
       }
       sessionProfile = validateProfile(session.profile)
       sessionName = session.name
+      sessionLocale = validateLocale((session as Record<string, unknown>).locale)
     }
 
     const stream = new ReadableStream({
@@ -150,10 +167,10 @@ export async function POST(request: NextRequest) {
             allTranscripts = clientTranscripts.filter(Boolean)
             totalSeconds = clientDurations.reduce((sum, d) => sum + d, 0)
           } else {
-            send({ step: 'Les hluta...', progress: 10 })
+            send({ step: 'fetching', progress: 10 })
             const allChunks = await getSessionChunks(sessionId!)
             if (allChunks.length === 0) {
-              send({ step: 'villa', villa: 'Engir hlutar fundust' })
+              send({ step: 'error', villa: 'Engir hlutar fundust' })
               controller.close()
               return
             }
@@ -162,7 +179,7 @@ export async function POST(request: NextRequest) {
           }
 
           if (allTranscripts.length === 0) {
-            send({ step: 'villa', villa: 'Engir textar fundust' })
+            send({ step: 'error', villa: 'Engir textar fundust' })
             controller.close()
             return
           }
@@ -171,8 +188,8 @@ export async function POST(request: NextRequest) {
           const previousTranscripts: string[] = []
           const allNotes: string[] = []
           for (let i = 0; i < allTranscripts.length; i++) {
-            send({ step: `Bý til yfirferð (${i + 1}/${allTranscripts.length})...`, progress: 30 + Math.round((i / allTranscripts.length) * 25) })
-            const { notes, rollingSummary } = await generateNotes(allTranscripts[i], sessionProfile, previousTranscripts)
+            send({ step: 'generating_notes', progress: 30 + Math.round((i / allTranscripts.length) * 25), current: i + 1, total: allTranscripts.length })
+            const { notes, rollingSummary } = await generateNotes(allTranscripts[i], sessionProfile, previousTranscripts, sessionLocale)
             if (!ephemeral && sessionId) {
               await createNote({ sessionId, content: notes, rollingSummary })
             }
@@ -181,14 +198,14 @@ export async function POST(request: NextRequest) {
           }
 
           // Generate final summary
-          send({ step: 'Tek saman...', progress: 60 })
-          const finalSummary = await generateFinalSummary(allTranscripts, sessionProfile)
+          send({ step: 'summarizing', progress: 60 })
+          const finalSummary = await generateFinalSummary(allTranscripts, sessionProfile, sessionLocale)
           if (!ephemeral && sessionId) {
             await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds })
           }
 
           // Usage, logging, email
-          send({ step: 'Geng frá...', progress: 85 })
+          send({ step: 'sending_email', progress: 85 })
           const access = await checkTranscriptionAccess(userId)
           const periodStart = access.subscription?.currentPeriodStart || new Date()
           await recordUsage({ userId, sessionId: sessionId || null, seconds: totalSeconds, source: 'hljod-skra', periodStart })
@@ -199,11 +216,11 @@ export async function POST(request: NextRequest) {
           await logAction(userId, email, 'skra.stort', `${filename} (${sizeLabel}, ${allTranscripts.length} hlutar)${ephemeral ? ' [tímabundið]' : ''}`)
           if (email && finalSummary) {
             const yfirferd = allNotes.join('\n\n')
-            sendSummaryEmail(email, sessionName, finalSummary, yfirferd).catch(() => {})
+            sendSummaryEmail(email, sessionName, finalSummary, yfirferd, sessionLocale).catch(() => {})
           }
 
           send({
-            step: 'lokið',
+            step: 'done',
             progress: 100,
             sessionId: sessionId || null,
             ...(ephemeral && { ephemeral: true, transcript: allTranscripts.join('\n\n'), yfirferd: allNotes.join('\n\n'), samantekt: finalSummary }),
@@ -211,7 +228,7 @@ export async function POST(request: NextRequest) {
           controller.close()
         } catch (error) {
           const message = safeErrorMessage(error)
-          try { send({ step: 'villa', villa: message }) } catch { /* */ }
+          try { send({ step: 'error', villa: message }) } catch { /* */ }
           controller.close()
         }
       },

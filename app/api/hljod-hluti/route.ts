@@ -5,8 +5,17 @@ import { getSession } from '@/lib/db/sessions'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile, safeErrorMessage } from '@/lib/pipeline/validate'
+import type { Locale } from '@/i18n/config'
+import { locales, defaultLocale } from '@/i18n/config'
 
 export const maxDuration = 60
+
+function validateLocale(input: unknown): Locale {
+  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
+    return input as Locale
+  }
+  return defaultLocale
+}
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
@@ -23,18 +32,21 @@ export async function POST(request: NextRequest) {
   const seq = parseInt(formData.get('seq') as string || '0')
   const ephemeral = formData.get('ephemeral') === 'true'
   const profile = validateProfile(formData.get('profile'))
+  const locale = validateLocale(formData.get('locale'))
 
   if (!hljod || (!ephemeral && !sessionId)) {
     return NextResponse.json({ villa: 'Vantar hljóð eða lotunúmer' }, { status: 400 })
   }
 
   let sessionProfile = profile
+  let sessionLocale = locale
   if (!ephemeral && sessionId) {
     const session = await getSession(sessionId)
     if (!session || session.userId !== userId) {
       return NextResponse.json({ villa: 'Lota finnst ekki' }, { status: 404 })
     }
     sessionProfile = validateProfile(session.profile)
+    sessionLocale = validateLocale((session as Record<string, unknown>).locale)
   }
 
   // Parse previous transcripts for ephemeral context
@@ -57,6 +69,7 @@ export async function POST(request: NextRequest) {
       filename: hljod.name,
       ephemeral,
       previousTranscripts,
+      locale: sessionLocale,
     })
 
     // Skrá notkun
