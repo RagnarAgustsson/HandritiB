@@ -11,17 +11,17 @@ export default async function Nav() {
   const t = await getTranslations('nav')
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm px-4 py-3">
+    <nav className="sticky top-0 z-50 border-b border-zinc-800/60 bg-zinc-950/70 backdrop-blur-xl px-4 py-3">
       <div className="mx-auto max-w-2xl flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-bold text-zinc-100 tracking-tight">
+        <Link href="/" className="flex items-center gap-2 font-bold text-zinc-100 tracking-tight hover:text-white transition-colors">
           <Logo size={28} />
           Handriti
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/sessions" className="text-sm text-zinc-400 hover:text-zinc-100 transition">{t('sessions')}</Link>
-          <Link href="/subscription" className="text-sm text-zinc-400 hover:text-zinc-100 transition">{t('subscription')}</Link>
+          <Link href="/sessions" className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">{t('sessions')}</Link>
+          <Link href="/subscription" className="text-sm text-zinc-400 hover:text-zinc-100 transition-colors">{t('subscription')}</Link>
           {isAdmin && (
-            <Link href="/admin" className="text-sm text-indigo-400 hover:text-indigo-300 transition">{t('admin')}</Link>
+            <Link href="/admin" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">{t('admin')}</Link>
           )}
           <LanguageSwitcher />
           <UserButton afterSignOutUrl={`/${locale}/sign-in`} />

@@ -5,12 +5,17 @@ import { NextIntlClientProvider } from 'next-intl'
 import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
+import { Geist, Geist_Mono } from 'next/font/google'
+import { Toaster } from 'sonner'
 import Nav from '../components/Nav'
 import Footer from '../components/Footer'
 import PaddleLoader from '../components/PaddleLoader'
 import IOSInstallPrompt from '../components/IOSInstallPrompt'
 import { Analytics } from '@vercel/analytics/next'
 import type { Locale } from '@/i18n/config'
+
+const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 const clerkLocalizations: Record<string, any> = {
   is: isIS,
@@ -42,13 +47,24 @@ export default async function LocaleLayout({
   return (
     <ClerkProvider localization={clerkLocalizations[locale] || isIS}>
       <html lang={locale}>
-        <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased flex flex-col">
+        <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased flex flex-col`}>
           <NextIntlClientProvider messages={messages}>
             <Nav />
             <PaddleLoader />
             <main className="flex-1">{children}</main>
             <Footer />
             <IOSInstallPrompt />
+            <Toaster
+              theme="dark"
+              position="bottom-right"
+              toastOptions={{
+                style: {
+                  background: '#18181b',
+                  border: '1px solid #27272a',
+                  color: '#f4f4f5',
+                },
+              }}
+            />
           </NextIntlClientProvider>
           <Analytics />
         </body>

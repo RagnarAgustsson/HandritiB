@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from '@/i18n/navigation'
 import { useTranslations } from 'next-intl'
+import AnimatedProgress from './motion/AnimatedProgress'
 
 interface UsageData {
   usedMinutes: number
@@ -37,7 +38,7 @@ export default function UsageBanner() {
   const isBlocked = pct >= 100
 
   return (
-    <div className={`rounded-xl border p-3 mb-6 ${
+    <div className={`rounded-xl border p-3 mb-6 transition-colors ${
       isBlocked ? 'border-red-500/30 bg-red-500/5' :
       isWarning ? 'border-amber-500/30 bg-amber-500/5' :
       'border-zinc-800 bg-zinc-900'
@@ -48,14 +49,10 @@ export default function UsageBanner() {
           {usage.usedMinutes} / {usage.limitMinutes} {tc('min')}
         </span>
       </div>
-      <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${
-            isBlocked ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-indigo-500'
-          }`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      <AnimatedProgress
+        percent={pct}
+        colorClass={isBlocked ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-indigo-500'}
+      />
       {isBlocked && (
         <Link href="/subscription" className="text-xs text-red-400 hover:text-red-300 mt-2 block">
           {t('upgradeLink')}
