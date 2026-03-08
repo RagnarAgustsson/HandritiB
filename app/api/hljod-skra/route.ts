@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         const user = await currentUser()
         const email = user?.emailAddresses[0]?.emailAddress || ''
         const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
-        await logAction(userId, email, 'skra.hlada', `${filename} (${sizeLabel})${ephemeral ? ' [tímabundið]' : ''}`)
+        await logAction(userId, email, 'hljodskra.hlada', `${filename} (${sizeLabel})${ephemeral ? ' [tímabundið]' : ''}`)
         if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary, notes, locale).catch(() => {})
 
         // Done

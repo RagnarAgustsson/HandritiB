@@ -55,9 +55,13 @@ export default function AudioVisualizer({
         const b = Math.round(241)
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${0.5 + value * 0.5})`
 
-        // Rounded bars
+        // Rounded bars (fallback for older browsers without roundRect)
         ctx.beginPath()
-        ctx.roundRect(x, y, barWidth, barHeight, radius)
+        if (ctx.roundRect) {
+          ctx.roundRect(x, y, barWidth, barHeight, radius)
+        } else {
+          ctx.rect(x, y, barWidth, barHeight)
+        }
         ctx.fill()
       }
 

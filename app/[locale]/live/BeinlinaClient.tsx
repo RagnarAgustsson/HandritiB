@@ -184,7 +184,7 @@ export default function BeinlinaClient() {
                 type="checkbox"
                 checked={tímabundið}
                 onChange={e => setTímabundið(e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-400"
               />
               <span className="text-sm text-zinc-400">{tr('ephemeral')}</span>
             </label>
@@ -194,7 +194,7 @@ export default function BeinlinaClient() {
 
             <button
               onClick={byrja}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white font-semibold hover:bg-indigo-700 transition"
+              className="flex items-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-white font-semibold hover:bg-indigo-600 transition"
             >
               <Zap className="h-5 w-5" />
               {t('start')}

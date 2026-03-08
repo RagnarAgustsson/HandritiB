@@ -6,7 +6,6 @@ import { getMessages, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { Toaster } from 'sonner'
 import Nav from '../components/Nav'
 import Footer from '../components/Footer'
 import PaddleLoader from '../components/PaddleLoader'
@@ -54,17 +53,6 @@ export default async function LocaleLayout({
             <main className="flex-1">{children}</main>
             <Footer />
             <IOSInstallPrompt />
-            <Toaster
-              theme="dark"
-              position="bottom-right"
-              toastOptions={{
-                style: {
-                  background: '#18181b',
-                  border: '1px solid #27272a',
-                  color: '#f4f4f5',
-                },
-              }}
-            />
           </NextIntlClientProvider>
           <Analytics />
         </body>

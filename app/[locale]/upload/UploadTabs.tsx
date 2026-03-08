@@ -21,7 +21,7 @@ export default function UploadTabs() {
             onClick={() => setTab('venjuleg')}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
               tab === 'venjuleg'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-indigo-500 text-white'
                 : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
             }`}
           >
@@ -31,7 +31,7 @@ export default function UploadTabs() {
             onClick={() => setTab('stor')}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
               tab === 'stor'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-indigo-500 text-white'
                 : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
             }`}
           >

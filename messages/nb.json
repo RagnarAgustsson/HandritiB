@@ -147,8 +147,7 @@
     "noSamantekt": "Ingen sammendrag ennå. Fullfør økten for å lage sammendrag.",
     "ephemeralTitle": "Midlertidig økt",
     "ephemeralInfo": "Resultater lagres ikke i systemet, men er sendt på e-post. Kopier det du vil beholde før du lukker vinduet.",
-    "noSamantektShort": "Ingen sammendrag.",
-    "copied": "Kopiert!"
+    "noSamantektShort": "Ingen sammendrag."
   },
   "subscription": {
     "title": "Abonnement",
@@ -236,10 +235,15 @@
       "lota_ljuka": "Økt fullført",
       "lota_endurnefna": "Gi nytt navn",
       "hljodskra_hlada": "Fil lastet opp",
+      "skra_hlada": "Fil lastet opp",
       "beinlina_hefja": "Direkte startet",
       "beinlina_vista": "Direkte lagret",
       "admin_breyta": "Administratorendring",
-      "askrift_ny": "Nytt abonnement"
+      "admin_uppfaera": "Administratorhandling",
+      "askrift_ny": "Nytt abonnement",
+      "askrift_stofna": "Nytt abonnement",
+      "skra_stort": "Stor fil lastet opp",
+      "lota_eyda": "Økt slettet"
     }
   },
   "contact": {

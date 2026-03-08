@@ -12,7 +12,7 @@
     "tryAgain": "Reyna aftur",
     "processing": "Vinnur...",
     "done": "Vinnslu lokið!",
-    "doNotClose": "Loka ekki þessum glugga",
+    "doNotClose": "Ekki loka þessum glugga",
     "fetchingResults": "Sæki niðurstöður...",
     "min": "mín"
   },
@@ -53,7 +53,7 @@
     "start": "Byrja upptöku",
     "recording": "Tekur upp...",
     "stop": "Stöðva",
-    "listening": "Hlustandi...",
+    "listening": "Hlusta...",
     "notes": "Glósur",
     "overview": "Yfirlit",
     "sendError": "Villa við sendingu hljóðs. Reynir aftur...",
@@ -147,8 +147,7 @@
     "noSamantekt": "Engin samantekt enn. Ljúktu lotunni til að búa til lokasamantekt.",
     "ephemeralTitle": "Tímabundin lota",
     "ephemeralInfo": "Niðurstöður eru ekki vistaðar í kerfinu en hafa verið sendar í tölvupósti. Afritaðu það sem þú vilt halda áður en þú lokar glugganum.",
-    "noSamantektShort": "Engin samantekt.",
-    "copied": "Afritað!"
+    "noSamantektShort": "Engin samantekt."
   },
   "subscription": {
     "title": "Áskrift",
@@ -236,10 +235,15 @@
       "lota_ljuka": "Lotu lokið",
       "lota_endurnefna": "Endurnefna",
       "hljodskra_hlada": "Skrá hlaðin upp",
+      "skra_hlada": "Skrá hlaðin upp",
       "beinlina_hefja": "Beinlína hafin",
       "beinlina_vista": "Beinlína vistuð",
       "admin_breyta": "Stjórnandabreyting",
-      "askrift_ny": "Ný áskrift"
+      "admin_uppfaera": "Stjórnandaaðgerð",
+      "askrift_ny": "Ný áskrift",
+      "askrift_stofna": "Ný áskrift",
+      "skra_stort": "Stór skrá hlaðin upp",
+      "lota_eyda": "Lotu eytt"
     }
   },
   "contact": {

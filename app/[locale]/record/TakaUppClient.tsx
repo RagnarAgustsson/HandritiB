@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Mic, Square, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
+import { formatDate } from '@/i18n/config'
 import EphemeralResults from '../../components/EphemeralResults'
 import AudioVisualizer from '../../components/motion/AudioVisualizer'
 
@@ -22,8 +23,6 @@ const profileTranslationKey: Record<string, string> = {
   'frjálst': 'frjalst',
   'stjórnarfundur': 'stjornarfundur',
 }
-
-const LOCALE_DATE: Record<string, string> = { is: 'is-IS', nb: 'nb-NO', da: 'da-DK', sv: 'sv-SE' }
 
 export default function TakaUppClient() {
   const router = useRouter()
@@ -49,6 +48,7 @@ export default function TakaUppClient() {
   const chunksRef = useRef<Blob[]>([])
   const ephTranscriptsRef = useRef<string[]>([])
   const ephNotesRef = useRef<string[]>([])
+  const sessionIdRef = useRef<string | null>(null)
 
   function profileLabel(p: Profile) {
     return tp(profileTranslationKey[p] || p)
@@ -71,11 +71,12 @@ export default function TakaUppClient() {
       const res = await fetch('/api/lotur', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nafn: nafn || `${profileLabel(profile)} ${new Date().toLocaleDateString(LOCALE_DATE[locale] || 'is-IS')}`, profile, locale }),
+        body: JSON.stringify({ nafn: nafn || `${profileLabel(profile)} ${formatDate(new Date())}`, profile, locale }),
       })
       const { session } = await res.json()
       sid = session.id
       setSessionId(sid)
+      sessionIdRef.current = sid
 
       // Start SSE stream
       const es = new EventSource(`/api/straumur?sessionId=${session.id}`)
@@ -161,8 +162,10 @@ export default function TakaUppClient() {
     }
     eventSourceRef.current?.close()
 
-    // Wait briefly for last chunk to finish processing
-    await new Promise(r => setTimeout(r, 500))
+    // Wait for last chunk to finish sending
+    await new Promise(r => setTimeout(r, 2000))
+
+    const sid = sessionIdRef.current
 
     if (tímabundið) {
       const combinedTranscript = ephTranscriptsRef.current.join('\n\n')
@@ -177,7 +180,7 @@ export default function TakaUppClient() {
           body: JSON.stringify({
             transcript: combinedTranscript,
             profile,
-            nafn: nafn || `${profileLabel(profile)} ${new Date().toLocaleDateString(LOCALE_DATE[locale] || 'is-IS')}`,
+            nafn: nafn || `${profileLabel(profile)} ${formatDate(new Date())}`,
             durationSeconds: ephTranscriptsRef.current.length * (HLUTI_TIMI_MS / 1000),
             ephemeral: true,
             locale,
@@ -195,13 +198,13 @@ export default function TakaUppClient() {
         setVilla(tc('connectionFailed'))
         setStaða('villa')
       }
-    } else if (sessionId) {
+    } else if (sid) {
       await fetch('/api/lotur', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, aðgerð: 'ljúka' }),
+        body: JSON.stringify({ sessionId: sid, aðgerð: 'ljúka' }),
       })
-      router.push(`/sessions/${sessionId}`)
+      router.push(`/sessions/${sid}`)
     }
   }
 
@@ -228,7 +231,7 @@ export default function TakaUppClient() {
                     onClick={() => setProfile(p)}
                     className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                       profile === p
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-indigo-500 text-white'
                         : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                     }`}
                   >
@@ -244,7 +247,7 @@ export default function TakaUppClient() {
                 type="text"
                 value={nafn}
                 onChange={e => setNafn(e.target.value)}
-                placeholder={`${profileLabel(profile)} ${new Date().toLocaleDateString(LOCALE_DATE[locale] || 'is-IS')}`}
+                placeholder={`${profileLabel(profile)} ${formatDate(new Date())}`}
                 className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -254,7 +257,7 @@ export default function TakaUppClient() {
                 type="checkbox"
                 checked={tímabundið}
                 onChange={e => setTímabundið(e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-400"
               />
               <span className="text-sm text-zinc-400">{t('ephemeral')}</span>
             </label>
@@ -264,7 +267,7 @@ export default function TakaUppClient() {
 
             <button
               onClick={byrjaUpptöku}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white font-semibold hover:bg-indigo-700 transition"
+              className="flex items-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-white font-semibold hover:bg-indigo-600 transition"
             >
               <Mic className="h-5 w-5" />
               {t('start')}

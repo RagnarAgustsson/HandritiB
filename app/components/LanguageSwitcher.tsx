@@ -46,6 +46,8 @@ export default function LanguageSwitcher() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="listbox"
         className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors"
       >
         <Globe className="h-3.5 w-3.5" />
@@ -55,15 +57,22 @@ export default function LanguageSwitcher() {
       <AnimatePresence>
         {open && (
           <motion.div
+            role="listbox"
+            aria-label="Language"
             initial={{ opacity: 0, scale: 0.95, y: -4 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -4 }}
             transition={{ duration: 0.15 }}
             className="absolute right-0 top-full mt-1.5 w-36 rounded-xl border border-zinc-800 bg-zinc-900 p-1 shadow-xl shadow-black/20 z-50"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setOpen(false)
+            }}
           >
             {locales.map((l) => (
               <button
                 key={l}
+                role="option"
+                aria-selected={l === locale}
                 onClick={() => onChange(l)}
                 className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
                   l === locale

@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { Loader2, CreditCard, Clock, Zap, CheckCircle, AlertCircle } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { formatDate } from '@/i18n/config'
 import { getPaddle } from '@/app/components/PaddleLoader'
 import type { Paddle } from '@paddle/paddle-js'
 
@@ -41,6 +42,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AskriftClient() {
   const { user } = useUser()
+  const locale = useLocale()
   const t = useTranslations('subscription')
   const tc = useTranslations('common')
   const [data, setData] = useState<AskriftResponse | null>(null)
@@ -139,19 +141,19 @@ export default function AskriftClient() {
 
             {sub.trialEndsAt && sub.status === 'trialing' && (
               <p className="text-sm text-zinc-400">
-                {t('trialExpires', { date: new Date(sub.trialEndsAt).toLocaleDateString('is-IS') })}
+                {t('trialExpires', { date: formatDate(new Date(sub.trialEndsAt)) })}
               </p>
             )}
 
             {sub.currentPeriodEnd && sub.status === 'active' && (
               <p className="text-sm text-zinc-400">
-                {t('nextRenewal', { date: new Date(sub.currentPeriodEnd).toLocaleDateString('is-IS') })}
+                {t('nextRenewal', { date: formatDate(new Date(sub.currentPeriodEnd)) })}
               </p>
             )}
 
             {sub.canceledAt && (
               <p className="text-sm text-zinc-500">
-                {t('canceledAt', { date: new Date(sub.canceledAt).toLocaleDateString('is-IS') })}
+                {t('canceledAt', { date: formatDate(new Date(sub.canceledAt)) })}
               </p>
             )}
           </div>
@@ -200,7 +202,7 @@ export default function AskriftClient() {
             {(sub.status === 'trialing' || sub.status === 'canceled' || !sub.paddleSubscriptionId) && (
               <button
                 onClick={openCheckout}
-                className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white font-semibold hover:bg-indigo-700 transition"
+                className="flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-white font-semibold hover:bg-indigo-600 transition"
               >
                 <CreditCard className="h-5 w-5" />
                 {sub.status === 'canceled' ? t('renew') : t('upgrade')}

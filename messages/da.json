@@ -147,8 +147,7 @@
     "noSamantekt": "Intet resumé endnu. Afslut sessionen for at lave resumé.",
     "ephemeralTitle": "Midlertidig session",
     "ephemeralInfo": "Resultater gemmes ikke i systemet, men er sendt på e-mail. Kopiér det du vil beholde, før du lukker vinduet.",
-    "noSamantektShort": "Intet resumé.",
-    "copied": "Kopieret!"
+    "noSamantektShort": "Intet resumé."
   },
   "subscription": {
     "title": "Abonnement",
@@ -236,10 +235,15 @@
       "lota_ljuka": "Session afsluttet",
       "lota_endurnefna": "Omdøb",
       "hljodskra_hlada": "Fil uploadet",
+      "skra_hlada": "Fil uploadet",
       "beinlina_hefja": "Direkte startet",
       "beinlina_vista": "Direkte gemt",
       "admin_breyta": "Administratorændring",
-      "askrift_ny": "Nyt abonnement"
+      "admin_uppfaera": "Administratorhandling",
+      "askrift_ny": "Nyt abonnement",
+      "askrift_stofna": "Nyt abonnement",
+      "skra_stort": "Stor fil uploadet",
+      "lota_eyda": "Session slettet"
     }
   },
   "contact": {

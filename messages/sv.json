@@ -147,8 +147,7 @@
     "noSamantekt": "Ingen sammanfattning ännu. Avsluta sessionen för att skapa sammanfattning.",
     "ephemeralTitle": "Tillfällig session",
     "ephemeralInfo": "Resultaten sparas inte i systemet men har skickats via e-post. Kopiera det du vill behålla innan du stänger fönstret.",
-    "noSamantektShort": "Ingen sammanfattning.",
-    "copied": "Kopierat!"
+    "noSamantektShort": "Ingen sammanfattning."
   },
   "subscription": {
     "title": "Prenumeration",
@@ -236,10 +235,15 @@
       "lota_ljuka": "Session avslutad",
       "lota_endurnefna": "Byt namn",
       "hljodskra_hlada": "Fil uppladdad",
+      "skra_hlada": "Fil uppladdad",
       "beinlina_hefja": "Direkt startad",
       "beinlina_vista": "Direkt sparad",
       "admin_breyta": "Administratörsändring",
-      "askrift_ny": "Ny prenumeration"
+      "admin_uppfaera": "Administratörsåtgärd",
+      "askrift_ny": "Ny prenumeration",
+      "askrift_stofna": "Ny prenumeration",
+      "skra_stort": "Stor fil uppladdad",
+      "lota_eyda": "Session raderad"
     }
   },
   "contact": {

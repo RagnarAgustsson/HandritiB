@@ -84,14 +84,22 @@ export default function HlaðaUppClient() {
     // Reyna að greina lengd hljóðskrár
     try {
       const url = URL.createObjectURL(f)
-      const audio = new Audio(url)
+      const audio = new Audio()
+      audio.preload = 'metadata'
       audio.addEventListener('loadedmetadata', () => {
         if (audio.duration && isFinite(audio.duration)) {
           setLengd(Math.round(audio.duration))
         }
+        audio.removeAttribute('src')
+        audio.load()
         URL.revokeObjectURL(url)
       })
-      audio.addEventListener('error', () => URL.revokeObjectURL(url))
+      audio.addEventListener('error', () => {
+        audio.removeAttribute('src')
+        audio.load()
+        URL.revokeObjectURL(url)
+      })
+      audio.src = url
     } catch {
       // Ef ekki tekst — fallback á 0, server áætlar úr orðafjölda
     }
@@ -174,8 +182,8 @@ export default function HlaðaUppClient() {
           if (!line.startsWith('data: ')) continue
           try {
             const data = JSON.parse(line.slice(6))
-            if (data.step === 'villa') throw new Error(data.villa)
-            if (data.step === 'lokið') {
+            if (data.step === 'villa' || data.step === 'error') throw new Error(data.villa)
+            if (data.step === 'lokið' || data.step === 'done') {
               sessionId = data.sessionId
               if (data.ephemeral) {
                 setEphResult({ transcript: data.transcript, yfirferd: data.yfirferd, samantekt: data.samantekt })
@@ -251,7 +259,7 @@ export default function HlaðaUppClient() {
                     onClick={() => setProfile(p)}
                     className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
                       profile === p
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-indigo-500 text-white'
                         : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                     }`}
                   >
@@ -266,7 +274,7 @@ export default function HlaðaUppClient() {
                 type="checkbox"
                 checked={tímabundið}
                 onChange={e => setTímabundið(e.target.checked)}
-                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-400"
               />
               <span className="text-sm text-zinc-400">{tr('ephemeral')}</span>
             </label>
@@ -288,7 +296,7 @@ export default function HlaðaUppClient() {
             <button
               onClick={senda}
               disabled={!skrá}
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-white font-semibold hover:bg-indigo-700 transition disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-white font-semibold hover:bg-indigo-600 transition disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <Upload className="h-5 w-5" />
               {t('submit')}

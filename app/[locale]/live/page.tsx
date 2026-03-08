@@ -34,7 +34,7 @@ export default async function BeinlinaPage({ params }: Props) {
             </p>
             <Link
               href="/pricing"
-              className="inline-block rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+              className="inline-block rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 transition-colors"
             >
               {t('viewPricing')}
             </Link>

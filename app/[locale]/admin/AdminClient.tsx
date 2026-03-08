@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Shield, Clock, Users, ChevronLeft, ChevronRight, Loader2, Search, UserPlus, Gift, MessageSquare, Radio, XCircle } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import { formatDate, formatDateTime } from '@/i18n/config'
 
 interface AuditEntry {
   id: string
@@ -201,7 +202,7 @@ export default function AdminClient() {
                       {log.map(entry => (
                         <tr key={entry.id} className="border-b border-zinc-800/50">
                           <td className="px-4 py-3 text-zinc-500 whitespace-nowrap text-xs">
-                            {new Date(entry.createdAt).toLocaleString('is-IS')}
+                            {formatDateTime(new Date(entry.createdAt))}
                           </td>
                           <td className="px-4 py-3 text-zinc-300 text-xs">{entry.email}</td>
                           <td className="px-4 py-3">
@@ -298,7 +299,7 @@ export default function AdminClient() {
                     <div>
                       <div className="text-zinc-100 text-sm">{u.email}</div>
                       <div className="flex items-center gap-3 text-xs text-zinc-500 mt-0.5">
-                        <span>{t('lastSeen', { date: new Date(u.lastSeen).toLocaleDateString('is-IS') })}</span>
+                        <span>{t('lastSeen', { date: formatDate(new Date(u.lastSeen)) })}</span>
                         {u.subscription && (
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
                             u.subscription.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' :
@@ -364,7 +365,7 @@ export default function AdminClient() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm text-zinc-100">{msg.email}</div>
                     <div className="text-xs text-zinc-500">
-                      {new Date(msg.createdAt).toLocaleString('is-IS')}
+                      {formatDateTime(new Date(msg.createdAt))}
                     </div>
                   </div>
                   <p className="text-sm text-zinc-400 whitespace-pre-wrap">{msg.message}</p>
@@ -393,7 +394,7 @@ export default function AdminClient() {
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="text-xs text-zinc-500">
-                        {new Date(s.createdAt).toLocaleString('is-IS')}
+                        {formatDateTime(new Date(s.createdAt))}
                       </div>
                       <button onClick={() => closeSessionAction(s.id)}
                         className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs bg-red-500/10 text-red-400 hover:bg-red-500/20 transition">

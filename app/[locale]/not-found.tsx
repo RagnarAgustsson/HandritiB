@@ -9,7 +9,7 @@ export default async function NotFound() {
       <h1 className="text-6xl font-bold text-zinc-800 mb-4">{t('notFoundTitle')}</h1>
       <h2 className="text-xl font-semibold text-zinc-100 mb-2">{t('notFoundMessage')}</h2>
       <p className="text-zinc-500 mb-8">{t('notFoundDesc')}</p>
-      <Link href="/" className="rounded-xl bg-indigo-600 px-5 py-2.5 text-white font-semibold hover:bg-indigo-700 transition">
+      <Link href="/" className="rounded-xl bg-indigo-500 px-5 py-2.5 text-white font-semibold hover:bg-indigo-600 transition">
         {t('goHome')}
       </Link>
     </div>

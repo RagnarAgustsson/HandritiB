@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { Link } from '@/i18n/navigation'
 import { Copy, Check, ArrowLeft, Pencil, Trash2 } from 'lucide-react'
 import { useRouter } from '@/i18n/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { formatDate } from '@/i18n/config'
 import { motion } from 'motion/react'
-import { toast } from 'sonner'
 import type { Session, Chunk, Note } from '@/lib/db/schema'
 
 interface Props {
@@ -16,14 +16,15 @@ interface Props {
 }
 
 function CopyButton({ text }: { text: string }) {
-  const t = useTranslations('results')
+  const [copied, setCopied] = useState(false)
   const copy = () => {
     navigator.clipboard.writeText(text)
-    toast.success(t('copied'))
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
   return (
     <button onClick={copy} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 transition-colors">
-      <Copy className="h-4 w-4" />
+      {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
     </button>
   )
 }
@@ -40,6 +41,7 @@ const tabs = ['yfirferd', 'uppskrift', 'samantekt'] as const
 
 export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
   const router = useRouter()
+  const locale = useLocale()
   const t = useTranslations('results')
   const ts = useTranslations('sessions')
   const tc = useTranslations('common')
@@ -112,7 +114,7 @@ export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
             </div>
           )}
           <div className="text-sm text-zinc-500 mt-1">
-            {tp(profileTranslationKey[session.profile] || session.profile)} · {new Date(session.createdAt).toLocaleDateString('is-IS')}
+            {tp(profileTranslationKey[session.profile] || session.profile)} · {formatDate(new Date(session.createdAt))}
           </div>
         </div>
 

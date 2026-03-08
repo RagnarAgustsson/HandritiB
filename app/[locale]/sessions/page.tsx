@@ -3,13 +3,10 @@ import { redirect, Link } from '@/i18n/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { getUserSessions } from '@/lib/db/sessions'
 import { Mic, ChevronRight } from 'lucide-react'
+import { formatDate } from '@/i18n/config'
 import FadeIn from '../../components/motion/FadeIn'
 import { StaggerContainer, StaggerItem } from '../../components/motion/StaggerList'
 import EyðaHnappur from './EyðaHnappur'
-
-const LOCALE_DATE: Record<string, string> = {
-  is: 'is-IS', nb: 'nb-NO', da: 'da-DK', sv: 'sv-SE',
-}
 
 const profileTranslationKey: Record<string, string> = {
   'fundur': 'fundur',
@@ -32,19 +29,19 @@ function relativeTime(date: Date, locale: string): string {
   const diffHrs = Math.floor(diffMs / 3_600_000)
   const diffDays = Math.floor(diffMs / 86_400_000)
 
-  const labels: Record<string, { now: string; min: string; hrs: string; days: string; day: string }> = {
-    is: { now: 'Rétt í þessu', min: 'mín síðan', hrs: 'klst síðan', days: 'dögum síðan', day: 'degi síðan' },
-    nb: { now: 'Akkurat nå', min: 'min siden', hrs: 'timer siden', days: 'dager siden', day: 'dag siden' },
-    da: { now: 'Lige nu', min: 'min siden', hrs: 'timer siden', days: 'dage siden', day: 'dag siden' },
-    sv: { now: 'Just nu', min: 'min sedan', hrs: 'timmar sedan', days: 'dagar sedan', day: 'dag sedan' },
+  const labels: Record<string, { now: string; min: string; hr: string; hrs: string; day: string; days: string }> = {
+    is: { now: 'Rétt í þessu', min: 'mín síðan', hr: 'klst síðan', hrs: 'klst síðan', day: 'degi síðan', days: 'dögum síðan' },
+    nb: { now: 'Akkurat nå', min: 'min siden', hr: 'time siden', hrs: 'timer siden', day: 'dag siden', days: 'dager siden' },
+    da: { now: 'Lige nu', min: 'min siden', hr: 'time siden', hrs: 'timer siden', day: 'dag siden', days: 'dage siden' },
+    sv: { now: 'Just nu', min: 'min sedan', hr: 'timme sedan', hrs: 'timmar sedan', day: 'dag sedan', days: 'dagar sedan' },
   }
   const l = labels[locale] || labels.is
 
   if (diffMin < 1) return l.now
   if (diffMin < 60) return `${diffMin} ${l.min}`
-  if (diffHrs < 24) return `${diffHrs} ${diffHrs === 1 ? l.day.replace('degi', 'klst') : l.hrs}`
+  if (diffHrs < 24) return `${diffHrs} ${diffHrs === 1 ? l.hr : l.hrs}`
   if (diffDays <= 7) return `${diffDays} ${diffDays === 1 ? l.day : l.days}`
-  return date.toLocaleDateString(LOCALE_DATE[locale] || 'is-IS')
+  return formatDate(date)
 }
 
 interface Props {

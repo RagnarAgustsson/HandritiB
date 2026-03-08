@@ -10,6 +10,12 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Override Tailwind v4 indigo (too dark) with brighter Tailwind v3 values */
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
 }
 
 html {
@@ -51,11 +57,6 @@ body::before {
   background: #3f3f46;
 }
 
-@keyframes waveform {
-  0% { height: 20%; }
-  100% { height: 100%; }
-}
-
 @keyframes sonar {
   0% { transform: scale(1); opacity: 0.5; }
   100% { transform: scale(2.5); opacity: 0; }
@@ -83,7 +84,7 @@ body::before {
   animation: glow-pulse 4s ease-in-out infinite;
 }
 
-/* Card glow on hover */
+/* Card glow on hover — centered radial highlight */
 .card-glow {
   position: relative;
   overflow: hidden;
@@ -94,7 +95,7 @@ body::before {
   inset: 0;
   opacity: 0;
   transition: opacity 0.3s ease;
-  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(99, 102, 241, 0.06), transparent 40%);
+  background: radial-gradient(600px circle at 50% 50%, rgba(99, 102, 241, 0.06), transparent 40%);
   pointer-events: none;
 }
 .card-glow:hover::after {

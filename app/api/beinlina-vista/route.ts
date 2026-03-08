@@ -9,7 +9,7 @@ import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile } from '@/lib/pipeline/validate'
 import type { Locale } from '@/i18n/config'
-import { locales, defaultLocale } from '@/i18n/config'
+import { locales, defaultLocale, formatDate } from '@/i18n/config'
 
 function validateLocale(input: unknown): Locale {
   if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
 
   const duration = Math.round(durationSeconds)
-  const sessionName = nafn || `Beinlína ${new Date().toLocaleDateString('is-IS')}`
+  const sessionName = nafn || `Beinlína ${formatDate(new Date())}`
   let sessionId: string | null = null
 
   if (!isEphemeral) {
