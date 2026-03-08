@@ -147,7 +147,8 @@
     "noSamantekt": "Ingen sammendrag ennå. Fullfør økten for å lage sammendrag.",
     "ephemeralTitle": "Midlertidig økt",
     "ephemeralInfo": "Resultater lagres ikke i systemet, men er sendt på e-post. Kopier det du vil beholde før du lukker vinduet.",
-    "noSamantektShort": "Ingen sammendrag."
+    "noSamantektShort": "Ingen sammendrag.",
+    "copied": "Kopiert!"
   },
   "subscription": {
     "title": "Abonnement",

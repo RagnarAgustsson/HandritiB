@@ -147,7 +147,8 @@
     "noSamantekt": "Intet resumé endnu. Afslut sessionen for at lave resumé.",
     "ephemeralTitle": "Midlertidig session",
     "ephemeralInfo": "Resultater gemmes ikke i systemet, men er sendt på e-mail. Kopiér det du vil beholde, før du lukker vinduet.",
-    "noSamantektShort": "Intet resumé."
+    "noSamantektShort": "Intet resumé.",
+    "copied": "Kopieret!"
   },
   "subscription": {
     "title": "Abonnement",

@@ -18,7 +18,7 @@ export default async function Home({ params }: Props) {
       <div className="w-full max-w-lg text-center">
         <FadeIn direction="none" duration={0.7}>
           <div className="hero-glow mb-3">
-            <h1 className="text-5xl font-bold tracking-tight text-zinc-100">Handriti</h1>
+            <h1 className="text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-violet-200 bg-clip-text text-transparent">Handriti</h1>
           </div>
         </FadeIn>
 

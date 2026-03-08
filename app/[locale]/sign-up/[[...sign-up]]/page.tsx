@@ -10,7 +10,10 @@ export default async function NýskráningPage({ params }: Props) {
   setRequestLocale(locale)
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center">
+    <div className="relative flex min-h-[80vh] items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="h-[400px] w-[400px] rounded-full bg-indigo-500/[0.07] blur-[100px]" />
+      </div>
       <SignUp />
     </div>
   )

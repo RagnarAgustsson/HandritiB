@@ -5,6 +5,7 @@ import { Mic, Square, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { useRouter } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import EphemeralResults from '../../components/EphemeralResults'
+import AudioVisualizer from '../../components/motion/AudioVisualizer'
 
 type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst' | 'stjórnarfundur'
 type Staða = 'biðröð' | 'taka-upp' | 'hleður' | 'lokið' | 'villa'
@@ -40,6 +41,8 @@ export default function TakaUppClient() {
   const [tímabundið, setTímabundið] = useState(false)
   const [ephResult, setEphResult] = useState<{ transcript: string; yfirferd: string; samantekt: string } | null>(null)
 
+  const [activeStream, setActiveStream] = useState<MediaStream | null>(null)
+
   const recorderRef = useRef<MediaRecorder | null>(null)
   const seqRef = useRef(0)
   const eventSourceRef = useRef<EventSource | null>(null)
@@ -61,6 +64,7 @@ export default function TakaUppClient() {
     ephNotesRef.current = []
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    setActiveStream(stream)
 
     let sid: string | null = null
     if (!tímabundið) {
@@ -148,6 +152,7 @@ export default function TakaUppClient() {
 
   async function stöðvaUpptöku() {
     setStaða('hleður')
+    setActiveStream(null)
     const recorder = recorderRef.current
     if (recorder) {
       clearInterval((recorder as any)._interval)
@@ -269,29 +274,21 @@ export default function TakaUppClient() {
 
         {staða === 'taka-upp' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-[3px] h-5">
-                  {[0.45, 0.65, 0.4, 0.7, 0.5].map((dur, i) => (
-                    <span
-                      key={i}
-                      className="w-[3px] rounded-full bg-red-500"
-                      style={{
-                        animation: `waveform ${dur}s ease-in-out infinite alternate`,
-                        animationDelay: `${i * 0.12}s`,
-                      }}
-                    />
-                  ))}
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
+                  <span className="font-semibold text-zinc-100">{t('recording')}</span>
                 </div>
-                <span className="font-semibold text-zinc-100">{t('recording')}</span>
+                <button
+                  onClick={stöðvaUpptöku}
+                  className="flex items-center gap-2 rounded-xl bg-zinc-800 px-5 py-2.5 text-zinc-100 font-semibold hover:bg-zinc-700 transition-colors"
+                >
+                  <Square className="h-4 w-4" />
+                  {t('stop')}
+                </button>
               </div>
-              <button
-                onClick={stöðvaUpptöku}
-                className="flex items-center gap-2 rounded-xl bg-zinc-800 px-5 py-2.5 text-zinc-100 font-semibold hover:bg-zinc-700 transition"
-              >
-                <Square className="h-4 w-4" />
-                {t('stop')}
-              </button>
+              <AudioVisualizer stream={activeStream} barCount={40} />
             </div>
 
             {villa && (

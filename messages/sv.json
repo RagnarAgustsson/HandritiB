@@ -147,7 +147,8 @@
     "noSamantekt": "Ingen sammanfattning ännu. Avsluta sessionen för att skapa sammanfattning.",
     "ephemeralTitle": "Tillfällig session",
     "ephemeralInfo": "Resultaten sparas inte i systemet men har skickats via e-post. Kopiera det du vill behålla innan du stänger fönstret.",
-    "noSamantektShort": "Ingen sammanfattning."
+    "noSamantektShort": "Ingen sammanfattning.",
+    "copied": "Kopierat!"
   },
   "subscription": {
     "title": "Prenumeration",

@@ -147,7 +147,8 @@
     "noSamantekt": "Engin samantekt enn. Ljúktu lotunni til að búa til lokasamantekt.",
     "ephemeralTitle": "Tímabundin lota",
     "ephemeralInfo": "Niðurstöður eru ekki vistaðar í kerfinu en hafa verið sendar í tölvupósti. Afritaðu það sem þú vilt halda áður en þú lokar glugganum.",
-    "noSamantektShort": "Engin samantekt."
+    "noSamantektShort": "Engin samantekt.",
+    "copied": "Afritað!"
   },
   "subscription": {
     "title": "Áskrift",

@@ -25,6 +25,28 @@ const statusKey: Record<string, string> = {
   villa: 'statusError',
 }
 
+function relativeTime(date: Date, locale: string): string {
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMin = Math.floor(diffMs / 60_000)
+  const diffHrs = Math.floor(diffMs / 3_600_000)
+  const diffDays = Math.floor(diffMs / 86_400_000)
+
+  const labels: Record<string, { now: string; min: string; hrs: string; days: string; day: string }> = {
+    is: { now: 'Rétt í þessu', min: 'mín síðan', hrs: 'klst síðan', days: 'dögum síðan', day: 'degi síðan' },
+    nb: { now: 'Akkurat nå', min: 'min siden', hrs: 'timer siden', days: 'dager siden', day: 'dag siden' },
+    da: { now: 'Lige nu', min: 'min siden', hrs: 'timer siden', days: 'dage siden', day: 'dag siden' },
+    sv: { now: 'Just nu', min: 'min sedan', hrs: 'timmar sedan', days: 'dagar sedan', day: 'dag sedan' },
+  }
+  const l = labels[locale] || labels.is
+
+  if (diffMin < 1) return l.now
+  if (diffMin < 60) return `${diffMin} ${l.min}`
+  if (diffHrs < 24) return `${diffHrs} ${diffHrs === 1 ? l.day.replace('degi', 'klst') : l.hrs}`
+  if (diffDays <= 7) return `${diffDays} ${diffDays === 1 ? l.day : l.days}`
+  return date.toLocaleDateString(LOCALE_DATE[locale] || 'is-IS')
+}
+
 interface Props {
   params: Promise<{ locale: string }>
 }
@@ -46,15 +68,18 @@ export default async function LoturPage({ params }: Props) {
         <FadeIn>
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-2xl font-bold text-zinc-100">{t('title')}</h1>
-            <Link href="/" className="text-sm text-indigo-400 hover:text-indigo-300 transition">{t('newSession')}</Link>
+            <Link href="/" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">{t('newSession')}</Link>
           </div>
         </FadeIn>
 
         {lotur.length === 0 ? (
           <FadeIn delay={0.1}>
-            <div className="text-center py-16 text-zinc-500">
+            <div className="text-center py-20 text-zinc-500">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-zinc-700 bg-zinc-900/50">
+                <Mic className="h-7 w-7 text-zinc-600" />
+              </div>
               <p className="text-lg mb-2">{t('empty')}</p>
-              <Link href="/" className="text-indigo-400 hover:text-indigo-300 text-sm transition">{t('emptyLink')}</Link>
+              <Link href="/" className="text-indigo-400 hover:text-indigo-300 text-sm transition-colors">{t('emptyLink')}</Link>
             </div>
           </FadeIn>
         ) : (
@@ -69,7 +94,7 @@ export default async function LoturPage({ params }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-zinc-100 truncate">{lot.name}</div>
                     <div className="text-sm text-zinc-500">
-                      {tp(profileTranslationKey[lot.profile] || lot.profile)} · {new Date(lot.createdAt).toLocaleDateString(LOCALE_DATE[locale] || 'is-IS')}
+                      {tp(profileTranslationKey[lot.profile] || lot.profile)} · {relativeTime(new Date(lot.createdAt), locale)}
                     </div>
                   </div>
                   <div className="relative z-10 flex items-center gap-2">
