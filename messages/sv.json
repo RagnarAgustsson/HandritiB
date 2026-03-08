@@ -26,6 +26,12 @@
     "terms": "Villkor",
     "privacy": "Integritetspolicy"
   },
+  "metadata": {
+    "title": "Handriti — AI-transkription och sammanfattning",
+    "description": "Spela in eller ladda upp ljudfil och få automatisk transkription och sammanfattning. Möten, föreläsningar och intervjuer — klart på några minuter.",
+    "ogTitle": "Handriti",
+    "ogDescription": "Automatisk ljudtranskription och sammanfattning med AI."
+  },
   "home": {
     "tagline": "Transkriberar och sammanfattar på svenska",
     "record": "Spela in",

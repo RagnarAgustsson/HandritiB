@@ -26,6 +26,12 @@
     "terms": "Vilkår",
     "privacy": "Privatlivspolitik"
   },
+  "metadata": {
+    "title": "Handriti — AI-transskription og opsummering",
+    "description": "Optag eller upload lydfil og få automatisk transskription og resumé. Møder, forelæsninger og interviews — færdigt på få minutter.",
+    "ogTitle": "Handriti",
+    "ogDescription": "Automatisk lydtransskription og opsummering med AI."
+  },
   "home": {
     "tagline": "Transskriberer og opsummerer på dansk",
     "record": "Optag",

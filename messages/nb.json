@@ -26,6 +26,12 @@
     "terms": "Vilkår",
     "privacy": "Personvern"
   },
+  "metadata": {
+    "title": "Handriti — AI-transkripsjon og oppsummering",
+    "description": "Ta opp eller last opp lydfil og få automatisk transkripsjon og sammendrag. Møter, forelesninger og intervjuer — ferdig på noen minutter.",
+    "ogTitle": "Handriti",
+    "ogDescription": "Automatisk lydtranskripsjon og oppsummering med AI."
+  },
   "home": {
     "tagline": "Transkriberer og oppsummerer på norsk",
     "record": "Ta opp",

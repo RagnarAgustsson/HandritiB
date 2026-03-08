@@ -26,6 +26,12 @@
     "terms": "Skilmálar",
     "privacy": "Persónuvernd"
   },
+  "metadata": {
+    "title": "Handriti — Sjálfvirk hljóðritun og samantekt",
+    "description": "Taktu upp hljóð eða hladdu upp skrá og fáðu yfirferð og samantekt á íslensku. Fundir, fyrirlestrar og viðtöl — unnið á nokkrum mínútum.",
+    "ogTitle": "Handriti",
+    "ogDescription": "Sjálfvirk hljóðritun og samantekt á íslensku."
+  },
   "home": {
     "tagline": "Hljóðritar og tekur saman á íslensku",
     "record": "Taka upp",
