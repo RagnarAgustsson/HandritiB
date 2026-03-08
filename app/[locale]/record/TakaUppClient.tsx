@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { formatDate } from '@/i18n/config'
 import EphemeralResults from '../../components/EphemeralResults'
 import AudioVisualizer from '../../components/motion/AudioVisualizer'
+import FormattedText from '../../components/FormattedText'
 
 type Profile = 'fundur' | 'fyrirlestur' | 'viðtal' | 'frjálst' | 'stjórnarfundur'
 type Staða = 'biðröð' | 'taka-upp' | 'hleður' | 'lokið' | 'villa'
@@ -49,6 +50,7 @@ export default function TakaUppClient() {
   const ephTranscriptsRef = useRef<string[]>([])
   const ephNotesRef = useRef<string[]>([])
   const sessionIdRef = useRef<string | null>(null)
+  const pendingSendRef = useRef<Promise<void>>(Promise.resolve())
 
   function profileLabel(p: Profile) {
     return tp(profileTranslationKey[p] || p)
@@ -97,11 +99,14 @@ export default function TakaUppClient() {
       if (e.data.size > 0) chunksRef.current.push(e.data)
     }
 
-    recorder.onstop = async () => {
+    recorder.onstop = () => {
       if (chunksRef.current.length === 0) return
       const blob = new Blob(chunksRef.current, { type: mimeType })
       chunksRef.current = []
-      await sendHluti(blob, sid, seqRef.current++)
+      const seq = seqRef.current++
+      pendingSendRef.current = pendingSendRef.current
+        .then(() => sendHluti(blob, sid, seq))
+        .catch(() => {})
     }
 
     recorder.start()
@@ -162,8 +167,9 @@ export default function TakaUppClient() {
     }
     eventSourceRef.current?.close()
 
-    // Wait for last chunk to finish sending
-    await new Promise(r => setTimeout(r, 2000))
+    // Give onstop event time to fire, then wait for transcription to complete
+    await new Promise(r => setTimeout(r, 300))
+    await pendingSendRef.current
 
     const sid = sessionIdRef.current
 
@@ -304,7 +310,7 @@ export default function TakaUppClient() {
             {samantekt && (
               <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
                 <div className="text-xs font-semibold uppercase tracking-wide text-zinc-600 mb-2">{t('overview')}</div>
-                <p className="text-sm text-zinc-300 whitespace-pre-wrap">{samantekt}</p>
+                <FormattedText text={samantekt} className="text-sm text-zinc-300 whitespace-pre-wrap" />
               </div>
             )}
 
@@ -313,7 +319,7 @@ export default function TakaUppClient() {
                 <div className="text-xs font-semibold uppercase tracking-wide text-zinc-600">{t('notes')}</div>
                 {glósur.map((g, i) => (
                   <div key={i} className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-                    <p className="text-sm text-zinc-300 whitespace-pre-wrap">{g}</p>
+                    <FormattedText text={g} className="text-sm text-zinc-300 whitespace-pre-wrap" />
                   </div>
                 ))}
               </div>

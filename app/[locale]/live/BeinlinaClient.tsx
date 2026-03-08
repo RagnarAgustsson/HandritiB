@@ -5,6 +5,7 @@ import { Zap, Square, Loader2, AlertCircle, ArrowRight } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import EphemeralResults from '../../components/EphemeralResults'
+import FormattedText from '../../components/FormattedText'
 
 type Staða = 'biðröð' | 'tengist' | 'í-gangi' | 'vistar' | 'lokið' | 'villa'
 type Message = { type: 'user' | 'handriti'; text: string }
@@ -278,9 +279,11 @@ export default function BeinlinaClient() {
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-zinc-600 mb-3">{t('summary')}</div>
               <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
-                <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">
-                  {summary || t('noSummary')}
-                </p>
+                {summary ? (
+                  <FormattedText text={summary} className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed" />
+                ) : (
+                  <p className="text-sm text-zinc-300">{t('noSummary')}</p>
+                )}
               </div>
             </div>
 

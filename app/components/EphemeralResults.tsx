@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Copy, Check, ShieldAlert } from 'lucide-react'
 import { useTranslations } from 'next-intl'
+import FormattedText from './FormattedText'
 
 interface Props {
   transcript: string
@@ -59,7 +60,7 @@ export default function EphemeralResults({ transcript, yfirferd, samantekt }: Pr
           yfirferd ? (
             <>
               <div className="flex justify-end mb-2"><CopyButton text={yfirferd} /></div>
-              <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{yfirferd}</p>
+              <FormattedText text={yfirferd} className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed" />
             </>
           ) : <p className="text-zinc-500 text-sm">{t('noYfirferd')}</p>
         )}
@@ -75,7 +76,7 @@ export default function EphemeralResults({ transcript, yfirferd, samantekt }: Pr
           samantekt ? (
             <>
               <div className="flex justify-end mb-2"><CopyButton text={samantekt} /></div>
-              <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{samantekt}</p>
+              <FormattedText text={samantekt} className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed" />
             </>
           ) : <p className="text-zinc-500 text-sm">{t('noSamantektShort')}</p>
         )}

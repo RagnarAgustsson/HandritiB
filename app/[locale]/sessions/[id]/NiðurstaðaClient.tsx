@@ -7,6 +7,7 @@ import { useRouter } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { formatDate } from '@/i18n/config'
 import { motion } from 'motion/react'
+import FormattedText from '../../../components/FormattedText'
 import type { Session, Chunk, Note } from '@/lib/db/schema'
 
 interface Props {
@@ -157,7 +158,7 @@ export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
                   <div className="flex justify-end mb-2">
                     <CopyButton text={allGlósur} />
                   </div>
-                  <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{allGlósur}</p>
+                  <FormattedText text={allGlósur} className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed" />
                 </>
               )}
             </div>
@@ -187,7 +188,7 @@ export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
                   <div className="flex justify-end mb-2">
                     <CopyButton text={session.finalSummary} />
                   </div>
-                  <p className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed">{session.finalSummary}</p>
+                  <FormattedText text={session.finalSummary} className="text-sm text-zinc-300 whitespace-pre-wrap leading-relaxed" />
                 </>
               ) : (
                 <p className="text-zinc-500 text-sm">{t('noSamantekt')}</p>
