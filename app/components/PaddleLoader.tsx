@@ -39,7 +39,7 @@ function loadScript(): Promise<Paddle> {
 }
 
 export async function getPaddle(): Promise<Paddle | undefined> {
-  if (paddleInstance?.Initialized) return paddleInstance
+  if (paddleInstance) return paddleInstance
 
   if (!paddlePromise) {
     const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
@@ -53,17 +53,17 @@ export async function getPaddle(): Promise<Paddle | undefined> {
       )
 
       if (!paddle.Initialized) {
-        paddle.Initialize({
-          token,
-          eventCallback: (event) => {
-            eventListeners.forEach(fn => fn(event))
-          },
-        })
-      }
-
-      // Verify initialization actually worked
-      if (!paddle.Initialized) {
-        throw new Error('Paddle.Initialize() did not set Initialized flag')
+        try {
+          paddle.Initialize({
+            token,
+            eventCallback: (event) => {
+              eventListeners.forEach(fn => fn(event))
+            },
+          })
+        } catch (initErr) {
+          // ProfitWell/Retain may crash but checkout config might still be set
+          console.warn('[Paddle] Initialize threw (ProfitWell?), continuing anyway:', initErr)
+        }
       }
 
       return paddle
