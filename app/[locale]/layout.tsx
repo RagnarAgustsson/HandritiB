@@ -9,6 +9,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import Nav from '../components/Nav'
 import Footer from '../components/Footer'
 import IOSInstallPrompt from '../components/IOSInstallPrompt'
+import PaddleLoader from '../components/PaddleLoader'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
 import type { Locale } from '@/i18n/config'
@@ -103,6 +104,7 @@ export default async function LocaleLayout({
           />
           <NextIntlClientProvider messages={messages}>
             <Nav />
+            <PaddleLoader />
             <main className="flex-1">{children}</main>
             <Footer />
             <IOSInstallPrompt />
