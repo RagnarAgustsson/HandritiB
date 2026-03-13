@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import type { Paddle } from '@paddle/paddle-js'
+import { initializePaddle, type Paddle } from '@paddle/paddle-js'
 
 let paddleInstance: Paddle | null = null
 let paddlePromise: Promise<Paddle | undefined> | null = null
@@ -14,28 +14,17 @@ export function onPaddleEvent(handler: PaddleEventHandler) {
   return () => { eventListeners.delete(handler) }
 }
 
-function loadScript(): Promise<Paddle> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined') { reject(new Error('SSR')); return }
-    if (window.Paddle) { resolve(window.Paddle); return }
-
-    const existing = document.querySelector('script[src*="paddle.com/paddle"]')
-    if (existing) {
-      existing.addEventListener('load', () => {
-        window.Paddle ? resolve(window.Paddle) : reject(new Error('Paddle not on window'))
-      })
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js'
-    script.async = true
-    script.onload = () => {
-      window.Paddle ? resolve(window.Paddle) : reject(new Error('Paddle not on window'))
-    }
-    script.onerror = () => reject(new Error('Failed to load Paddle CDN script'))
-    document.head.appendChild(script)
-  })
+/**
+ * Stub window.profitwell before Paddle CDN loads so that
+ * Paddle.Initialize doesn't crash on ProfitWell/Retain setup.
+ * Retain is half-enabled in the Paddle dashboard and causes
+ * Q.defaults().profitwellSnippetBase to be undefined.
+ */
+function stubProfitWell() {
+  if (typeof window === 'undefined') return
+  if (!(window as any).profitwell) {
+    (window as any).profitwell = function () { /* no-op stub */ }
+  }
 }
 
 export async function getPaddle(): Promise<Paddle | undefined> {
@@ -46,25 +35,15 @@ export async function getPaddle(): Promise<Paddle | undefined> {
     if (!token) return undefined
 
     paddlePromise = (async () => {
-      const paddle = await loadScript()
+      stubProfitWell()
 
-      paddle.Environment.set(
-        (process.env.NEXT_PUBLIC_PADDLE_ENV as 'sandbox' | 'production') || 'sandbox'
-      )
-
-      if (!paddle.Initialized) {
-        try {
-          paddle.Initialize({
-            token,
-            eventCallback: (event) => {
-              eventListeners.forEach(fn => fn(event))
-            },
-          })
-        } catch (initErr) {
-          // ProfitWell/Retain may crash but checkout config might still be set
-          console.warn('[Paddle] Initialize threw (ProfitWell?), continuing anyway:', initErr)
-        }
-      }
+      const paddle = await initializePaddle({
+        token,
+        environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as 'sandbox' | 'production') || 'sandbox',
+        eventCallback: (event) => {
+          eventListeners.forEach(fn => fn(event))
+        },
+      })
 
       return paddle
     })()
