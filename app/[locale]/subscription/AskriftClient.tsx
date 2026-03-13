@@ -48,7 +48,6 @@ export default function AskriftClient() {
   const [data, setData] = useState<AskriftResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [checkoutError, setCheckoutError] = useState('')
-  const [checkoutOpen, setCheckoutOpen] = useState(false)
   const paddleRef = useRef<Paddle | null>(null)
 
   useEffect(() => {
@@ -64,9 +63,6 @@ export default function AskriftClient() {
     }).catch(err => console.error('[Paddle] init failed:', err))
 
     return onPaddleEvent((event) => {
-      if (event.name === 'checkout.closed' || event.name === 'checkout.completed') {
-        setCheckoutOpen(false)
-      }
       if (event.name === 'checkout.completed') {
         window.location.href = `/${locale}/subscription?success=true`
       }
@@ -87,29 +83,21 @@ export default function AskriftClient() {
     }
     if (!paddle) { setCheckoutError(t('paymentUnavailable')); return }
 
-    // Show container first, then open checkout after DOM update
-    setCheckoutOpen(true)
-    requestAnimationFrame(() => {
-      try {
-        paddle.Checkout.open({
-          items: [{ priceId, quantity: 1 }],
-          customData: { userId: user.id },
-          customer: { email: user.emailAddresses[0]?.emailAddress || '' },
-          settings: {
-            theme: 'dark',
-            displayMode: 'inline',
-            frameTarget: 'paddle-checkout',
-            frameStyle: 'width: 100%; min-width: 312px; background-color: transparent; border: none;',
-            frameInitialHeight: 450,
-            successUrl: `${window.location.origin}/${locale}/subscription?success=true`,
-          },
-        })
-      } catch (err) {
-        console.error('[Paddle] Checkout.open failed:', err)
-        setCheckoutOpen(false)
-        setCheckoutError(t('paymentNotReady'))
-      }
-    })
+    try {
+      paddle.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customData: { userId: user.id },
+        customer: { email: user.emailAddresses[0]?.emailAddress || '' },
+        settings: {
+          theme: 'dark',
+          displayMode: 'overlay',
+          successUrl: `${window.location.origin}/${locale}/subscription?success=true`,
+        },
+      })
+    } catch (err) {
+      console.error('[Paddle] Checkout.open failed:', err)
+      setCheckoutError(t('paymentNotReady'))
+    }
   }
 
   if (loading) {
@@ -243,12 +231,6 @@ export default function AskriftClient() {
             )}
           </div>
 
-          {/* Paddle inline checkout container */}
-          {checkoutOpen && (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-1 mt-4">
-              <div className="paddle-checkout" />
-            </div>
-          )}
         </div>
       </div>
     </div>

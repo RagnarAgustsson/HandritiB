@@ -30,9 +30,16 @@ export async function getPaddle(): Promise<Paddle | undefined> {
     })
   }
 
-  const instance = await paddlePromise
-  if (instance) paddleInstance = instance
-  return instance
+  try {
+    const instance = await paddlePromise
+    if (instance) paddleInstance = instance
+    return instance
+  } catch (err) {
+    // Reset so next call retries instead of returning cached rejection
+    paddlePromise = null
+    console.error('[Paddle] init failed:', err)
+    return undefined
+  }
 }
 
 export default function PaddleLoader() {
