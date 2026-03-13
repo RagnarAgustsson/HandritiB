@@ -22,6 +22,9 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
   const locale = body.locale || 'is'
 
+  const keyPreview = `${apiKey.slice(0, 8)}...${apiKey.slice(-4)} (len=${apiKey.length})`
+  console.log('[Paddle] Creating transaction:', { priceId, userId, keyPreview })
+
   try {
     const res = await fetch(`${PADDLE_API}/transactions`, {
       method: 'POST',
