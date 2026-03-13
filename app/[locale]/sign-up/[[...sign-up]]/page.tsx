@@ -14,7 +14,7 @@ export default async function NýskráningPage({ params }: Props) {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="h-[400px] w-[400px] rounded-full bg-indigo-500/[0.07] blur-[100px]" />
       </div>
-      <SignUp />
+      <SignUp fallbackRedirectUrl={`/${locale}`} />
     </div>
   )
 }

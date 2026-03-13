@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { initializePaddle, type Paddle } from '@paddle/paddle-js'
+import type { Paddle } from '@paddle/paddle-js'
 
 let paddleInstance: Paddle | null = null
 let paddlePromise: Promise<Paddle | undefined> | null = null
@@ -14,20 +14,60 @@ export function onPaddleEvent(handler: PaddleEventHandler) {
   return () => { eventListeners.delete(handler) }
 }
 
+function loadScript(): Promise<Paddle> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') { reject(new Error('SSR')); return }
+    if (window.Paddle) { resolve(window.Paddle); return }
+
+    const existing = document.querySelector('script[src*="paddle.com/paddle"]')
+    if (existing) {
+      existing.addEventListener('load', () => {
+        window.Paddle ? resolve(window.Paddle) : reject(new Error('Paddle not on window'))
+      })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js'
+    script.async = true
+    script.onload = () => {
+      window.Paddle ? resolve(window.Paddle) : reject(new Error('Paddle not on window'))
+    }
+    script.onerror = () => reject(new Error('Failed to load Paddle CDN script'))
+    document.head.appendChild(script)
+  })
+}
+
 export async function getPaddle(): Promise<Paddle | undefined> {
-  if (paddleInstance) return paddleInstance
+  if (paddleInstance?.Initialized) return paddleInstance
 
   if (!paddlePromise) {
     const token = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
     if (!token) return undefined
 
-    paddlePromise = initializePaddle({
-      token,
-      environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as 'sandbox' | 'production') || 'sandbox',
-      eventCallback: (event) => {
-        eventListeners.forEach(fn => fn(event))
-      },
-    })
+    paddlePromise = (async () => {
+      const paddle = await loadScript()
+
+      paddle.Environment.set(
+        (process.env.NEXT_PUBLIC_PADDLE_ENV as 'sandbox' | 'production') || 'sandbox'
+      )
+
+      if (!paddle.Initialized) {
+        paddle.Initialize({
+          token,
+          eventCallback: (event) => {
+            eventListeners.forEach(fn => fn(event))
+          },
+        })
+      }
+
+      // Verify initialization actually worked
+      if (!paddle.Initialized) {
+        throw new Error('Paddle.Initialize() did not set Initialized flag')
+      }
+
+      return paddle
+    })()
   }
 
   try {
@@ -35,7 +75,6 @@ export async function getPaddle(): Promise<Paddle | undefined> {
     if (instance) paddleInstance = instance
     return instance
   } catch (err) {
-    // Reset so next call retries instead of returning cached rejection
     paddlePromise = null
     console.error('[Paddle] init failed:', err)
     return undefined
