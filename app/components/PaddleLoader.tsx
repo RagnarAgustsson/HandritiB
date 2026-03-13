@@ -6,6 +6,14 @@ import { initializePaddle, type Paddle } from '@paddle/paddle-js'
 let paddleInstance: Paddle | null = null
 let paddlePromise: Promise<Paddle | undefined> | null = null
 
+type PaddleEventHandler = (event: { name?: string }) => void
+const eventListeners = new Set<PaddleEventHandler>()
+
+export function onPaddleEvent(handler: PaddleEventHandler) {
+  eventListeners.add(handler)
+  return () => { eventListeners.delete(handler) }
+}
+
 export async function getPaddle(): Promise<Paddle | undefined> {
   if (paddleInstance) return paddleInstance
 
@@ -16,6 +24,9 @@ export async function getPaddle(): Promise<Paddle | undefined> {
     paddlePromise = initializePaddle({
       token,
       environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as 'sandbox' | 'production') || 'sandbox',
+      eventCallback: (event) => {
+        eventListeners.forEach(fn => fn(event))
+      },
     })
   }
 

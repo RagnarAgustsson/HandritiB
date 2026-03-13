@@ -5,7 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import { Loader2, CreditCard, Clock, Zap, CheckCircle, AlertCircle } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { formatDate } from '@/i18n/config'
-import { getPaddle } from '@/app/components/PaddleLoader'
+import { getPaddle, onPaddleEvent } from '@/app/components/PaddleLoader'
 import type { Paddle } from '@paddle/paddle-js'
 
 interface SubscriptionData {
@@ -48,6 +48,7 @@ export default function AskriftClient() {
   const [data, setData] = useState<AskriftResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [checkoutError, setCheckoutError] = useState('')
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
   const paddleRef = useRef<Paddle | null>(null)
 
   useEffect(() => {
@@ -57,32 +58,58 @@ export default function AskriftClient() {
       .catch(() => setLoading(false))
 
     // Pre-load Paddle so it's ready on click (avoids popup blocker)
-    getPaddle().then(p => { if (p) paddleRef.current = p })
-  }, [])
+    getPaddle().then(p => {
+      if (p) paddleRef.current = p
+      else console.warn('[Paddle] initializePaddle resolved without instance')
+    }).catch(err => console.error('[Paddle] init failed:', err))
 
-  function openCheckout() {
+    return onPaddleEvent((event) => {
+      if (event.name === 'checkout.closed' || event.name === 'checkout.completed') {
+        setCheckoutOpen(false)
+      }
+      if (event.name === 'checkout.completed') {
+        window.location.href = `/${locale}/subscription?success=true`
+      }
+    })
+  }, [locale])
+
+  async function openCheckout() {
     setCheckoutError('')
     const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID
     if (!priceId) { setCheckoutError(t('priceError')); return }
     if (!user) { setCheckoutError(t('userNotLoaded')); return }
 
-    const paddle = paddleRef.current
+    // Try to get Paddle on-demand if pre-load didn't work
+    let paddle = paddleRef.current
+    if (!paddle) {
+      paddle = (await getPaddle()) ?? null
+      if (paddle) paddleRef.current = paddle
+    }
     if (!paddle) { setCheckoutError(t('paymentUnavailable')); return }
 
-    try {
-      paddle.Checkout.open({
-        items: [{ priceId, quantity: 1 }],
-        customData: { userId: user.id },
-        customer: { email: user.emailAddresses[0]?.emailAddress || '' },
-        settings: {
-          theme: 'dark',
-          displayMode: 'overlay',
-          successUrl: `${window.location.origin}/subscription?success=true`,
-        },
-      })
-    } catch {
-      setCheckoutError(t('paymentNotReady'))
-    }
+    // Show container first, then open checkout after DOM update
+    setCheckoutOpen(true)
+    requestAnimationFrame(() => {
+      try {
+        paddle.Checkout.open({
+          items: [{ priceId, quantity: 1 }],
+          customData: { userId: user.id },
+          customer: { email: user.emailAddresses[0]?.emailAddress || '' },
+          settings: {
+            theme: 'dark',
+            displayMode: 'inline',
+            frameTarget: 'paddle-checkout',
+            frameStyle: 'width: 100%; min-width: 312px; background-color: transparent; border: none;',
+            frameInitialHeight: 450,
+            successUrl: `${window.location.origin}/${locale}/subscription?success=true`,
+          },
+        })
+      } catch (err) {
+        console.error('[Paddle] Checkout.open failed:', err)
+        setCheckoutOpen(false)
+        setCheckoutError(t('paymentNotReady'))
+      }
+    })
   }
 
   if (loading) {
@@ -215,6 +242,13 @@ export default function AskriftClient() {
               </p>
             )}
           </div>
+
+          {/* Paddle inline checkout container */}
+          {checkoutOpen && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-1 mt-4">
+              <div className="paddle-checkout" />
+            </div>
+          )}
         </div>
       </div>
     </div>
