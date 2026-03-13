@@ -8,7 +8,6 @@ import { routing } from '@/i18n/routing'
 import { Geist, Geist_Mono } from 'next/font/google'
 import Nav from '../components/Nav'
 import Footer from '../components/Footer'
-import PaddleLoader from '../components/PaddleLoader'
 import IOSInstallPrompt from '../components/IOSInstallPrompt'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
@@ -104,7 +103,6 @@ export default async function LocaleLayout({
           />
           <NextIntlClientProvider messages={messages}>
             <Nav />
-            <PaddleLoader />
             <main className="flex-1">{children}</main>
             <Footer />
             <IOSInstallPrompt />
