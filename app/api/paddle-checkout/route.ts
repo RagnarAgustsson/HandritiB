@@ -40,7 +40,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ checkoutUrl })
   } catch (err: any) {
-    console.error('[Paddle] Transaction create failed:', err)
+    console.error('[Paddle] Transaction create failed:', {
+      message: err?.message,
+      code: err?.code,
+      status: err?.statusCode,
+      type: err?.type,
+      detail: err?.detail,
+      raw: JSON.stringify(err, null, 2),
+    })
     return NextResponse.json(
       { error: err?.message || 'Failed to create checkout' },
       { status: 500 }
