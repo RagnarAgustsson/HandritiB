@@ -38,11 +38,9 @@ export async function POST(request: NextRequest) {
     const json = await res.json()
 
     if (!res.ok) {
-      console.error('[Paddle] API error:', res.status, JSON.stringify(json))
-      return NextResponse.json(
-        { error: json?.error?.detail || 'Paddle API error' },
-        { status: 500 }
-      )
+      const errMsg = json?.error?.detail || json?.error?.message || JSON.stringify(json?.error) || 'Paddle API error'
+      console.error('[Paddle] API error:', res.status, errMsg, JSON.stringify(json))
+      return NextResponse.json({ error: errMsg }, { status: 500 })
     }
 
     let checkoutUrl = json.data?.checkout?.url
