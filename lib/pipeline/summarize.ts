@@ -24,9 +24,10 @@ export async function generateNotes(
   transcript: string,
   profile: PromptProfile,
   previousTranscripts: string[],
-  locale: Locale = 'is'
+  locale: Locale = 'is',
+  userContext?: string
 ): Promise<NotesResult> {
-  const systemPrompt = buildNotesSystemPrompt(profile, locale)
+  const systemPrompt = buildNotesSystemPrompt(profile, locale, userContext)
 
   // Locale-aware section marker
   const sectionMarker: Record<Locale, string> = {
@@ -70,9 +71,10 @@ export async function generateNotes(
 export async function generateFinalSummary(
   allTranscripts: string[],
   profile: PromptProfile,
-  locale: Locale = 'is'
+  locale: Locale = 'is',
+  userContext?: string
 ): Promise<string> {
-  const systemPrompt = buildFinalSummarySystemPrompt(profile, locale)
+  const systemPrompt = buildFinalSummarySystemPrompt(profile, locale, userContext)
 
   // Gögnin fara í user message
   const cleanTranscripts = sanitizeTranscriptParts(allTranscripts)

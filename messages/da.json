@@ -64,7 +64,10 @@
     "overview": "Oversigt",
     "sendError": "Fejl ved afsendelse af lyd. Prøver igen...",
     "summarizing": "Laver resumé...",
-    "finishing": "Færdiggør resumé..."
+    "finishing": "Færdiggør resumé...",
+    "contextToggle": "Tilføj dagsorden eller kontekst",
+    "contextPlaceholder": "Indsæt dagsorden, deltagerliste eller anden kontekst, der hjælper med gennemgangen...",
+    "contextHint": "Dette hjælper systemet med bedre at forstå, hvad der foregår."
   },
   "upload": {
     "title": "Upload fil",

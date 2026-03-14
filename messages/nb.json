@@ -64,7 +64,10 @@
     "overview": "Oversikt",
     "sendError": "Feil ved sending av lyd. Prøver igjen...",
     "summarizing": "Lager sammendrag...",
-    "finishing": "Fullfører sammendrag..."
+    "finishing": "Fullfører sammendrag...",
+    "contextToggle": "Legg til agenda eller kontekst",
+    "contextPlaceholder": "Legg inn agenda, deltakerliste eller annen kontekst som hjelper med gjennomgangen...",
+    "contextHint": "Dette hjelper systemet å bedre forstå hva som foregår."
   },
   "upload": {
     "title": "Last opp fil",

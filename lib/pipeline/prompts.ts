@@ -21,8 +21,8 @@ interface LocalePrompts {
   LANGUAGE_INSTRUCTIONS: string
   profileContext: Record<string, string>
   buildTranscriptPrompt: () => string
-  buildNotesSystemPrompt: (profile: string) => string
-  buildFinalSummarySystemPrompt: (profile: string) => string
+  buildNotesSystemPrompt: (profile: string, userContext?: string) => string
+  buildFinalSummarySystemPrompt: (profile: string, userContext?: string) => string
   BEINLINA_INSTRUCTIONS: string
 }
 
@@ -61,12 +61,12 @@ export function buildTranscriptPrompt(locale: Locale = 'is'): string {
   return getModule(locale).buildTranscriptPrompt()
 }
 
-export function buildNotesSystemPrompt(profile: PromptProfile, locale: Locale = 'is'): string {
-  return getModule(locale).buildNotesSystemPrompt(profile)
+export function buildNotesSystemPrompt(profile: PromptProfile, locale: Locale = 'is', userContext?: string): string {
+  return getModule(locale).buildNotesSystemPrompt(profile, userContext)
 }
 
-export function buildFinalSummarySystemPrompt(profile: PromptProfile, locale: Locale = 'is'): string {
-  return getModule(locale).buildFinalSummarySystemPrompt(profile)
+export function buildFinalSummarySystemPrompt(profile: PromptProfile, locale: Locale = 'is', userContext?: string): string {
+  return getModule(locale).buildFinalSummarySystemPrompt(profile, userContext)
 }
 
 export function getBeinlinaInstructions(locale: Locale = 'is'): string {

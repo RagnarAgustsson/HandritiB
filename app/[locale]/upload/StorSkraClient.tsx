@@ -3,7 +3,7 @@
 
 import { useState, useRef } from 'react'
 import { put } from '@vercel/blob/client'
-import { Upload, Loader2, AlertCircle, CheckCircle, FlaskConical } from 'lucide-react'
+import { Upload, Loader2, AlertCircle, CheckCircle, FlaskConical, ChevronDown, ChevronRight } from 'lucide-react'
 import { useRouter } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import EphemeralResults from '../../components/EphemeralResults'
@@ -39,6 +39,8 @@ export default function StorSkraClient() {
   const [framvinda, setFramvinda] = useState(0)
   const [skref, setSkref] = useState('')
   const [tímabundið, setTímabundið] = useState(false)
+  const [sýnaSamhengi, setSýnaSamhengi] = useState(false)
+  const [samhengi, setSamhengi] = useState('')
   const [ephResult, setEphResult] = useState<{ transcript: string; yfirferd: string; samantekt: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -172,6 +174,7 @@ export default function StorSkraClient() {
           profile,
           nafn: nafn || skrá.name.replace(/\.[^/.]+$/, ''),
           locale,
+          ...(samhengi && { userContext: samhengi }),
           ...(tímabundið && { transcripts: collectedTranscripts, durations: collectedDurations }),
         }),
       })
@@ -304,6 +307,30 @@ export default function StorSkraClient() {
               placeholder={t('namePlaceholder')}
               className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+          </div>
+
+          <div>
+            <button
+              type="button"
+              onClick={() => setSýnaSamhengi(!sýnaSamhengi)}
+              className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition"
+            >
+              {sýnaSamhengi ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {tr('contextToggle')}
+            </button>
+            {sýnaSamhengi && (
+              <div className="mt-2 space-y-1.5">
+                <textarea
+                  value={samhengi}
+                  onChange={e => setSamhengi(e.target.value)}
+                  placeholder={tr('contextPlaceholder')}
+                  rows={5}
+                  maxLength={2000}
+                  className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                />
+                <p className="text-xs text-zinc-600">{tr('contextHint')}</p>
+              </div>
+            )}
           </div>
 
           <label className="flex items-center gap-3 cursor-pointer">

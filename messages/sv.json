@@ -64,7 +64,10 @@
     "overview": "Översikt",
     "sendError": "Fel vid sändning av ljud. Försöker igen...",
     "summarizing": "Skapar sammanfattning...",
-    "finishing": "Slutför sammanfattning..."
+    "finishing": "Slutför sammanfattning...",
+    "contextToggle": "Lägg till dagordning eller kontext",
+    "contextPlaceholder": "Ange dagordning, deltagarlista eller annan kontext som hjälper vid genomgången...",
+    "contextHint": "Detta hjälper systemet att bättre förstå vad som pågår."
   },
   "upload": {
     "title": "Ladda upp fil",

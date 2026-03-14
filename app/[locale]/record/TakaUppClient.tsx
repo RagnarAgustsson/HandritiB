@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Mic, Square, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { Mic, Square, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronRight } from 'lucide-react'
 import { useRouter } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { formatDate } from '@/i18n/config'
@@ -39,11 +39,14 @@ export default function TakaUppClient() {
   const [villa, setVilla] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [tímabundið, setTímabundið] = useState(false)
+  const [sýnaSamhengi, setSýnaSamhengi] = useState(false)
+  const [samhengi, setSamhengi] = useState('')
   const [ephResult, setEphResult] = useState<{ transcript: string; yfirferd: string; samantekt: string } | null>(null)
 
   const [activeStream, setActiveStream] = useState<MediaStream | null>(null)
 
   const recorderRef = useRef<MediaRecorder | null>(null)
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null)
   const seqRef = useRef(0)
   const eventSourceRef = useRef<EventSource | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -64,6 +67,13 @@ export default function TakaUppClient() {
     seqRef.current = 0
     ephTranscriptsRef.current = []
     ephNotesRef.current = []
+
+    // Halda skjánum vakandi meðan á upptöku stendur
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await navigator.wakeLock.request('screen')
+      }
+    } catch { /* Wake Lock ekki stutt eða hafnað */ }
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
     setActiveStream(stream)
@@ -135,6 +145,7 @@ export default function TakaUppClient() {
     fd.append('seconds', String(HLUTI_TIMI_MS / 1000))
 
     fd.append('locale', locale)
+    if (samhengi) fd.append('userContext', samhengi)
     if (tímabundið) {
       fd.append('ephemeral', 'true')
       fd.append('profile', profile)
@@ -159,6 +170,11 @@ export default function TakaUppClient() {
   async function stöðvaUpptöku() {
     setStaða('hleður')
     setActiveStream(null)
+
+    // Sleppa wake lock
+    wakeLockRef.current?.release().catch(() => {})
+    wakeLockRef.current = null
+
     const recorder = recorderRef.current
     if (recorder) {
       clearInterval((recorder as any)._interval)
@@ -190,6 +206,7 @@ export default function TakaUppClient() {
             durationSeconds: ephTranscriptsRef.current.length * (HLUTI_TIMI_MS / 1000),
             ephemeral: true,
             locale,
+            ...(samhengi && { userContext: samhengi }),
           }),
         })
         const data = await res.json()
@@ -214,10 +231,21 @@ export default function TakaUppClient() {
     }
   }
 
+  // Re-acquire wake lock when page becomes visible again (OS releases it on tab switch)
   useEffect(() => {
+    async function handleVisibilityChange() {
+      if (document.visibilityState === 'visible' && recorderRef.current?.state === 'recording' && 'wakeLock' in navigator) {
+        try {
+          wakeLockRef.current = await navigator.wakeLock.request('screen')
+        } catch { /* ignored */ }
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       recorderRef.current?.stream?.getTracks().forEach(t => t.stop())
       eventSourceRef.current?.close()
+      wakeLockRef.current?.release().catch(() => {})
     }
   }, [])
 
@@ -256,6 +284,30 @@ export default function TakaUppClient() {
                 placeholder={`${profileLabel(profile)} ${formatDate(new Date())}`}
                 className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
+            </div>
+
+            <div>
+              <button
+                type="button"
+                onClick={() => setSýnaSamhengi(!sýnaSamhengi)}
+                className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 transition"
+              >
+                {sýnaSamhengi ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                {t('contextToggle')}
+              </button>
+              {sýnaSamhengi && (
+                <div className="mt-2 space-y-1.5">
+                  <textarea
+                    value={samhengi}
+                    onChange={e => setSamhengi(e.target.value)}
+                    placeholder={t('contextPlaceholder')}
+                    rows={5}
+                    maxLength={2000}
+                    className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                  />
+                  <p className="text-xs text-zinc-600">{t('contextHint')}</p>
+                </div>
+              )}
             </div>
 
             <label className="flex items-center gap-3 cursor-pointer">

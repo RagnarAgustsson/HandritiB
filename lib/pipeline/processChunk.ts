@@ -14,6 +14,7 @@ interface ProcessChunkInput {
   ephemeral?: boolean
   previousTranscripts?: string[]
   locale?: Locale
+  userContext?: string
 }
 
 interface ProcessChunkResult {
@@ -24,7 +25,7 @@ interface ProcessChunkResult {
 }
 
 export async function processChunk(input: ProcessChunkInput): Promise<ProcessChunkResult> {
-  const { sessionId, seq, audioBlob, profile, durationSeconds = 0, filename, ephemeral = false, previousTranscripts: suppliedContext, locale = 'is' } = input
+  const { sessionId, seq, audioBlob, profile, durationSeconds = 0, filename, ephemeral = false, previousTranscripts: suppliedContext, locale = 'is', userContext } = input
 
   // 1. Transcribe
   const transcript = await transcribeAudio(audioBlob, filename, locale)
@@ -46,7 +47,7 @@ export async function processChunk(input: ProcessChunkInput): Promise<ProcessChu
   }
 
   // Generate notes
-  const { notes, rollingSummary } = await generateNotes(transcript, profile, previousTranscripts, locale)
+  const { notes, rollingSummary } = await generateNotes(transcript, profile, previousTranscripts, locale, userContext)
 
   if (!ephemeral && sessionId) {
     await createNote({ sessionId, chunkId: chunkId || undefined, content: notes, rollingSummary })

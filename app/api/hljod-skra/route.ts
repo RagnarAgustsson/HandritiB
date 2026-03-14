@@ -8,7 +8,7 @@ import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
-import { validateProfile, validateBlobUrl, safeErrorMessage } from '@/lib/pipeline/validate'
+import { validateProfile, validateBlobUrl, safeErrorMessage, sanitizeUserContext } from '@/lib/pipeline/validate'
 import type { Locale } from '@/i18n/config'
 import { locales, defaultLocale } from '@/i18n/config'
 
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
   const fileSize = parseInt((body.fileSize as string) || '0')
   const ephemeral = body.ephemeral === true
   const locale = validateLocale(body.locale)
+  const userContext = sanitizeUserContext(body.userContext) || undefined
 
   if (!blobUrl || !validateBlobUrl(blobUrl)) {
     return NextResponse.json({ villa: 'Ógild skrá' }, { status: 400 })
@@ -116,14 +117,14 @@ export async function POST(request: NextRequest) {
 
         // 4. Generate notes (yfirferð)
         send({ step: 'generating_notes', progress: 55 })
-        const { notes } = await generateNotes(transcript, profile, [], locale)
+        const { notes } = await generateNotes(transcript, profile, [], locale, userContext)
         if (!ephemeral && sessionId) {
           await createNote({ sessionId, content: notes })
         }
 
         // 5. Generate final summary
         send({ step: 'summarizing', progress: 75 })
-        const finalSummary = await generateFinalSummary([transcript], profile, locale)
+        const finalSummary = await generateFinalSummary([transcript], profile, locale, userContext)
         if (!ephemeral && sessionId) {
           await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds: durationSeconds })
         }

@@ -7,7 +7,7 @@ import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { getSubscription, createTrialSubscription } from '@/lib/db/subscriptions'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
-import { validateProfile } from '@/lib/pipeline/validate'
+import { validateProfile, sanitizeUserContext } from '@/lib/pipeline/validate'
 import type { Locale } from '@/i18n/config'
 import { locales, defaultLocale, formatDate } from '@/i18n/config'
 
@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
   const { transcript, profile: rawProfile, nafn, durationSeconds = 0, ephemeral: isEphemeral = false } = body
   const profile = validateProfile(rawProfile)
   const locale = validateLocale(body.locale)
+  const userContext = sanitizeUserContext(body.userContext) || undefined
 
   if (!transcript || typeof transcript !== 'string') {
     return NextResponse.json({ villa: 'Vantar uppskrift' }, { status: 400 })
@@ -54,8 +55,8 @@ export async function POST(request: NextRequest) {
     await createChunk({ sessionId, seq: 0, transcript, durationSeconds: duration })
   }
 
-  const { notes: yfirferd } = await generateNotes(transcript, profile, [], locale)
-  const finalSummary = await generateFinalSummary([transcript], profile, locale)
+  const { notes: yfirferd } = await generateNotes(transcript, profile, [], locale, userContext)
+  const finalSummary = await generateFinalSummary([transcript], profile, locale, userContext)
 
   if (!isEphemeral && sessionId) {
     await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds: duration })

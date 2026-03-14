@@ -64,7 +64,10 @@
     "overview": "Yfirlit",
     "sendError": "Villa við sendingu hljóðs. Reynir aftur...",
     "summarizing": "Bý til samantekt...",
-    "finishing": "Geng frá samantekt..."
+    "finishing": "Geng frá samantekt...",
+    "contextToggle": "Bæta við dagskrá eða samhengi",
+    "contextPlaceholder": "Settu inn dagskrá, þátttakendalista eða annað samhengi sem hjálpar við yfirferðina...",
+    "contextHint": "Þetta hjálpar kerfinu að skilja betur hvað er í gangi."
   },
   "upload": {
     "title": "Hlaða upp skrá",

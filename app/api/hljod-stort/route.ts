@@ -9,7 +9,7 @@ import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
-import { validateProfile, validateBlobUrl, safeErrorMessage } from '@/lib/pipeline/validate'
+import { validateProfile, validateBlobUrl, safeErrorMessage, sanitizeUserContext } from '@/lib/pipeline/validate'
 import type { Locale } from '@/i18n/config'
 import { locales, defaultLocale } from '@/i18n/config'
 
@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
     const clientTranscripts = (body.transcripts as string[]) || []
     const clientDurations = (body.durations as number[]) || []
     const locale = validateLocale(body.locale)
+    const userContext = sanitizeUserContext(body.userContext) || undefined
 
     if (!ephemeral && !sessionId) {
       return NextResponse.json({ villa: 'Vantar sessionId' }, { status: 400 })
@@ -189,7 +190,7 @@ export async function POST(request: NextRequest) {
           const allNotes: string[] = []
           for (let i = 0; i < allTranscripts.length; i++) {
             send({ step: 'generating_notes', progress: 30 + Math.round((i / allTranscripts.length) * 25), current: i + 1, total: allTranscripts.length })
-            const { notes, rollingSummary } = await generateNotes(allTranscripts[i], sessionProfile, previousTranscripts, sessionLocale)
+            const { notes, rollingSummary } = await generateNotes(allTranscripts[i], sessionProfile, previousTranscripts, sessionLocale, userContext)
             if (!ephemeral && sessionId) {
               await createNote({ sessionId, content: notes, rollingSummary })
             }
@@ -199,7 +200,7 @@ export async function POST(request: NextRequest) {
 
           // Generate final summary
           send({ step: 'summarizing', progress: 60 })
-          const finalSummary = await generateFinalSummary(allTranscripts, sessionProfile, sessionLocale)
+          const finalSummary = await generateFinalSummary(allTranscripts, sessionProfile, sessionLocale, userContext)
           if (!ephemeral && sessionId) {
             await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds })
           }

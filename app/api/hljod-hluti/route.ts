@@ -4,7 +4,7 @@ import { processChunk } from '@/lib/pipeline/processChunk'
 import { getSession } from '@/lib/db/sessions'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
-import { validateProfile, safeErrorMessage } from '@/lib/pipeline/validate'
+import { validateProfile, safeErrorMessage, sanitizeUserContext } from '@/lib/pipeline/validate'
 import type { Locale } from '@/i18n/config'
 import { locales, defaultLocale } from '@/i18n/config'
 
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
   const ephemeral = formData.get('ephemeral') === 'true'
   const profile = validateProfile(formData.get('profile'))
   const locale = validateLocale(formData.get('locale'))
+  const userContext = sanitizeUserContext(formData.get('userContext')) || undefined
 
   if (!hljod || (!ephemeral && !sessionId)) {
     return NextResponse.json({ villa: 'Vantar hljóð eða lotunúmer' }, { status: 400 })
@@ -70,6 +71,7 @@ export async function POST(request: NextRequest) {
       ephemeral,
       previousTranscripts,
       locale: sessionLocale,
+      userContext,
     })
 
     // Skrá notkun
