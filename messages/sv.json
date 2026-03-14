@@ -179,6 +179,15 @@
     "planPro": "Professionell",
     "planProDesc": "1 000 minuter per månad",
     "month": "mån",
+    "minutesPerMonth": "min/mån",
+    "upgradeToPro": "Uppgradera till Professionell (19€/mån)",
+    "downgradeToBasic": "Byt till Bas (9€/mån)",
+    "cancelSubscription": "Säg upp prenumeration",
+    "cancelConfirm": "Är du säker? Prenumerationen gäller resten av perioden men förnyas inte.",
+    "cancelYes": "Ja, säg upp",
+    "cancelNo": "Avbryt",
+    "updateError": "Fel vid ändring av prenumeration. Försök igen.",
+    "cancelError": "Fel vid uppsägning. Försök igen.",
     "statusLabels": {
       "trialing": "Provperiod",
       "active": "Aktiv prenumeration",
@@ -261,6 +270,8 @@
       "admin_uppfaera": "Administratörsåtgärd",
       "askrift_ny": "Ny prenumeration",
       "askrift_stofna": "Ny prenumeration",
+      "askrift_uppfaera": "Prenumeration ändrad",
+      "askrift_segjaupp": "Prenumeration uppsagd",
       "skra_stort": "Stor fil uppladdad",
       "lota_eyda": "Session raderad"
     }

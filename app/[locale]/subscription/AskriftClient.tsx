@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { Loader2, CreditCard, Clock, Zap, CheckCircle, AlertCircle } from 'lucide-react'
+import { Loader2, CreditCard, Clock, Zap, CheckCircle, AlertCircle, ArrowUpCircle, XCircle } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 import { formatDate } from '@/i18n/config'
 import { getPaddle, onPaddleEvent } from '@/app/components/PaddleLoader'
@@ -50,7 +50,9 @@ export default function AskriftClient() {
   const tc = useTranslations('common')
   const [data, setData] = useState<AskriftResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  const [checkoutError, setCheckoutError] = useState('')
+  const [actionError, setActionError] = useState('')
+  const [actionLoading, setActionLoading] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const paddleRef = useRef<Paddle | null>(null)
 
   useEffect(() => {
@@ -71,16 +73,16 @@ export default function AskriftClient() {
   }, [locale])
 
   async function openCheckout(priceId: string) {
-    setCheckoutError('')
-    if (!priceId) { setCheckoutError(t('priceError')); return }
-    if (!user) { setCheckoutError(t('userNotLoaded')); return }
+    setActionError('')
+    if (!priceId) { setActionError(t('priceError')); return }
+    if (!user) { setActionError(t('userNotLoaded')); return }
 
     let paddle = paddleRef.current
     if (!paddle) {
       paddle = (await getPaddle()) ?? null
       if (paddle) paddleRef.current = paddle
     }
-    if (!paddle) { setCheckoutError(t('paymentUnavailable')); return }
+    if (!paddle) { setActionError(t('paymentUnavailable')); return }
 
     try {
       paddle.Checkout.open({
@@ -96,7 +98,41 @@ export default function AskriftClient() {
       })
     } catch (err) {
       console.error('[Paddle] Checkout.open failed:', err)
-      setCheckoutError(t('paymentNotReady'))
+      setActionError(t('paymentNotReady'))
+    }
+  }
+
+  async function changePlan(priceId: string) {
+    setActionError('')
+    setActionLoading(true)
+    try {
+      const res = await fetch('/api/askrift/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update', priceId }),
+      })
+      if (!res.ok) throw new Error()
+      window.location.reload()
+    } catch {
+      setActionError(t('updateError'))
+      setActionLoading(false)
+    }
+  }
+
+  async function cancelSubscription() {
+    setActionError('')
+    setActionLoading(true)
+    try {
+      const res = await fetch('/api/askrift/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'cancel' }),
+      })
+      if (!res.ok) throw new Error()
+      window.location.reload()
+    } catch {
+      setActionError(t('cancelError'))
+      setActionLoading(false)
     }
   }
 
@@ -121,7 +157,10 @@ export default function AskriftClient() {
   const pct = Math.min(usage.percentUsed, 100)
   const isBlocked = pct >= 100
   const hasSearchParam = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('success')
-  const showPlans = sub.status === 'trialing' || sub.status === 'canceled' || !sub.paddleSubscriptionId
+  const noSubscription = sub.status === 'trialing' || sub.status === 'canceled' || !sub.paddleSubscriptionId
+  const isBasic = sub.planId === PRICE_ID_BASIC
+  const isPro = sub.planId === PRICE_ID_PRO
+  const isActive = sub.status === 'active' && sub.paddleSubscriptionId
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -147,6 +186,12 @@ export default function AskriftClient() {
                 {statusLabel}
               </span>
             </div>
+
+            {isActive && (
+              <p className="text-sm text-zinc-300 mb-2">
+                {isBasic ? t('planBasic') : isPro ? t('planPro') : t('planBasic')} — {sub.minutesLimit} {t('minutesPerMonth')}
+              </p>
+            )}
 
             {(hasFreeAccess || isAdmin) && (
               <div className="flex items-center gap-2 text-sm text-emerald-400 mb-3">
@@ -207,15 +252,16 @@ export default function AskriftClient() {
             </div>
           )}
 
-          {/* Velja áskrift */}
-          {checkoutError && (
+          {/* Villa */}
+          {actionError && (
             <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-400">
               <AlertCircle className="h-4 w-4 shrink-0" />
-              {checkoutError}
+              {actionError}
             </div>
           )}
 
-          {showPlans && (
+          {/* Velja áskrift — ef ekki í áskrift */}
+          {noSubscription && (
             <div className="grid gap-3 sm:grid-cols-2 pt-2">
               <button
                 onClick={() => openCheckout(PRICE_ID_BASIC)}
@@ -236,10 +282,60 @@ export default function AskriftClient() {
             </div>
           )}
 
-          {sub.paddleSubscriptionId && sub.status === 'active' && (
-            <p className="text-sm text-zinc-500 text-center pt-2">
-              {t('manageNote')}
-            </p>
+          {/* Breyta áskrift — ef í áskrift */}
+          {isActive && (
+            <div className="space-y-3 pt-2">
+              {isBasic && (
+                <button
+                  onClick={() => changePlan(PRICE_ID_PRO)}
+                  disabled={actionLoading}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-indigo-500 px-6 py-3 text-white font-semibold hover:bg-indigo-600 transition disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUpCircle className="h-5 w-5" />}
+                  {t('upgradeToPro')}
+                </button>
+              )}
+
+              {isPro && (
+                <button
+                  onClick={() => changePlan(PRICE_ID_BASIC)}
+                  disabled={actionLoading}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl border border-zinc-700 px-6 py-3 text-zinc-300 font-semibold hover:bg-zinc-800 transition disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  {t('downgradeToBasic')}
+                </button>
+              )}
+
+              {!showCancelConfirm ? (
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="flex items-center justify-center gap-2 w-full rounded-xl px-6 py-2.5 text-sm text-zinc-500 hover:text-red-400 transition"
+                >
+                  {t('cancelSubscription')}
+                </button>
+              ) : (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
+                  <p className="text-sm text-zinc-300 mb-3">{t('cancelConfirm')}</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={cancelSubscription}
+                      disabled={actionLoading}
+                      className="flex items-center gap-2 rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 transition disabled:opacity-50"
+                    >
+                      {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+                      {t('cancelYes')}
+                    </button>
+                    <button
+                      onClick={() => setShowCancelConfirm(false)}
+                      className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-400 hover:bg-zinc-800 transition"
+                    >
+                      {t('cancelNo')}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

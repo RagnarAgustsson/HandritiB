@@ -179,6 +179,15 @@
     "planPro": "Profesjonell",
     "planProDesc": "1 000 minutter per måned",
     "month": "mnd",
+    "minutesPerMonth": "min/mnd",
+    "upgradeToPro": "Oppgrader til Profesjonell (19€/mnd)",
+    "downgradeToBasic": "Endre til Basis (9€/mnd)",
+    "cancelSubscription": "Si opp abonnement",
+    "cancelConfirm": "Er du sikker? Abonnementet gjelder ut perioden, men fornyes ikke.",
+    "cancelYes": "Ja, si opp",
+    "cancelNo": "Avbryt",
+    "updateError": "Feil ved endring av abonnement. Prøv igjen.",
+    "cancelError": "Feil ved oppsigelse. Prøv igjen.",
     "statusLabels": {
       "trialing": "Prøveperiode",
       "active": "Aktivt abonnement",
@@ -261,6 +270,8 @@
       "admin_uppfaera": "Administratorhandling",
       "askrift_ny": "Nytt abonnement",
       "askrift_stofna": "Nytt abonnement",
+      "askrift_uppfaera": "Abonnement endret",
+      "askrift_segjaupp": "Abonnement sagt opp",
       "skra_stort": "Stor fil lastet opp",
       "lota_eyda": "Økt slettet"
     }

@@ -179,6 +179,15 @@
     "planPro": "Atvinna",
     "planProDesc": "1.000 mínútur á mánuði",
     "month": "mán",
+    "minutesPerMonth": "mín/mán",
+    "upgradeToPro": "Uppfæra í Atvinna (19€/mán)",
+    "downgradeToBasic": "Breyta í Grunn (9€/mán)",
+    "cancelSubscription": "Segja upp áskrift",
+    "cancelConfirm": "Ertu viss? Áskriftin gildir út tímabilið en endurnýjast ekki.",
+    "cancelYes": "Já, segja upp",
+    "cancelNo": "Hætta við",
+    "updateError": "Villa við að breyta áskrift. Reyndu aftur.",
+    "cancelError": "Villa við að segja upp. Reyndu aftur.",
     "statusLabels": {
       "trialing": "Prufutímabil",
       "active": "Virk áskrift",
@@ -261,6 +270,8 @@
       "admin_uppfaera": "Stjórnandaaðgerð",
       "askrift_ny": "Ný áskrift",
       "askrift_stofna": "Ný áskrift",
+      "askrift_uppfaera": "Áskrift breytt",
+      "askrift_segjaupp": "Áskrift sagt upp",
       "skra_stort": "Stór skrá hlaðin upp",
       "lota_eyda": "Lotu eytt"
     }
