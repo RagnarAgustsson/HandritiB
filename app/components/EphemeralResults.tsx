@@ -25,9 +25,15 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
+// Flip to true to show the raw transcript tab again
+const SHOW_TRANSCRIPT_TAB = false
+
+const allTabs = ['yfirferd', 'uppskrift', 'samantekt'] as const
+const visibleTabs = allTabs.filter(t => SHOW_TRANSCRIPT_TAB || t !== 'uppskrift')
+
 export default function EphemeralResults({ transcript, yfirferd, samantekt }: Props) {
   const t = useTranslations('results')
-  const [flipi, setFlipi] = useState<'yfirferd' | 'uppskrift' | 'samantekt'>('samantekt')
+  const [flipi, setFlipi] = useState<(typeof allTabs)[number]>('samantekt')
 
   return (
     <div className="space-y-4">
@@ -42,7 +48,7 @@ export default function EphemeralResults({ transcript, yfirferd, samantekt }: Pr
       </div>
 
       <div className="flex gap-1 bg-zinc-900 rounded-xl p-1 border border-zinc-800">
-        {(['yfirferd', 'uppskrift', 'samantekt'] as const).map(f => (
+        {visibleTabs.map(f => (
           <button
             key={f}
             onClick={() => setFlipi(f)}

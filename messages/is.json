@@ -109,7 +109,7 @@
   },
   "live": {
     "title": "Beinlína",
-    "instruction": "Handriti hlustir í þögn og skráir samtalið. Segðu \"Halló Handriti\" til að tala við það:",
+    "instruction": "Handriti hlustar í þögn og skráir samtalið. Segðu \"Halló Handriti\" til að tala við það:",
     "exampleAsk": "\"Halló Handriti, hvað segir þú um X?\"",
     "exampleAskDesc": "Handriti svarar spurningunni með samhengi samtalsins í huga",
     "exampleStop": "\"Takk Handriti\"",
@@ -274,7 +274,7 @@
       "askrift_ny": "Ný áskrift",
       "askrift_stofna": "Ný áskrift",
       "askrift_uppfaera": "Áskrift breytt",
-      "askrift_segjaupp": "Áskrift sagt upp",
+      "askrift_segjaupp": "Áskrift sögð upp",
       "skra_stort": "Stór skrá hlaðin upp",
       "lota_eyda": "Lotu eytt"
     }

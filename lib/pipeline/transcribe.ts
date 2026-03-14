@@ -10,7 +10,7 @@ const FALLBACK_MODEL = 'whisper-1'
 // ── Per-locale transcription prompts ─────────────────────────────
 
 const ISLENSKA_PROMPT = `Þetta er íslenskt tal. Skráðu nákvæmlega það sem sagt er á vandaðri íslensku.
-Notaðu rétta stafsetningu, greinarmerk og fallbeygingu.
+Notaðu rétta stafsetningu, greinarmerki og fallbeygingu.
 Leiðréttu talmálsvillur en breyttu ekki merkingu eða orðavali.
 Íslenskar orðmyndir: þ, ð, æ, ö, á, é, í, ó, ú, ý.`
 

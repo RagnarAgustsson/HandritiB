@@ -38,7 +38,11 @@ const profileTranslationKey: Record<string, string> = {
   'stjórnarfundur': 'stjornarfundur',
 }
 
-const tabs = ['yfirferd', 'uppskrift', 'samantekt'] as const
+// Flip to true to show the raw transcript tab again
+const SHOW_TRANSCRIPT_TAB = false
+
+const allTabs = ['yfirferd', 'uppskrift', 'samantekt'] as const
+const tabs = allTabs.filter(t => SHOW_TRANSCRIPT_TAB || t !== 'uppskrift')
 
 export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
   const router = useRouter()
@@ -47,7 +51,7 @@ export default function NiðurstaðaClient({ session, chunks, notes }: Props) {
   const ts = useTranslations('sessions')
   const tc = useTranslations('common')
   const tp = useTranslations('profiles')
-  const [flipi, setFlipi] = useState<'yfirferd' | 'uppskrift' | 'samantekt'>('yfirferd')
+  const [flipi, setFlipi] = useState<(typeof allTabs)[number]>('yfirferd')
   const [nafn, setNafn] = useState(session.name)
   const [endurnefna, setEndurnefna] = useState(false)
   const [nýttNafn, setNýttNafn] = useState(session.name)
