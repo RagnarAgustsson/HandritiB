@@ -220,7 +220,7 @@ export default function AskriftClient() {
           </div>
 
           {/* Notkun */}
-          {!hasFreeAccess && !isAdmin && (
+          {(
             <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5">
               <div className="flex items-center gap-3 mb-4">
                 <Clock className="h-5 w-5 text-zinc-400" />

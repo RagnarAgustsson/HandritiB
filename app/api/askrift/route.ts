@@ -17,7 +17,11 @@ export async function GET() {
   let sub = await getSubscription(userId)
   if (!sub) sub = await createTrialSubscription(userId)
 
+  const effectiveLimit = (admin || freeAccess) ? 10000 : sub.minutesLimit
   const usage = await getUserUsageSummary(userId)
+  const limitSeconds = effectiveLimit * 60
+  const usedSeconds = usage.usedSeconds
+  const remainingSeconds = Math.max(0, limitSeconds - usedSeconds)
 
   return NextResponse.json({
     subscription: {
@@ -27,14 +31,14 @@ export async function GET() {
       currentPeriodEnd: sub.currentPeriodEnd,
       trialEndsAt: sub.trialEndsAt,
       canceledAt: sub.canceledAt,
-      minutesLimit: sub.minutesLimit,
+      minutesLimit: effectiveLimit,
       paddleSubscriptionId: sub.paddleSubscriptionId,
     },
     usage: {
-      usedMinutes: Math.round(usage.usedSeconds / 60),
-      limitMinutes: Math.round(usage.limitSeconds / 60),
-      remainingMinutes: Math.round(usage.remainingSeconds / 60),
-      percentUsed: Math.round(usage.percentUsed),
+      usedMinutes: Math.round(usedSeconds / 60),
+      limitMinutes: effectiveLimit,
+      remainingMinutes: Math.round(remainingSeconds / 60),
+      percentUsed: limitSeconds > 0 ? Math.round((usedSeconds / limitSeconds) * 100) : 0,
     },
     isAdmin: admin,
     hasFreeAccess: freeAccess,
