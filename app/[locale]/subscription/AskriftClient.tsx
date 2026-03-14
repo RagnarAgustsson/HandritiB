@@ -88,6 +88,7 @@ export default function AskriftClient() {
         settings: {
           theme: 'dark',
           displayMode: 'overlay',
+          locale: locale === 'nb' ? 'no' : locale,
           successUrl: `${window.location.origin}/${locale}/subscription?success=true`,
         },
       })

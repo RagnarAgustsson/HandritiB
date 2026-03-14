@@ -89,12 +89,12 @@ export default async function VerdskraPage({ params }: Props) {
                   </li>
                 ))}
               </ul>
-              <button
-                disabled
-                className="block w-full text-center rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white opacity-50 cursor-not-allowed"
+              <Link
+                href="/subscription"
+                className="block w-full text-center rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-600 transition"
               >
-                {t('comingSoon')}
-              </button>
+                {t('subButton')}
+              </Link>
             </div>
           </AnimatedCard>
         </div>
