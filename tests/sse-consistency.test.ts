@@ -13,8 +13,7 @@ const SERVER_ROUTES = [
 ]
 
 const CLIENT_COMPONENTS = [
-  'app/[locale]/upload/HlaðaUppClient.tsx',
-  'app/[locale]/upload/StorSkraClient.tsx',
+  'app/[locale]/upload/UploadClient.tsx',
 ]
 
 function extractServerSteps(filePath: string): string[] {

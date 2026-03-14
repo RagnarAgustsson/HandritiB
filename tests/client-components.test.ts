@@ -10,7 +10,7 @@ import path from 'path'
  */
 
 const RECORD_CLIENT = 'app/[locale]/record/TakaUppClient.tsx'
-const UPLOAD_CLIENT = 'app/[locale]/upload/HlaðaUppClient.tsx'
+const UPLOAD_CLIENT = 'app/[locale]/upload/UploadClient.tsx'
 const BEINLINA_CLIENT = 'app/[locale]/live/BeinlinaClient.tsx'
 
 describe('TakaUppClient recording lifecycle', () => {
@@ -118,7 +118,7 @@ describe('client components use correct color tokens', () => {
 
 describe('SSE step handling in upload clients', () => {
   const uploadClients = [
-    { file: UPLOAD_CLIENT, name: 'HlaðaUppClient' },
+    { file: UPLOAD_CLIENT, name: 'UploadClient' },
   ]
 
   for (const { file, name } of uploadClients) {

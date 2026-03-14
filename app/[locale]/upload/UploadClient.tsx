@@ -1,9 +1,8 @@
-// EXPERIMENTAL: stórar skrár — client-side splitting + chunked upload/transcription
 'use client'
 
 import { useState, useRef } from 'react'
 import { put } from '@vercel/blob/client'
-import { Upload, Loader2, AlertCircle, CheckCircle, FlaskConical, ChevronDown, ChevronRight } from 'lucide-react'
+import { Upload, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronRight } from 'lucide-react'
 import { useRouter } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import EphemeralResults from '../../components/EphemeralResults'
@@ -24,7 +23,7 @@ const profileTranslationKey: Record<string, string> = {
 const LEYFÐAR_ENDINGAR = ['.mp3', '.mp4', '.m4a', '.wav', '.webm', '.ogg', '.flac']
 const MAX_MB = 100
 
-export default function StorSkraClient() {
+export default function UploadClient() {
   const router = useRouter()
   const locale = useLocale()
   const t = useTranslations('upload')
@@ -46,6 +45,19 @@ export default function StorSkraClient() {
 
   function profileLabel(p: Profile) {
     return tp(profileTranslationKey[p] || p)
+  }
+
+  const stepLabels: Record<string, string> = {
+    fetching: t('steps.fetching'),
+    transcribing: t('steps.transcribing'),
+    generating_notes: t('steps.generating_notes'),
+    summarizing: t('steps.summarizing'),
+    sending_email: t('steps.sending_email'),
+    done: t('steps.done'),
+  }
+
+  function translateStep(step: string): string {
+    return stepLabels[step] || step
   }
 
   function velja(e: React.ChangeEvent<HTMLInputElement>) {
@@ -211,7 +223,7 @@ export default function StorSkraClient() {
                 setEphResult({ transcript: data.transcript, yfirferd: data.yfirferd, samantekt: data.samantekt })
               }
             } else {
-              setSkref(data.step)
+              setSkref(translateStep(data.step))
               setFramvinda(data.progress)
             }
           } catch (e) {
@@ -232,15 +244,8 @@ export default function StorSkraClient() {
     }
   }
 
-  const erAðVinna = staða !== 'biðröð' && staða !== 'villa' && staða !== 'lokið'
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2 text-amber-400 text-sm">
-        <FlaskConical className="h-4 w-4 shrink-0" />
-        <span>{t('experimentalBadge', { maxMb: MAX_MB })}</span>
-      </div>
-
       {staða === 'biðröð' || staða === 'villa' ? (
         <>
           <div
@@ -298,6 +303,19 @@ export default function StorSkraClient() {
             </div>
           </div>
 
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={tímabundið}
+              onChange={e => setTímabundið(e.target.checked)}
+              className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-400"
+            />
+            <span className="text-sm text-zinc-400">{tr('ephemeral')}</span>
+          </label>
+          {tímabundið && (
+            <p className="text-xs text-amber-400/70 ml-7">{tr('ephemeralNote')}</p>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">{t('nameLabel')}</label>
             <input
@@ -333,19 +351,6 @@ export default function StorSkraClient() {
             )}
           </div>
 
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={tímabundið}
-              onChange={e => setTímabundið(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-700 bg-zinc-900 text-indigo-500 focus:ring-indigo-400"
-            />
-            <span className="text-sm text-zinc-400">{tr('ephemeral')}</span>
-          </label>
-          {tímabundið && (
-            <p className="text-xs text-amber-400/70 ml-7">{tr('ephemeralNote')}</p>
-          )}
-
           <button
             onClick={senda}
             disabled={!skrá}
@@ -355,7 +360,7 @@ export default function StorSkraClient() {
             {t('submit')}
           </button>
         </>
-      ) : erAðVinna ? (
+      ) : staða === 'klippir' || staða === 'hleður' || staða === 'vinnur' ? (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
           <div className="w-full max-w-xs">
