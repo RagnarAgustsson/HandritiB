@@ -12,6 +12,11 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;')
 }
 
+/** Convert markdown bold (**text**) to <strong> tags. Run AFTER escapeHtml. */
+function markdownBold(str: string): string {
+  return str.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+}
+
 // Localized labels for email content
 const EMAIL_LABELS: Record<Locale, { yfirferd: string; samantekt: string; fra: string }> = {
   is: { yfirferd: 'Yfirferð', samantekt: 'Samantekt', fra: 'Frá Handriti' },
@@ -31,8 +36,8 @@ export async function sendSummaryEmail(
 
   const labels = EMAIL_LABELS[locale] || EMAIL_LABELS.is
   const safeName = escapeHtml(sessionName)
-  const safeSummary = escapeHtml(summary)
-  const safeYfirferd = yfirferd ? escapeHtml(yfirferd) : ''
+  const safeSummary = markdownBold(escapeHtml(summary))
+  const safeYfirferd = yfirferd ? markdownBold(escapeHtml(yfirferd)) : ''
 
   const yfirferdBlock = safeYfirferd ? `
         <h3 style="color: #18181b; font-size: 16px; margin: 0 0 12px 0;">${escapeHtml(labels.yfirferd)}</h3>
