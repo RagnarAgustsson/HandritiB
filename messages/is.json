@@ -66,7 +66,11 @@
     "summarizing": "Bý til samantekt...",
     "finishing": "Geng frá samantekt...",
     "contextToggle": "Bæta við dagskrá eða samhengi",
-    "contextPlaceholder": "Settu inn dagskrá, þátttakendalista eða annað samhengi sem hjálpar við yfirferðina...",
+    "contextPlaceholder_fundur": "T.d. dagskrá fundar, nöfn viðstaddra, tilefni fundar",
+    "contextPlaceholder_fyrirlestur": "T.d. nafn námskeiðs, fyrirlesari, efni dagsins",
+    "contextPlaceholder_viðtal": "T.d. nafn viðmælanda, starfsheiti, efni viðtals",
+    "contextPlaceholder_stjórnarfundur": "T.d. dagskrá, viðstaddir stjórnarmenn, fundarnúmer",
+    "contextPlaceholder_frjálst": "T.d. efni umræðu, þátttakendur, tilefni",
     "contextHint": "Þetta hjálpar kerfinu að skilja betur hvað er í gangi."
   },
   "upload": {

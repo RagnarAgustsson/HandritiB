@@ -66,7 +66,11 @@
     "summarizing": "Laver resumé...",
     "finishing": "Færdiggør resumé...",
     "contextToggle": "Tilføj dagsorden eller kontekst",
-    "contextPlaceholder": "Indsæt dagsorden, deltagerliste eller anden kontekst, der hjælper med gennemgangen...",
+    "contextPlaceholder_fundur": "F.eks. mødedagsorden, navne på deltagere, mødeformål",
+    "contextPlaceholder_fyrirlestur": "F.eks. kursusnavn, underviser, dagens emne",
+    "contextPlaceholder_viðtal": "F.eks. navn på interviewperson, stillingsbetegnelse, emne for interviewet",
+    "contextPlaceholder_stjórnarfundur": "F.eks. dagsorden, tilstedeværende bestyrelsesmedlemmer, mødenummer",
+    "contextPlaceholder_frjálst": "F.eks. diskussionsemne, deltagere, anledning",
     "contextHint": "Dette hjælper systemet med bedre at forstå, hvad der foregår."
   },
   "upload": {

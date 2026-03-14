@@ -300,7 +300,7 @@ export default function TakaUppClient() {
                   <textarea
                     value={samhengi}
                     onChange={e => setSamhengi(e.target.value)}
-                    placeholder={t('contextPlaceholder')}
+                    placeholder={t(`contextPlaceholder_${profile}`)}
                     rows={5}
                     maxLength={2000}
                     className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"

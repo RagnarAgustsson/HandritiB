@@ -66,7 +66,11 @@
     "summarizing": "Lager sammendrag...",
     "finishing": "Fullfører sammendrag...",
     "contextToggle": "Legg til agenda eller kontekst",
-    "contextPlaceholder": "Legg inn agenda, deltakerliste eller annen kontekst som hjelper med gjennomgangen...",
+    "contextPlaceholder_fundur": "F.eks. møteagenda, navn på deltakere, møtets formål",
+    "contextPlaceholder_fyrirlestur": "F.eks. kursnavn, foreleser, dagens emne",
+    "contextPlaceholder_viðtal": "F.eks. navn på intervjuobjekt, stillingstittel, tema for intervjuet",
+    "contextPlaceholder_stjórnarfundur": "F.eks. agenda, styremedlemmer til stede, møtenummer",
+    "contextPlaceholder_frjálst": "F.eks. emne for diskusjonen, deltakere, anledning",
     "contextHint": "Dette hjelper systemet å bedre forstå hva som foregår."
   },
   "upload": {

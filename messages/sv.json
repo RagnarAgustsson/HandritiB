@@ -66,7 +66,11 @@
     "summarizing": "Skapar sammanfattning...",
     "finishing": "Slutför sammanfattning...",
     "contextToggle": "Lägg till dagordning eller kontext",
-    "contextPlaceholder": "Ange dagordning, deltagarlista eller annan kontext som hjälper vid genomgången...",
+    "contextPlaceholder_fundur": "T.ex. mötesdagordning, namn på deltagare, mötets syfte",
+    "contextPlaceholder_fyrirlestur": "T.ex. kursnamn, föreläsare, dagens ämne",
+    "contextPlaceholder_viðtal": "T.ex. namn på intervjupersonen, befattning, ämne för intervjun",
+    "contextPlaceholder_stjórnarfundur": "T.ex. dagordning, närvarande styrelseledamöter, mötesnummer",
+    "contextPlaceholder_frjálst": "T.ex. diskussionsämne, deltagare, anledning",
     "contextHint": "Detta hjälper systemet att bättre förstå vad som pågår."
   },
   "upload": {
