@@ -1,20 +1,12 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { createSession, getUserSessions, updateSession, getSessionNotes, getSession, deleteSession } from '@/lib/db/sessions'
+import { createSession, getUserSessions, updateSession, getSessionNotes, getSession, deleteSession, claimSessionForSummary } from '@/lib/db/sessions'
 import { generateFinalSummary } from '@/lib/pipeline/summarize'
 import { getSessionChunks } from '@/lib/db/sessions'
 import { logAction } from '@/lib/db/admin'
 import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { validateProfile } from '@/lib/pipeline/validate'
-import type { Locale } from '@/i18n/config'
-import { locales, defaultLocale } from '@/i18n/config'
-
-function validateLocale(input: unknown): Locale {
-  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
-    return input as Locale
-  }
-  return defaultLocale
-}
+import { validateLocale } from '@/lib/api/utils'
 
 export async function GET() {
   const { userId } = await auth()
@@ -72,18 +64,23 @@ export async function PATCH(request: NextRequest) {
       finalSummary = await generateFinalSummary(transcripts, validateProfile(session.profile), sessionLocale)
     }
 
-    const updated = await updateSession(sessionId, { status: 'lokið', finalSummary })
+    const updated = await claimSessionForSummary(sessionId, { finalSummary })
+    if (!updated) {
+      return NextResponse.json({ villa: 'Lota er þegar lokið eða í vinnslu' }, { status: 409 })
+    }
 
     const user = await currentUser()
     const email = user?.emailAddresses[0]?.emailAddress || ''
     await logAction(userId, email, 'lota.ljuka', `Lota ${sessionId}`)
+    let emailSent = false
     if (email && finalSummary) {
       const notes = await getSessionNotes(sessionId)
       const yfirferd = notes.map(n => n.content).join('\n\n')
-      sendSummaryEmail(email, updated.name, finalSummary, yfirferd || undefined, sessionLocale).catch(() => {})
+      const emailResult = await sendSummaryEmail(email, updated.name, finalSummary, yfirferd || undefined, sessionLocale)
+      emailSent = emailResult.sent
     }
 
-    return NextResponse.json({ session: updated })
+    return NextResponse.json({ session: updated, emailSent })
   }
 
   if (aðgerð === 'endurnefna' && body.nafn) {

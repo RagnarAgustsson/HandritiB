@@ -6,19 +6,19 @@ import { logAction } from '@/lib/db/admin'
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Ekki innskráður' }, { status: 401 })
+  if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
 
   const { action, priceId } = await request.json()
 
   const sub = await getSubscription(userId)
   if (!sub?.paddleSubscriptionId) {
-    return NextResponse.json({ error: 'Engin virk áskrift' }, { status: 400 })
+    return NextResponse.json({ villa: 'Engin virk áskrift' }, { status: 400 })
   }
 
   try {
     switch (action) {
       case 'update': {
-        if (!priceId) return NextResponse.json({ error: 'priceId vantar' }, { status: 400 })
+        if (!priceId) return NextResponse.json({ villa: 'priceId vantar' }, { status: 400 })
         await paddle.subscriptions.update(sub.paddleSubscriptionId, {
           items: [{ priceId, quantity: 1 }],
           prorationBillingMode: 'prorated_immediately',
@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        return NextResponse.json({ error: 'Ógild aðgerð' }, { status: 400 })
+        return NextResponse.json({ villa: 'Ógild aðgerð' }, { status: 400 })
     }
   } catch (err: any) {
     console.error('[Paddle] manage error:', err)
-    return NextResponse.json({ error: 'Villa við að uppfæra áskrift' }, { status: 500 })
+    return NextResponse.json({ villa: 'Villa við að uppfæra áskrift' }, { status: 500 })
   }
 }

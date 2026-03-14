@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { paddle } from '@/lib/paddle/client'
 import { upsertSubscription, updateSubscriptionByPaddleId } from '@/lib/db/subscriptions'
 import { logAction } from '@/lib/db/admin'
+import { isEventProcessed } from '@/lib/db/events'
 import type { EventEntity } from '@paddle/paddle-node-sdk'
 
 const PRICE_MINUTES: Record<string, number> = {
@@ -28,6 +29,17 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('Paddle webhook staðfesting mistókst:', err)
     return NextResponse.json({ villa: 'Ógild undirskrift' }, { status: 400 })
+  }
+
+  const eventId = event.eventId
+  if (!eventId) {
+    return NextResponse.json({ villa: 'eventId vantar' }, { status: 400 })
+  }
+
+  // Idempotency: skip if this event was already processed
+  const alreadyProcessed = await isEventProcessed(eventId, event.eventType || 'unknown')
+  if (alreadyProcessed) {
+    return NextResponse.json({ ok: true, skipped: true })
   }
 
   const data = event.data as any
@@ -92,7 +104,13 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.error('Paddle webhook villa:', err)
-    // Skila 200 svo Paddle reyni ekki aftur
+    // Skila 500 svo Paddle reyni aftur — event er þegar í dedup töflu
+    // svo næsta retry mun sjá það og skipa yfir. Eyðum úr töflu svo retry virki.
+    const { db } = await import('@/lib/db/client')
+    const { processedEvents } = await import('@/lib/db/schema')
+    const { eq } = await import('drizzle-orm')
+    await db.delete(processedEvents).where(eq(processedEvents.eventId, eventId)).catch(() => {})
+    return NextResponse.json({ villa: 'Úrvinnsla mistókst' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })

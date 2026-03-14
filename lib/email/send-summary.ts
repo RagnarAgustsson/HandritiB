@@ -31,8 +31,11 @@ export async function sendSummaryEmail(
   summary: string,
   yfirferd?: string,
   locale: Locale = 'is',
-) {
-  if (!process.env.RESEND_API_KEY) return
+): Promise<{ sent: boolean; error?: string }> {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[email] RESEND_API_KEY vantar — email ekki sent')
+    return { sent: false, error: 'API key vantar' }
+  }
 
   const labels = EMAIL_LABELS[locale] || EMAIL_LABELS.is
   const safeName = escapeHtml(sessionName)
@@ -46,21 +49,28 @@ export async function sendSummaryEmail(
         </div>
   ` : ''
 
-  await resend.emails.send({
-    from,
-    to,
-    subject: `${labels.samantekt}: ${safeName}`,
-    html: `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 16px; background-color: #ffffff;">
-        <h2 style="color: #18181b; font-size: 20px; margin: 0 0 4px 0;">${safeName}</h2>
-        <p style="color: #71717a; font-size: 13px; margin: 0 0 24px 0;">${escapeHtml(labels.fra)}</p>
-        ${yfirferdBlock}
-        <h3 style="color: #18181b; font-size: 16px; margin: 0 0 12px 0;">${escapeHtml(labels.samantekt)}</h3>
-        <div style="background-color: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px;">
-          <p style="color: #27272a; font-size: 14px; line-height: 1.7; white-space: pre-wrap; margin: 0;">${safeSummary}</p>
+  try {
+    await resend.emails.send({
+      from,
+      to,
+      subject: `${labels.samantekt}: ${safeName}`,
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 32px 16px; background-color: #ffffff;">
+          <h2 style="color: #18181b; font-size: 20px; margin: 0 0 4px 0;">${safeName}</h2>
+          <p style="color: #71717a; font-size: 13px; margin: 0 0 24px 0;">${escapeHtml(labels.fra)}</p>
+          ${yfirferdBlock}
+          <h3 style="color: #18181b; font-size: 16px; margin: 0 0 12px 0;">${escapeHtml(labels.samantekt)}</h3>
+          <div style="background-color: #f4f4f5; border: 1px solid #e4e4e7; border-radius: 12px; padding: 20px;">
+            <p style="color: #27272a; font-size: 14px; line-height: 1.7; white-space: pre-wrap; margin: 0;">${safeSummary}</p>
+          </div>
+          <p style="color: #a1a1aa; font-size: 12px; margin-top: 24px;">— Handriti</p>
         </div>
-        <p style="color: #a1a1aa; font-size: 12px; margin-top: 24px;">— Handriti</p>
-      </div>
-    `.trim(),
-  })
+      `.trim(),
+    })
+    return { sent: true }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Óþekkt villa'
+    console.error(`[email] Sending failed to ${to}:`, msg)
+    return { sent: false, error: msg }
+  }
 }

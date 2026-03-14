@@ -25,12 +25,12 @@ export async function getSubscriptionByPaddleId(paddleSubId: string): Promise<Su
 }
 
 export async function createTrialSubscription(userId: string): Promise<Subscription> {
-  const existing = await getSubscription(userId)
-  if (existing) return existing
-
   const now = new Date()
   const trialEnd = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000)
 
+  // Atomic: insert only if no subscription exists for this userId (unique constraint).
+  // onConflictDoNothing prevents race condition where two concurrent requests
+  // could both pass the "existing" check and insert two rows.
   const rows = await db.insert(subscriptions).values({
     userId,
     status: 'trialing',
@@ -38,23 +38,27 @@ export async function createTrialSubscription(userId: string): Promise<Subscript
     currentPeriodStart: now,
     currentPeriodEnd: trialEnd,
     trialEndsAt: trialEnd,
-  }).returning()
+  }).onConflictDoNothing({ target: subscriptions.userId }).returning()
+
+  // If conflict occurred (row already exists), fetch and return the existing one
+  if (rows.length === 0) {
+    const existing = await getSubscription(userId)
+    return existing!
+  }
 
   return rows[0]
 }
 
 export async function upsertSubscription(data: NewSubscription): Promise<Subscription> {
-  const existing = await getSubscription(data.userId)
-  if (existing) {
-    const rows = await db
-      .update(subscriptions)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(subscriptions.userId, data.userId))
-      .returning()
-    return rows[0]
-  }
-
-  const rows = await db.insert(subscriptions).values(data).returning()
+  const { userId, ...rest } = data
+  const rows = await db
+    .insert(subscriptions)
+    .values(data)
+    .onConflictDoUpdate({
+      target: subscriptions.userId,
+      set: { ...rest, updatedAt: new Date() },
+    })
+    .returning()
   return rows[0]
 }
 

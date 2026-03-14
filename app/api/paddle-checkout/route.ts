@@ -6,13 +6,13 @@ const PADDLE_API = 'https://api.paddle.com'
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
   if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
   }
 
   const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID
   const apiKey = process.env.PADDLE_API_KEY
   if (!priceId || !apiKey) {
-    return NextResponse.json({ error: 'Payment not configured' }, { status: 500 })
+    return NextResponse.json({ villa: 'Greiðslukerfi ekki stillt' }, { status: 500 })
   }
 
   const user = await currentUser()
@@ -22,8 +22,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
   const locale = body.locale || 'is'
 
-  const keyPreview = `${apiKey.slice(0, 8)}...${apiKey.slice(-4)} (len=${apiKey.length})`
-  console.log('[Paddle] Creating transaction:', { priceId, userId, keyPreview })
+  console.log('[Paddle] Creating transaction:', { priceId, userId })
 
   try {
     const res = await fetch(`${PADDLE_API}/transactions`, {
@@ -43,13 +42,13 @@ export async function POST(request: NextRequest) {
     if (!res.ok) {
       const errMsg = json?.error?.detail || json?.error?.message || JSON.stringify(json?.error) || 'Paddle API error'
       console.error('[Paddle] API error:', res.status, errMsg, JSON.stringify(json))
-      return NextResponse.json({ error: errMsg }, { status: 500 })
+      return NextResponse.json({ villa: errMsg }, { status: 500 })
     }
 
     let checkoutUrl = json.data?.checkout?.url
     if (!checkoutUrl) {
       console.error('[Paddle] No checkout URL in response:', JSON.stringify(json.data?.checkout))
-      return NextResponse.json({ error: 'No checkout URL returned' }, { status: 500 })
+      return NextResponse.json({ villa: 'Engin greiðsluslóð' }, { status: 500 })
     }
 
     // Append customer email and success redirect
@@ -62,7 +61,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[Paddle] Transaction create failed:', err?.message)
     return NextResponse.json(
-      { error: 'Failed to create checkout' },
+      { villa: 'Tókst ekki að stofna greiðslu' },
       { status: 500 }
     )
   }

@@ -99,5 +99,19 @@ export async function splitAudio(
     throw new Error('Klipping mistókst — engir hlutar búnir til')
   }
 
+  // Release ffmpeg instance to free memory
+  terminateFFmpeg()
+
   return chunks
+}
+
+/**
+ * Terminate the cached ffmpeg instance to free memory.
+ * Safe to call even if no instance exists.
+ */
+export function terminateFFmpeg(): void {
+  if (ffmpegInstance) {
+    try { ffmpegInstance.terminate() } catch { /* already terminated */ }
+    ffmpegInstance = null
+  }
 }

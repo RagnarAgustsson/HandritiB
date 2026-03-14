@@ -1,6 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { del } from '@vercel/blob'
 import { createSession, updateSession, createChunk, createNote } from '@/lib/db/sessions'
 import { transcribeAudio } from '@/lib/pipeline/transcribe'
 import { generateNotes, generateFinalSummary } from '@/lib/pipeline/summarize'
@@ -9,26 +8,12 @@ import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile, validateBlobUrl, safeErrorMessage, sanitizeUserContext } from '@/lib/pipeline/validate'
-import type { Locale } from '@/i18n/config'
-import { locales, defaultLocale } from '@/i18n/config'
+import { validateLocale, sseEvent, deleteBlob } from '@/lib/api/utils'
 
 export const maxDuration = 300
 
 // Áætluð orð á mínútu í íslensku tali
 const WORDS_PER_MINUTE = 130
-
-const encoder = new TextEncoder()
-
-function sseEvent(data: object): Uint8Array {
-  return encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-}
-
-function validateLocale(input: unknown): Locale {
-  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
-    return input as Locale
-  }
-  return defaultLocale
-}
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
@@ -98,7 +83,7 @@ export async function POST(request: NextRequest) {
         const transcript = await transcribeAudio(audioBlob, filename, locale)
 
         // Clean up blob
-        del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
+        deleteBlob(blobUrl)
 
         if (!transcript) {
           if (sessionId) await updateSession(sessionId, { status: 'villa' })
@@ -138,19 +123,24 @@ export async function POST(request: NextRequest) {
         const email = user?.emailAddresses[0]?.emailAddress || ''
         const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
         await logAction(userId, email, 'hljodskra.hlada', `${filename} (${sizeLabel})${ephemeral ? ' [tímabundið]' : ''}`)
-        if (email && finalSummary) sendSummaryEmail(email, nafn || filename, finalSummary, notes, locale).catch(() => {})
+        let emailSent = false
+        if (email && finalSummary) {
+          const emailResult = await sendSummaryEmail(email, nafn || filename, finalSummary, notes, locale)
+          emailSent = emailResult.sent
+        }
 
         // Done
         send({
           step: 'done',
           progress: 100,
           sessionId,
+          emailSent,
           ...(ephemeral && { ephemeral: true, transcript, yfirferd: notes, samantekt: finalSummary }),
         })
         controller.close()
       } catch (error) {
         // Clean up blob on error
-        del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
+        deleteBlob(blobUrl)
         const message = safeErrorMessage(error)
         try {
           send({ step: 'error', villa: message })

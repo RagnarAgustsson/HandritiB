@@ -1,8 +1,7 @@
 // EXPERIMENTAL: stórar skrár — client-orchestrated chunked processing
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { del } from '@vercel/blob'
-import { createSession, updateSession, createChunk, createNote, getSession, getSessionChunks } from '@/lib/db/sessions'
+import { createSession, updateSession, createChunk, createNote, getSession, getSessionChunks, claimSessionForSummary } from '@/lib/db/sessions'
 import { transcribeAudio } from '@/lib/pipeline/transcribe'
 import { generateNotes, generateFinalSummary } from '@/lib/pipeline/summarize'
 import { logAction } from '@/lib/db/admin'
@@ -10,24 +9,11 @@ import { sendSummaryEmail } from '@/lib/email/send-summary'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile, validateBlobUrl, safeErrorMessage, sanitizeUserContext } from '@/lib/pipeline/validate'
-import type { Locale } from '@/i18n/config'
-import { locales, defaultLocale } from '@/i18n/config'
+import { validateLocale, sseEvent, deleteBlob } from '@/lib/api/utils'
 
 export const maxDuration = 300
 
-const encoder = new TextEncoder()
 const WORDS_PER_MINUTE = 130
-
-function sseEvent(data: object): Uint8Array {
-  return encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-}
-
-function validateLocale(input: unknown): Locale {
-  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
-    return input as Locale
-  }
-  return defaultLocale
-}
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
@@ -107,7 +93,7 @@ export async function POST(request: NextRequest) {
       const transcript = await transcribeAudio(audioBlob, filename, sessionLocale)
 
       // Clean up blob
-      del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
+      deleteBlob(blobUrl)
 
       if (!transcript) {
         return NextResponse.json({ villa: `Tókst ekki að þýða hluta ${seq}` }, { status: 500 })
@@ -120,7 +106,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ ok: true, transcript, durationSeconds })
     } catch (error) {
-      del(blobUrl).catch((e) => console.error('[blob-delete]', blobUrl, e))
+      deleteBlob(blobUrl)
       return NextResponse.json({ villa: safeErrorMessage(error) }, { status: 500 })
     }
   }
@@ -202,7 +188,12 @@ export async function POST(request: NextRequest) {
           send({ step: 'summarizing', progress: 60 })
           const finalSummary = await generateFinalSummary(allTranscripts, sessionProfile, sessionLocale, userContext)
           if (!ephemeral && sessionId) {
-            await updateSession(sessionId, { status: 'lokið', finalSummary, totalSeconds })
+            const claimed = await claimSessionForSummary(sessionId, { finalSummary, totalSeconds })
+            if (!claimed) {
+              send({ step: 'error', villa: 'Lota er þegar í vinnslu' })
+              controller.close()
+              return
+            }
           }
 
           // Usage, logging, email
@@ -215,15 +206,18 @@ export async function POST(request: NextRequest) {
           const email = user?.emailAddresses[0]?.emailAddress || ''
           const sizeLabel = fileSize > 0 ? `${(fileSize / 1024 / 1024).toFixed(1)}MB` : 'blob'
           await logAction(userId, email, 'skra.stort', `${filename} (${sizeLabel}, ${allTranscripts.length} hlutar)${ephemeral ? ' [tímabundið]' : ''}`)
+          let emailSent = false
           if (email && finalSummary) {
             const yfirferd = allNotes.join('\n\n')
-            sendSummaryEmail(email, sessionName, finalSummary, yfirferd, sessionLocale).catch(() => {})
+            const emailResult = await sendSummaryEmail(email, sessionName, finalSummary, yfirferd, sessionLocale)
+            emailSent = emailResult.sent
           }
 
           send({
             step: 'done',
             progress: 100,
             sessionId: sessionId || null,
+            emailSent,
             ...(ephemeral && { ephemeral: true, transcript: allTranscripts.join('\n\n'), yfirferd: allNotes.join('\n\n'), samantekt: finalSummary }),
           })
           controller.close()

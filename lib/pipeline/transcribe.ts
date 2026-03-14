@@ -1,6 +1,43 @@
 import { openai } from '@/lib/openai/client'
 import type { Locale } from '@/i18n/config'
 
+// ── Retry logic for transient API errors ────────────────────
+const MAX_RETRIES = 3
+const BASE_DELAY_MS = 1000
+
+function isTransientError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  const msg = error.message
+  // 429 rate limit, 5xx server errors, network errors
+  if (msg.includes('429') || msg.includes('rate') || msg.includes('Rate')) return true
+  if (msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('504')) return true
+  if (msg.includes('ECONNRESET') || msg.includes('ETIMEDOUT') || msg.includes('fetch failed')) return true
+  // Check status code on API errors
+  if ('status' in error && typeof (error as any).status === 'number') {
+    const status = (error as any).status
+    if (status === 429 || status >= 500) return true
+  }
+  return false
+}
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      if (attempt < MAX_RETRIES && isTransientError(error)) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt) + Math.random() * 500
+        await new Promise(resolve => setTimeout(resolve, delay))
+        continue
+      }
+      throw error
+    }
+  }
+  throw lastError
+}
+
 // gpt-4o-transcribe er mun betri en whisper-1 fyrir íslensku —
 // skilur samhengi, leiðréttir sjálfkrafa og þekkir fleiri orð.
 // Hámarkslengd: 1400 sek. Ef lengra → fallback á whisper-1.
@@ -148,23 +185,27 @@ export async function transcribeAudio(audioBlob: Blob, filename = 'hljod.webm', 
   const prompt = PROMPT_MAP[locale] || ISLENSKA_PROMPT
 
   try {
-    const result = await openai.audio.transcriptions.create({
-      file,
-      model: PRIMARY_MODEL,
-      language,
-      prompt,
-    })
+    const result = await withRetry(() =>
+      openai.audio.transcriptions.create({
+        file,
+        model: PRIMARY_MODEL,
+        language,
+        prompt,
+      })
+    )
     return stripHallucination(stripPromptLeak(result.text.trim(), prompt))
   } catch (error) {
     // Fall back to whisper-1 for files exceeding gpt-4o-transcribe's 1400s limit
     const msg = error instanceof Error ? error.message : ''
     if (msg.includes('longer than') || msg.includes('maximum')) {
-      const result = await openai.audio.transcriptions.create({
-        file,
-        model: FALLBACK_MODEL,
-        language,
-        prompt,
-      })
+      const result = await withRetry(() =>
+        openai.audio.transcriptions.create({
+          file,
+          model: FALLBACK_MODEL,
+          language,
+          prompt,
+        })
+      )
       return stripHallucination(stripPromptLeak(result.text.trim(), prompt))
     }
     throw error

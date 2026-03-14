@@ -8,15 +8,8 @@ import { getSubscription, createTrialSubscription } from '@/lib/db/subscriptions
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile, sanitizeUserContext } from '@/lib/pipeline/validate'
-import type { Locale } from '@/i18n/config'
-import { locales, defaultLocale, formatDate } from '@/i18n/config'
-
-function validateLocale(input: unknown): Locale {
-  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
-    return input as Locale
-  }
-  return defaultLocale
-}
+import { formatDate } from '@/i18n/config'
+import { validateLocale } from '@/lib/api/utils'
 
 // Save a completed Realtime session transcript to the database
 export async function POST(request: NextRequest) {
@@ -73,11 +66,16 @@ export async function POST(request: NextRequest) {
   const user = await currentUser()
   const email = user?.emailAddresses[0]?.emailAddress || ''
   await logAction(userId, email, 'beinlina.vista', `${sessionId || 'tímabundið'}${isEphemeral ? ' [tímabundið]' : ''}`)
-  if (email && finalSummary) sendSummaryEmail(email, sessionName, finalSummary, yfirferd, locale).catch(() => {})
+  let emailSent = false
+  if (email && finalSummary) {
+    const emailResult = await sendSummaryEmail(email, sessionName, finalSummary, yfirferd, locale)
+    emailSent = emailResult.sent
+  }
 
   return NextResponse.json({
     sessionId,
     finalSummary,
+    emailSent,
     ...(isEphemeral && { ephemeral: true, transcript, yfirferd, samantekt: finalSummary }),
   })
 }

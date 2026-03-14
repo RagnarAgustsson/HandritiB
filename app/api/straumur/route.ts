@@ -3,6 +3,9 @@ import { NextRequest } from 'next/server'
 import { getSessionNotes, getSession } from '@/lib/db/sessions'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 300
+
+const CONNECTION_TIMEOUT_MS = 5 * 60 * 1000 // 5 mín
 
 export async function GET(request: NextRequest) {
   const { userId } = await auth()
@@ -47,9 +50,16 @@ export async function GET(request: NextRequest) {
 
       const interval = setInterval(poll, 1500)
 
+      // Auto-close after timeout to prevent resource leaks
+      const timeout = setTimeout(() => {
+        clearInterval(interval)
+        try { controller.close() } catch { /* already closed */ }
+      }, CONNECTION_TIMEOUT_MS)
+
       request.signal.addEventListener('abort', () => {
         clearInterval(interval)
-        controller.close()
+        clearTimeout(timeout)
+        try { controller.close() } catch { /* already closed */ }
       })
 
       await poll()

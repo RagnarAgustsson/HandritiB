@@ -5,17 +5,9 @@ import { getSession } from '@/lib/db/sessions'
 import { checkTranscriptionAccess } from '@/lib/subscription/check-access'
 import { recordUsage } from '@/lib/db/usage'
 import { validateProfile, safeErrorMessage, sanitizeUserContext } from '@/lib/pipeline/validate'
-import type { Locale } from '@/i18n/config'
-import { locales, defaultLocale } from '@/i18n/config'
+import { validateLocale } from '@/lib/api/utils'
 
 export const maxDuration = 60
-
-function validateLocale(input: unknown): Locale {
-  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
-    return input as Locale
-  }
-  return defaultLocale
-}
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth()

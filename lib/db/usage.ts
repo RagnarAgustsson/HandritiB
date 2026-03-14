@@ -1,4 +1,4 @@
-import { eq, and, gte, sql } from 'drizzle-orm'
+import { eq, and, gte, sql, inArray } from 'drizzle-orm'
 import { db } from './client'
 import { usageRecords } from './schema'
 import { getSubscription, createTrialSubscription } from './subscriptions'
@@ -10,6 +10,21 @@ export async function recordUsage(params: {
   source: string
   periodStart: Date
 }): Promise<void> {
+  // Dedup: if sessionId is provided, skip if already recorded for this session+source
+  if (params.sessionId) {
+    const existing = await db
+      .select({ id: usageRecords.id })
+      .from(usageRecords)
+      .where(
+        and(
+          eq(usageRecords.sessionId, params.sessionId),
+          eq(usageRecords.source, params.source)
+        )
+      )
+      .limit(1)
+    if (existing.length > 0) return
+  }
+
   await db.insert(usageRecords).values({
     userId: params.userId,
     sessionId: params.sessionId,
@@ -30,6 +45,43 @@ export async function getUsageForPeriod(userId: string, periodStart: Date): Prom
       )
     )
   return Number(result[0]?.total ?? 0)
+}
+
+/**
+ * Batch usage query — single GROUP BY instead of N+1.
+ * Returns Map<userId, usedSeconds>.
+ */
+export async function getUsageForAllUsers(
+  userPeriods: { userId: string; periodStart: Date }[]
+): Promise<Map<string, number>> {
+  if (userPeriods.length === 0) return new Map()
+
+  // Find the earliest periodStart to use as a floor filter
+  const earliest = userPeriods.reduce(
+    (min, p) => (p.periodStart < min ? p.periodStart : min),
+    userPeriods[0].periodStart
+  )
+
+  const userIds = userPeriods.map(p => p.userId)
+  const rows = await db
+    .select({
+      userId: usageRecords.userId,
+      total: sql<number>`COALESCE(SUM(${usageRecords.seconds}), 0)`,
+    })
+    .from(usageRecords)
+    .where(
+      and(
+        inArray(usageRecords.userId, userIds),
+        gte(usageRecords.periodStart, earliest)
+      )
+    )
+    .groupBy(usageRecords.userId)
+
+  const result = new Map<string, number>()
+  for (const row of rows) {
+    result.set(row.userId, Number(row.total))
+  }
+  return result
 }
 
 export async function getUserUsageSummary(userId: string): Promise<{

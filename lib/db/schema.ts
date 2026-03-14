@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, timestamp, pgEnum, index } from 'drizzle-orm/pg-core'
 
 export const profileEnum = pgEnum('profile', ['fundur', 'fyrirlestur', 'viðtal', 'frjálst', 'stjórnarfundur'])
 export const statusEnum = pgEnum('status', ['virkt', 'lokið', 'villa'])
@@ -14,7 +14,10 @@ export const sessions = pgTable('sessions', {
   totalSeconds: integer('total_seconds').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-})
+}, (table) => [
+  index('sessions_user_id_idx').on(table.userId),
+  index('sessions_status_idx').on(table.status),
+])
 
 export const chunks = pgTable('chunks', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -23,7 +26,9 @@ export const chunks = pgTable('chunks', {
   transcript: text('transcript').notNull().default(''),
   durationSeconds: integer('duration_seconds').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-})
+}, (table) => [
+  index('chunks_session_id_idx').on(table.sessionId),
+])
 
 export const notes = pgTable('notes', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -32,7 +37,9 @@ export const notes = pgTable('notes', {
   content: text('content').notNull(),
   rollingSummary: text('rolling_summary'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-})
+}, (table) => [
+  index('notes_session_id_idx').on(table.sessionId),
+])
 
 export type Session = typeof sessions.$inferSelect
 export type NewSession = typeof sessions.$inferInsert
@@ -57,7 +64,9 @@ export const auditLog = pgTable('audit_log', {
   action: text('action').notNull(),
   details: text('details'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-})
+}, (table) => [
+  index('audit_log_created_at_idx').on(table.createdAt),
+])
 
 export type Admin = typeof admins.$inferSelect
 export type AuditLogEntry = typeof auditLog.$inferSelect
@@ -96,7 +105,9 @@ export const usageRecords = pgTable('usage_records', {
   source: text('source').notNull(),
   periodStart: timestamp('period_start').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-})
+}, (table) => [
+  index('usage_user_period_idx').on(table.userId, table.periodStart),
+])
 
 export const freeAccessGrants = pgTable('free_access_grants', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -114,6 +125,14 @@ export const contactMessages = pgTable('contact_messages', {
   email: text('email').notNull(),
   message: text('message').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
+// ── Webhook Idempotency ─────────────────────────────────────
+
+export const processedEvents = pgTable('processed_events', {
+  eventId: text('event_id').primaryKey(),
+  eventType: text('event_type').notNull(),
+  processedAt: timestamp('processed_at').notNull().defaultNow(),
 })
 
 export type Subscription = typeof subscriptions.$inferSelect

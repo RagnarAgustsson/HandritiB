@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 // Generate a client token for direct blob upload — no webhook callback needed
 export async function POST(request: NextRequest) {
   const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Ekki innskráður' }, { status: 401 })
+  if (!userId) return NextResponse.json({ villa: 'Ekki innskráður' }, { status: 401 })
 
   try {
     const { pathname } = await request.json()
@@ -24,6 +24,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ clientToken })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Token villa'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ villa: message }, { status: 500 })
   }
 }

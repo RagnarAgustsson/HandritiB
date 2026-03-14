@@ -13,6 +13,6 @@ export function getGeminiClient(): GoogleGenerativeAI {
 // Lazy — krassar ekki nema Gemini sé raunverulega notað
 export const gemini = new Proxy({} as GoogleGenerativeAI, {
   get(_, prop) {
-    return (getGeminiClient() as Record<string | symbol, unknown>)[prop]
+    return (getGeminiClient() as unknown as Record<string | symbol, unknown>)[prop]
   },
 })

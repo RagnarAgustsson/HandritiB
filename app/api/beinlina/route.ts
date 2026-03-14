@@ -4,15 +4,7 @@ import { openai } from '@/lib/openai/client'
 import { logAction } from '@/lib/db/admin'
 import { checkBeinlinaAccess } from '@/lib/subscription/check-access'
 import { getBeinlinaInstructions } from '@/lib/pipeline/prompts'
-import type { Locale } from '@/i18n/config'
-import { locales, defaultLocale } from '@/i18n/config'
-
-function validateLocale(input: unknown): Locale {
-  if (typeof input === 'string' && (locales as readonly string[]).includes(input)) {
-    return input as Locale
-  }
-  return defaultLocale
-}
+import { validateLocale } from '@/lib/api/utils'
 
 // Issues an ephemeral token so the browser can connect directly to OpenAI Realtime.
 // The API key never leaves the server.
@@ -25,7 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ villa: 'Aðeins fyrir áskrifendur' }, { status: 403 })
   }
 
-  let locale: Locale = defaultLocale
+  let locale = validateLocale(undefined)
   try {
     const body = await request.json()
     locale = validateLocale(body.locale)

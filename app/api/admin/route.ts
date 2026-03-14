@@ -5,7 +5,7 @@ import { getAllSubscriptions } from '@/lib/db/subscriptions'
 import { getAllFreeAccessGrants, grantFreeAccess, revokeFreeAccess } from '@/lib/db/free-access'
 import { getContactMessages } from '@/lib/db/contacts'
 import { getActiveSessions, closeSession } from '@/lib/db/sessions'
-import { getUsageForPeriod } from '@/lib/db/usage'
+import { getUsageForAllUsers } from '@/lib/db/usage'
 
 async function requireAdmin() {
   const user = await currentUser()
@@ -43,15 +43,12 @@ export async function GET(request: NextRequest) {
   const subMap = new Map(subs.map(s => [s.userId, s]))
   const freeMap = new Map(freeGrants.map(g => [g.userId, g]))
 
-  // Compute usage per user with subscription (parallel queries)
-  const usageEntries = await Promise.all(
-    subs.map(async s => {
-      const periodStart = s.currentPeriodStart || s.createdAt
-      const usedSeconds = await getUsageForPeriod(s.userId, periodStart)
-      return [s.userId, usedSeconds] as const
-    })
-  )
-  const usageMap = new Map(usageEntries)
+  // Compute usage per user — single aggregation query instead of N+1
+  const userPeriods = subs.map(s => ({
+    userId: s.userId,
+    periodStart: s.currentPeriodStart || s.createdAt,
+  }))
+  const usageMap = await getUsageForAllUsers(userPeriods)
 
   const users = clerkUsers.data.map(u => {
     const sub = subMap.get(u.id)
