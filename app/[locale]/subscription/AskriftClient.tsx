@@ -40,6 +40,9 @@ const STATUS_COLORS: Record<string, string> = {
   paused: 'text-zinc-400 bg-zinc-500/10 border-zinc-500/20',
 }
 
+const PRICE_ID_BASIC = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim() || ''
+const PRICE_ID_PRO = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_PRO?.trim() || ''
+
 export default function AskriftClient() {
   const { user } = useUser()
   const locale = useLocale()
@@ -67,9 +70,8 @@ export default function AskriftClient() {
     })
   }, [locale])
 
-  async function openCheckout() {
+  async function openCheckout(priceId: string) {
     setCheckoutError('')
-    const priceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim()
     if (!priceId) { setCheckoutError(t('priceError')); return }
     if (!user) { setCheckoutError(t('userNotLoaded')); return }
 
@@ -119,6 +121,7 @@ export default function AskriftClient() {
   const pct = Math.min(usage.percentUsed, 100)
   const isBlocked = pct >= 100
   const hasSearchParam = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('success')
+  const showPlans = sub.status === 'trialing' || sub.status === 'canceled' || !sub.paddleSubscriptionId
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -204,31 +207,40 @@ export default function AskriftClient() {
             </div>
           )}
 
-          {/* Aðgerðir */}
+          {/* Velja áskrift */}
           {checkoutError && (
             <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-400">
               <AlertCircle className="h-4 w-4 shrink-0" />
               {checkoutError}
             </div>
           )}
-          <div className="flex flex-col gap-3 pt-2">
-            {(sub.status === 'trialing' || sub.status === 'canceled' || !sub.paddleSubscriptionId) && (
+
+          {showPlans && (
+            <div className="grid gap-3 sm:grid-cols-2 pt-2">
               <button
-                onClick={openCheckout}
-                className="flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-white font-semibold hover:bg-indigo-600 transition"
+                onClick={() => openCheckout(PRICE_ID_BASIC)}
+                className="flex flex-col items-center gap-1 rounded-xl border border-indigo-500/30 bg-indigo-500/5 px-6 py-4 hover:bg-indigo-500/10 transition"
               >
-                <CreditCard className="h-5 w-5" />
-                {sub.status === 'canceled' ? t('renew') : t('upgrade')}
+                <span className="text-sm font-semibold text-zinc-100">{t('planBasic')}</span>
+                <span className="text-lg font-bold text-indigo-400">9€<span className="text-xs text-zinc-500 font-normal"> / {t('month')}</span></span>
+                <span className="text-xs text-zinc-500">{t('planBasicDesc')}</span>
               </button>
-            )}
+              <button
+                onClick={() => openCheckout(PRICE_ID_PRO)}
+                className="flex flex-col items-center gap-1 rounded-xl border border-zinc-700 bg-zinc-900 px-6 py-4 hover:bg-zinc-800 transition"
+              >
+                <span className="text-sm font-semibold text-zinc-100">{t('planPro')}</span>
+                <span className="text-lg font-bold text-emerald-400">19€<span className="text-xs text-zinc-500 font-normal"> / {t('month')}</span></span>
+                <span className="text-xs text-zinc-500">{t('planProDesc')}</span>
+              </button>
+            </div>
+          )}
 
-            {sub.paddleSubscriptionId && sub.status === 'active' && (
-              <p className="text-sm text-zinc-500 text-center">
-                {t('manageNote')}
-              </p>
-            )}
-          </div>
-
+          {sub.paddleSubscriptionId && sub.status === 'active' && (
+            <p className="text-sm text-zinc-500 text-center pt-2">
+              {t('manageNote')}
+            </p>
+          )}
         </div>
       </div>
     </div>

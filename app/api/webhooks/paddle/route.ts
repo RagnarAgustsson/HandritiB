@@ -4,7 +4,15 @@ import { upsertSubscription, updateSubscriptionByPaddleId } from '@/lib/db/subsc
 import { logAction } from '@/lib/db/admin'
 import type { EventEntity } from '@paddle/paddle-node-sdk'
 
-const PAID_MINUTES_LIMIT = 300
+const PRICE_MINUTES: Record<string, number> = {
+  [process.env.NEXT_PUBLIC_PADDLE_PRICE_ID?.trim() || '']: 300,
+  [process.env.NEXT_PUBLIC_PADDLE_PRICE_ID_PRO?.trim() || '']: 1000,
+}
+
+function getMinutesForPrice(priceId: string | undefined): number {
+  if (!priceId) return 300
+  return PRICE_MINUTES[priceId] || 300
+}
 
 export async function POST(request: NextRequest) {
   const signature = request.headers.get('paddle-signature') || ''
@@ -45,7 +53,7 @@ export async function POST(request: NextRequest) {
           trialEndsAt: sub.currentBillingPeriod?.startsAt && sub.status === 'trialing'
             ? new Date(sub.currentBillingPeriod.endsAt)
             : null,
-          minutesLimit: PAID_MINUTES_LIMIT,
+          minutesLimit: getMinutesForPrice(sub.items?.[0]?.price?.id),
         })
         await logAction(userId, '', 'askrift.stofna', `Paddle: ${sub.id}`)
         break
@@ -53,8 +61,11 @@ export async function POST(request: NextRequest) {
 
       case 'subscription.updated': {
         const sub = data
+        const priceId = sub.items?.[0]?.price?.id
         await updateSubscriptionByPaddleId(sub.id, {
           status: mapPaddleStatus(sub.status),
+          planId: priceId || undefined,
+          minutesLimit: getMinutesForPrice(priceId),
           currentPeriodStart: sub.currentBillingPeriod?.startsAt ? new Date(sub.currentBillingPeriod.startsAt) : undefined,
           currentPeriodEnd: sub.currentBillingPeriod?.endsAt ? new Date(sub.currentBillingPeriod.endsAt) : undefined,
           canceledAt: sub.canceledAt ? new Date(sub.canceledAt) : undefined,
