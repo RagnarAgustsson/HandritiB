@@ -71,7 +71,12 @@
     "contextPlaceholder_viðtal": "F.eks. navn på intervjuobjekt, stillingstittel, tema for intervjuet",
     "contextPlaceholder_stjórnarfundur": "F.eks. agenda, styremedlemmer til stede, møtenummer",
     "contextPlaceholder_frjálst": "F.eks. emne for diskusjonen, deltakere, anledning",
-    "contextHint": "Dette hjelper systemet å bedre forstå hva som foregår."
+    "contextHint": "Dette hjelper systemet å bedre forstå hva som foregår.",
+    "micError": "Kunne ikke åpne mikrofonen. Sjekk tillatelser.",
+    "startError": "Kunne ikke starte økt. Sjekk nettverkstilkobling og prøv igjen.",
+    "authExpired": "Innlogging er utløpt. Stopp opptak, last inn siden på nytt og logg inn igjen.",
+    "newVersion": "Ny versjon er tilgjengelig — klikk her for å laste inn på nytt.",
+    "failedChunks": "{count, plural, one {# del gikk tapt} other {# deler gikk tapt}} — lyddata kan være ufullstendige."
   },
   "upload": {
     "title": "Last opp fil",

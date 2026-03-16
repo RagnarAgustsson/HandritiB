@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { Mic, Square, Loader2, AlertCircle, CheckCircle, ChevronDown, ChevronRight } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { Mic, Square, Loader2, AlertCircle, ChevronDown, ChevronRight, WifiOff, RefreshCw } from 'lucide-react'
 import { useRouter } from '@/i18n/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { formatDate } from '@/i18n/config'
@@ -14,6 +14,8 @@ type Staða = 'biðröð' | 'taka-upp' | 'hleður' | 'lokið' | 'villa'
 
 const HLUTI_TIMI_MS = 20_000 // 20 sek per hluta
 const CHUNK_TYPE = 'audio/webm;codecs=opus'
+const SEND_RETRIES = 3
+const HEALTH_INTERVAL_MS = 60_000 // 1 mín
 
 const PROFILES: Profile[] = ['fundur', 'fyrirlestur', 'viðtal', 'frjálst', 'stjórnarfundur']
 
@@ -42,6 +44,9 @@ export default function TakaUppClient() {
   const [sýnaSamhengi, setSýnaSamhengi] = useState(false)
   const [samhengi, setSamhengi] = useState('')
   const [ephResult, setEphResult] = useState<{ transcript: string; yfirferd: string; samantekt: string } | null>(null)
+  const [authExpired, setAuthExpired] = useState(false)
+  const [newVersion, setNewVersion] = useState(false)
+  const [failedChunks, setFailedChunks] = useState(0)
 
   const [activeStream, setActiveStream] = useState<MediaStream | null>(null)
 
@@ -54,50 +59,127 @@ export default function TakaUppClient() {
   const ephNotesRef = useRef<string[]>([])
   const sessionIdRef = useRef<string | null>(null)
   const pendingSendRef = useRef<Promise<void>>(Promise.resolve())
+  const healthIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const buildIdRef = useRef<string | null>(null)
+  const sseNoteCountRef = useRef(0)
 
   function profileLabel(p: Profile) {
     return tp(profileTranslationKey[p] || p)
   }
 
+  // ── SSE with auto-reconnect ──────────────────────────────────
+  const connectSSE = useCallback((sid: string) => {
+    eventSourceRef.current?.close()
+
+    const es = new EventSource(`/api/straumur?sessionId=${sid}`)
+    es.onmessage = (e) => {
+      const data = JSON.parse(e.data)
+      if (data.tegund === 'glosa') {
+        sseNoteCountRef.current++
+        setGlósur(prev => [...prev, data.efni])
+      }
+      if (data.tegund === 'samantekt') setSamantekt(data.efni)
+    }
+    es.onerror = () => {
+      es.close()
+      // Reconnect after 2s if still recording
+      setTimeout(() => {
+        if (recorderRef.current?.state === 'recording' || recorderRef.current?.state === 'inactive') {
+          connectSSE(sid)
+        }
+      }, 2000)
+    }
+    eventSourceRef.current = es
+  }, [])
+
+  // ── Health check (auth + version) ────────────────────────────
+  function startHealthCheck() {
+    stopHealthCheck()
+    healthIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch('/api/health')
+        if (!res.ok) {
+          setAuthExpired(true)
+          return
+        }
+        const data = await res.json()
+        if (!data.auth) setAuthExpired(true)
+        if (buildIdRef.current && data.buildId !== buildIdRef.current) {
+          setNewVersion(true)
+        }
+      } catch {
+        // Network error — don't alarm, could be temporary
+      }
+    }, HEALTH_INTERVAL_MS)
+  }
+
+  function stopHealthCheck() {
+    if (healthIntervalRef.current) {
+      clearInterval(healthIntervalRef.current)
+      healthIntervalRef.current = null
+    }
+  }
+
+  // ── Fetch initial build ID on mount ──────────────────────────
+  useEffect(() => {
+    fetch('/api/health')
+      .then(r => r.json())
+      .then(d => { buildIdRef.current = d.buildId })
+      .catch(() => {})
+  }, [])
+
+  // ── Start recording ──────────────────────────────────────────
   async function byrjaUpptöku() {
     setVilla('')
     setGlósur([])
     setSamantekt('')
     setEphResult(null)
+    setAuthExpired(false)
+    setNewVersion(false)
+    setFailedChunks(0)
     seqRef.current = 0
+    sseNoteCountRef.current = 0
     ephTranscriptsRef.current = []
     ephNotesRef.current = []
 
-    // Halda skjánum vakandi meðan á upptöku stendur
+    // Wake Lock
     try {
       if ('wakeLock' in navigator) {
         wakeLockRef.current = await navigator.wakeLock.request('screen')
       }
     } catch { /* Wake Lock ekki stutt eða hafnað */ }
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    let stream: MediaStream
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    } catch {
+      setVilla(t('micError'))
+      return
+    }
     setActiveStream(stream)
 
     let sid: string | null = null
     if (!tímabundið) {
-      const res = await fetch('/api/lotur', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nafn: nafn || `${profileLabel(profile)} ${formatDate(new Date())}`, profile, locale }),
-      })
-      const { session } = await res.json()
-      sid = session.id
-      setSessionId(sid)
-      sessionIdRef.current = sid
+      try {
+        const res = await fetch('/api/lotur', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nafn: nafn || `${profileLabel(profile)} ${formatDate(new Date())}`, profile, locale }),
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const { session } = await res.json()
+        const newSid: string = session.id
+        sid = newSid
+        setSessionId(newSid)
+        sessionIdRef.current = newSid
 
-      // Start SSE stream
-      const es = new EventSource(`/api/straumur?sessionId=${session.id}`)
-      es.onmessage = (e) => {
-        const data = JSON.parse(e.data)
-        if (data.tegund === 'glosa') setGlósur(prev => [...prev, data.efni])
-        if (data.tegund === 'samantekt') setSamantekt(data.efni)
+        connectSSE(newSid)
+      } catch {
+        stream.getTracks().forEach(t => t.stop())
+        setActiveStream(null)
+        setVilla(t('startError'))
+        return
       }
-      eventSourceRef.current = es
     }
 
     const mimeType = MediaRecorder.isTypeSupported(CHUNK_TYPE) ? CHUNK_TYPE : 'audio/webm'
@@ -121,6 +203,7 @@ export default function TakaUppClient() {
 
     recorder.start()
     setStaða('taka-upp')
+    startHealthCheck()
 
     // Send chunk every HLUTI_TIMI_MS
     const interval = setInterval(() => {
@@ -137,39 +220,66 @@ export default function TakaUppClient() {
     ;(recorder as any)._interval = interval
   }
 
+  // ── Send chunk with retry ────────────────────────────────────
   async function sendHluti(blob: Blob, sid: string | null, seq: number) {
-    const fd = new FormData()
-    fd.append('hljod', blob, 'hluti.webm')
-    if (sid) fd.append('sessionId', sid)
-    fd.append('seq', String(seq))
-    fd.append('seconds', String(HLUTI_TIMI_MS / 1000))
+    for (let attempt = 1; attempt <= SEND_RETRIES; attempt++) {
+      const fd = new FormData()
+      fd.append('hljod', blob, 'hluti.webm')
+      if (sid) fd.append('sessionId', sid)
+      fd.append('seq', String(seq))
+      fd.append('seconds', String(HLUTI_TIMI_MS / 1000))
 
-    fd.append('locale', locale)
-    if (samhengi) fd.append('userContext', samhengi)
-    if (tímabundið) {
-      fd.append('ephemeral', 'true')
-      fd.append('profile', profile)
-      fd.append('previousTranscripts', JSON.stringify(ephTranscriptsRef.current))
-    }
-
-    try {
-      const res = await fetch('/api/hljod-hluti', { method: 'POST', body: fd })
-      if (tímabundið && res.ok) {
-        const data = await res.json()
-        if (data.transcript) {
-          ephTranscriptsRef.current.push(data.transcript)
-          ephNotesRef.current.push(data.notes || '')
-          setGlósur(prev => [...prev, data.notes || data.transcript])
-        }
+      fd.append('locale', locale)
+      if (samhengi) fd.append('userContext', samhengi)
+      if (tímabundið) {
+        fd.append('ephemeral', 'true')
+        fd.append('profile', profile)
+        fd.append('previousTranscripts', JSON.stringify(ephTranscriptsRef.current))
       }
-    } catch {
-      setVilla(t('sendError'))
+
+      try {
+        const res = await fetch('/api/hljod-hluti', { method: 'POST', body: fd })
+
+        if (res.status === 401) {
+          setAuthExpired(true)
+          return
+        }
+
+        if (!res.ok) {
+          if (attempt < SEND_RETRIES) {
+            await new Promise(r => setTimeout(r, 1000 * attempt))
+            continue
+          }
+          setFailedChunks(prev => prev + 1)
+          setVilla(t('sendError'))
+          return
+        }
+
+        if (tímabundið) {
+          const data = await res.json()
+          if (data.transcript) {
+            ephTranscriptsRef.current.push(data.transcript)
+            ephNotesRef.current.push(data.notes || '')
+            setGlósur(prev => [...prev, data.notes || data.transcript])
+          }
+        }
+        return // success
+      } catch {
+        if (attempt < SEND_RETRIES) {
+          await new Promise(r => setTimeout(r, 1000 * attempt))
+          continue
+        }
+        setFailedChunks(prev => prev + 1)
+        setVilla(t('sendError'))
+      }
     }
   }
 
+  // ── Stop recording ───────────────────────────────────────────
   async function stöðvaUpptöku() {
     setStaða('hleður')
     setActiveStream(null)
+    stopHealthCheck()
 
     // Sleppa wake lock
     wakeLockRef.current?.release().catch(() => {})
@@ -246,6 +356,7 @@ export default function TakaUppClient() {
       recorderRef.current?.stream?.getTracks().forEach(t => t.stop())
       eventSourceRef.current?.close()
       wakeLockRef.current?.release().catch(() => {})
+      stopHealthCheck()
     }
   }, [])
 
@@ -351,6 +462,30 @@ export default function TakaUppClient() {
               </div>
               <AudioVisualizer stream={activeStream} barCount={40} />
             </div>
+
+            {authExpired && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-amber-400 text-sm">
+                <WifiOff className="h-4 w-4 shrink-0" />
+                {t('authExpired')}
+              </div>
+            )}
+
+            {newVersion && (
+              <button
+                onClick={() => window.location.reload()}
+                className="flex items-center gap-2 rounded-lg border border-indigo-500/20 bg-indigo-500/10 px-4 py-3 text-indigo-400 text-sm w-full text-left"
+              >
+                <RefreshCw className="h-4 w-4 shrink-0" />
+                {t('newVersion')}
+              </button>
+            )}
+
+            {failedChunks > 0 && (
+              <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-amber-400 text-sm">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {t('failedChunks', { count: failedChunks })}
+              </div>
+            )}
 
             {villa && (
               <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-400 text-sm">

@@ -71,7 +71,12 @@
     "contextPlaceholder_viðtal": "T.d. nafn viðmælanda, starfsheiti, efni viðtals",
     "contextPlaceholder_stjórnarfundur": "T.d. dagskrá, viðstaddir stjórnarmenn, fundarnúmer",
     "contextPlaceholder_frjálst": "T.d. efni umræðu, þátttakendur, tilefni",
-    "contextHint": "Þetta hjálpar kerfinu að skilja betur hvað er í gangi."
+    "contextHint": "Þetta hjálpar kerfinu að skilja betur hvað er í gangi.",
+    "micError": "Ekki tókst að opna hljóðnema. Athugaðu heimildir.",
+    "startError": "Ekki tókst að hefja lotu. Athugaðu nettengingu og reyndu aftur.",
+    "authExpired": "Innskráning er útrunnin. Stöðvaðu upptöku, endurhlaðið síðuna og skráðu yður inn aftur.",
+    "newVersion": "Ný útgáfa er til — smelltu hér til að endurhlaða.",
+    "failedChunks": "{count, plural, one {# hluti tapaðist} other {# hlutar töpuðust}} — hljóðgögn geta verið ófullkomin."
   },
   "upload": {
     "title": "Hlaða upp skrá",
