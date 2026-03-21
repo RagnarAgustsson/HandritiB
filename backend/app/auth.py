@@ -54,10 +54,19 @@ _clerk_guard: ClerkHTTPBearer | None = None
 
 
 def get_clerk_guard() -> ClerkHTTPBearer:
-    """Return the shared Clerk auth guard, creating it lazily on first call."""
+    """Return the shared Clerk auth guard, creating it lazily on first call.
+
+    Raises HTTPException 503 if Clerk is not configured (missing env vars).
+    """
     global _clerk_guard
     if _clerk_guard is None:
-        _clerk_guard = _build_clerk_auth()
+        try:
+            _clerk_guard = _build_clerk_auth()
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Auth not configured: {exc}",
+            ) from exc
     return _clerk_guard
 
 

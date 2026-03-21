@@ -1,38 +1,40 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Request
+from sqlalchemy import text
 
 from app.config import settings
+from app.models.database import get_db
 
 router = APIRouter()
 
 
-def _check_database() -> str:
-    """Run a simple SELECT 1 to verify DB connectivity. Returns 'connected' or 'unreachable'."""
+async def _check_database_async() -> str:
+    """Run a SELECT 1 via SQLAlchemy async session to verify DB connectivity.
+
+    Returns 'connected' or 'unreachable'.
+    """
     if not settings.DATABASE_URL:
         return "unreachable"
 
     try:
-        import psycopg2
-
-        conn = psycopg2.connect(settings.DATABASE_URL, connect_timeout=3)
-        cur = conn.cursor()
-        cur.execute("SELECT 1")
-        cur.close()
-        conn.close()
-        return "connected"
+        async for session in get_db():
+            await session.execute(text("SELECT 1"))
+            return "connected"
     except Exception:
         return "unreachable"
 
+    return "unreachable"
+
 
 @router.get("/health")
-def health_check(request: Request) -> dict:
+async def health_check(request: Request) -> dict:
     """Detailed health check — returns version, uptime, DB status, and timestamp."""
     now = datetime.now(UTC)
     start_time: datetime = request.app.state.start_time
     uptime_seconds = (now - start_time).total_seconds()
 
-    db_status = _check_database()
+    db_status = await _check_database_async()
     overall_status = "ok" if db_status == "connected" else "degraded"
 
     return {
