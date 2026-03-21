@@ -90,10 +90,10 @@ M1 (Phases 1-5) shipped a working transcription tool: live recording, file uploa
 **Plans**: 4 plans
 
 Plans:
-- [ ] 06-01: Maintenance mode middleware + page
-- [ ] 06-02: FastAPI project scaffold on Railway (health check, CORS, env)
-- [ ] 06-03: Clerk JWT verification on FastAPI + shared DB access
-- [ ] 06-04: Subdomain routing (api.handriti.is DNS + Vercel rewrites)
+- [x] 06-01: Maintenance mode middleware + page
+- [x] 06-02: FastAPI project scaffold on Railway (health check, CORS, env)
+- [x] 06-03: Clerk JWT verification on FastAPI + shared DB access
+- [x] 06-04: Subdomain routing (api.handriti.is DNS + Vercel rewrites)
 
 #### Phase 7: ElevenLabs Scribe v2 STT Layer
 **Goal**: Pro users can record a meeting and receive real-time transcription via ElevenLabs Scribe v2 — with speaker diarization, keyterm prompting, and confidence data — without the API key ever reaching the browser
@@ -211,7 +211,7 @@ M2: 6 → 7 → 8 → 9 → 10 → 11 → 12
 | 3. File Upload Flow | v1.0 | -/- | Complete | 2026-03 |
 | 4. GPT Realtime Flow | v1.0 | -/- | Complete | 2026-03 |
 | 5. Polish + Deployment | v1.0 | -/- | Complete | 2026-03 |
-| 6. Infrastructure + Maintenance Mode | 3/4 | In Progress|  | - |
+| 6. Infrastructure + Maintenance Mode | v2.0 | 4/4 | Complete | 2026-03-21 |
 | 7. ElevenLabs Scribe v2 STT Layer | v2.0 | 0/4 | Not started | - |
 | 8. OpenRouter LLM Routing | v2.0 | 0/3 | Not started | - |
 | 9. Meeting Agent (FastAPI WebSocket) | v2.0 | 0/5 | Not started | - |

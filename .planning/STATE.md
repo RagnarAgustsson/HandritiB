@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Meeting Intelligence Tool
 status: executing
-stopped_at: Completed 06-03-PLAN.md
-last_updated: "2026-03-21T21:19:07.664Z"
-last_activity: 2026-03-21 — Completed 06-02 FastAPI backend scaffold (health endpoint, uv, Dockerfile)
+stopped_at: Completed 06-04-PLAN.md
+last_updated: "2026-03-21T22:00:00.000Z"
+last_activity: 2026-03-21 — Completed 06-04 CORS middleware + api.handriti.is DNS/Railway custom domain
 progress:
   total_phases: 12
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 50
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 6 of 12 (Infrastructure + Maintenance Mode)
-Plan: 3 of 4 in current phase
-Status: In progress
-Last activity: 2026-03-21 — Completed 06-03 Clerk JWT auth + Neon SQLAlchemy layer
+Plan: 4 of 4 in current phase — COMPLETE
+Status: Phase complete, ready for Phase 7
+Last activity: 2026-03-21 — Completed 06-04 CORS middleware + api.handriti.is DNS/Railway custom domain
 
-Progress: [████████░░] 75% (phase 6: 3/4 plans complete)
+Progress: [██████████] 100% (phase 6: 4/4 plans complete)
 
 ## Milestone History
 
@@ -46,7 +46,7 @@ Progress: [████████░░] 75% (phase 6: 3/4 plans complete)
 ### M2 — Meeting Intelligence Tool (v2.0) ◆
 | # | Name | Status |
 |---|------|--------|
-| 6 | Infrastructure + Maintenance Mode | In Progress (3/4) |
+| 6 | Infrastructure + Maintenance Mode | Complete (4/4) |
 | 7 | ElevenLabs Scribe v2 STT Layer | Not started |
 | 8 | OpenRouter LLM Routing | Not started |
 | 9 | Meeting Agent (FastAPI WebSocket) | Not started |
@@ -79,6 +79,8 @@ Progress: [████████░░] 75% (phase 6: 3/4 plans complete)
 - [Phase 06]: fastapi-clerk-auth library over manual PyJWT JWKS — handles key caching and JWT verification cleanly
 - [Phase 06]: SQLAlchemy enum values use actual Icelandic characters from migrations (viðtal, frjálst) not ASCII approximations from plan interface
 - [Phase 06]: Missing Clerk config returns HTTP 503 (not 500) — operator misconfiguration is distinct from runtime auth failure
+- [Phase 06-04]: CORS origins env-var-driven (CORS_ORIGINS) — dev adds localhost via env var, never hardcoded
+- [Phase 06-04]: api.handriti.is CNAME → nmlzr64m.up.railway.app; SSL cert auto-provisioned by Railway (Let's Encrypt)
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T21:19:07.662Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-03-21T22:00:00.000Z
+Stopped at: Completed 06-04-PLAN.md — Phase 6 complete
 Resume file: None
