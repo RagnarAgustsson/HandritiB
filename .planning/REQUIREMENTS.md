@@ -1,130 +1,109 @@
-# Requirements: Handriti
+# Requirements: Handriti v2.0 — Meeting Intelligence Tool
 
-**Defined:** 2026-02-28
-**Core Value:** Icelandic speakers can record or upload audio and get accurate transcripts and useful, structured summaries — reliably, with no setup required.
+**Defined:** 2026-03-21
+**Core Value:** Icelandic speakers can run meetings and get accurate real-time transcription, live summaries, agenda tracking, and structured meeting minutes
 
-## v1 Requirements
+## v2.0 Requirements
 
-Requirements for the full rewrite. Every item here existed in the original app and must be preserved, or is a direct rewrite constraint from PROJECT.md.
+### Infrastructure
 
-### Setup
+- [ ] **INFRA-01**: Maintenance mode toggleable via env var (shows "Handriti er að fara í glowup" page)
+- [ ] **INFRA-02**: FastAPI backend deployed on Railway with health check endpoint
+- [ ] **INFRA-03**: Clerk JWT verification working on FastAPI backend (shared auth)
+- [ ] **INFRA-04**: Neon DB accessible from both Vercel and Railway (shared database)
+- [ ] **INFRA-05**: Subdomain routing — api.handriti.is → Railway, handriti.is → Vercel
 
-- [ ] **SETUP-01**: Next.js 15 App Router project is scaffolded with TypeScript, Tailwind CSS, and Node.js runtime enforced on all AI/audio routes
-- [ ] **SETUP-02**: Clerk auth is configured with `clerkMiddleware()` protecting all `/api/*` routes and a shared `requireAuth()` utility used in every handler
-- [ ] **SETUP-03**: Neon Postgres is connected via `@neondatabase/serverless` HTTP driver with Drizzle ORM; schema tables (`sessions`, `chunks`, `notes`) exist and migrations run in the Vercel build step
-- [ ] **SETUP-04**: Environment variables are validated at startup via `lib/env.ts`; `NEXT_PUBLIC_` prefix rules are enforced and documented
+### STT (Speech-to-Text)
 
-### Pipeline
+- [ ] **STT-01**: ElevenLabs Scribe v2 Realtime transcription via client-side WebSocket
+- [ ] **STT-02**: Single-use token generation endpoint (never expose API key to browser)
+- [ ] **STT-03**: VAD commit strategy for live meetings
+- [ ] **STT-04**: Speaker diarization with editable names per session
+- [ ] **STT-05**: Keyterm prompting per meeting template (up to 1,000 Icelandic terms)
+- [ ] **STT-06**: Word-level timestamps and confidence scores
+- [ ] **STT-07**: No-verbatim mode on by default (strips filler words)
+- [ ] **STT-08**: Audio event tagging enabled (laughter, applause)
 
-- [ ] **PIPE-01**: Whisper transcription pipeline (`lib/pipeline/transcribe.ts`) sends audio with `language: 'is'` and passes prior chunk transcript as context prompt
-- [ ] **PIPE-02**: GPT-4o summarization pipeline (`lib/pipeline/summarize.ts`) produces structured notes and rolling summary; every prompt includes an explicit Icelandic instruction
-- [ ] **PIPE-03**: Icelandic prompt constants are centralised in `lib/pipeline/prompts.ts`; no language instructions are inlined in route handlers
+### LLM Routing
 
-### Recording
+- [ ] **LLM-01**: All new LLM calls routed through OpenRouter (drop-in OpenAI SDK replacement)
+- [ ] **LLM-02**: User can select LLM model from curated dropdown in meeting settings
+- [ ] **LLM-03**: Model fallback array (auto-route on provider failure)
+- [ ] **LLM-04**: Streaming responses via OpenRouter SSE
 
-- [ ] **REC-01**: User can start and stop a live recording session from the browser using MediaRecorder (works on mobile Safari and Chrome)
-- [ ] **REC-02**: Each 10-second audio chunk is sent to `/api/chunk`, transcribed by Whisper, and a note is written to the database; each chunk has a `status` field (`pending`/`processing`/`done`/`failed`) and failures are logged with context
-- [ ] **REC-03**: User sees real-time transcription notes appearing during recording via SSE stream (`/api/stream` polling Neon every 300 ms)
-- [ ] **REC-04**: User can select a session profile (meeting, lecture, interview, casual) before recording; the selection drives prompt construction in the pipeline
-- [ ] **REC-05**: User sees a rolling summary updating during recording alongside the notes
+### Meeting Agent
 
-### Sessions
+- [ ] **AGNT-01**: FastAPI WebSocket agent maintains state for duration of meeting (2hr+)
+- [ ] **AGNT-02**: Running summary updated live as transcript blocks arrive
+- [ ] **AGNT-03**: Agenda tracking — agent compares transcript to agenda, checks off items
+- [ ] **AGNT-04**: Action item extraction in real-time
+- [ ] **AGNT-05**: Speaker stats accumulation from diarization data
+- [ ] **AGNT-06**: Meeting health score (agenda coverage, speaking balance, on-topic ratio)
+- [ ] **AGNT-07**: "Running out of time" nudge when agenda items remain near scheduled end
+- [ ] **AGNT-08**: Reconnection handling (5-min grace period, session ID recovery)
 
-- [ ] **SESS-01**: Session is created in Neon at recording start and finalised (final summary generated) when the user stops recording
-- [ ] **SESS-02**: User can view a list of their past sessions on the home dashboard, ordered by most recent
-- [ ] **SESS-03**: User can open a session detail page showing the full transcript, structured notes, and final summary
-- [ ] **SESS-04**: User can rename a session from the session detail page (single `title` field, inline edit)
+### UX
 
-### Upload
+- [ ] **UX-01**: Focus mode (default) — notepad + agenda sidebar + recording indicator
+- [ ] **UX-02**: Dashboard mode (opt-in) — full transcript + summary + agenda + speaker timeline
+- [ ] **UX-03**: Hybrid notepad — user notes merged with transcript post-meeting by LLM
+- [ ] **UX-04**: Speaker timeline bar (color-coded, who spoke when)
+- [ ] **UX-05**: Confidence visualization (low-confidence words at reduced opacity)
+- [ ] **UX-06**: Progressive disclosure summary panel (collapsible, badge count for updates)
+- [ ] **UX-07**: Agenda sidebar with checkboxes, progress bar, auto-checkoff
 
-- [ ] **UPLOAD-01**: User can select an audio file (webm, mp3, mp4, m4a, wav) for upload; the file is sent directly from the browser to Vercel Blob (bypassing the Next.js API route body limit); the API route receives only the storage URL
-- [ ] **UPLOAD-02**: Server processes the uploaded file by fetching from Vercel Blob, splitting into segments under 25 MB, transcribing each segment via Whisper, and generating a final summary; processing runs within a single function invocation with `maxDuration = 300`
-- [ ] **UPLOAD-03**: User sees progress feedback while the upload is processing and is redirected to the session detail page when complete
+### Tiers
 
-### Realtime
+- [ ] **TIER-01**: Free tier — browser Whisper WASM (small model), post-meeting batch, 60 min/mo
+- [ ] **TIER-02**: Starter tier — whisper-1 API, Gemini 2.5 Flash, batch processing, 10 hrs/mo
+- [ ] **TIER-03**: Pro tier — Scribe v2 + agent + Sonnet, real-time, diarization, 30 hrs/mo
+- [ ] **TIER-04**: Model selection dropdowns (STT + LLM) per tier restrictions
 
-- [ ] **REAL-01**: Server issues a short-lived OpenAI ephemeral token (`POST /api/realtime`) after Clerk auth verification; the token is returned to the client and never stored server-side
-- [ ] **REAL-02**: Client establishes a WebSocket directly to OpenAI using the ephemeral token; user can speak Icelandic and receive AI responses; transcript is accumulated client-side and saved to Neon via `POST /api/session` when the session ends
+### Export & Post-Meeting
 
-### Polish
+- [ ] **EXPORT-01**: PDF export with human-in-the-loop review (draft → edit → export)
+- [ ] **EXPORT-02**: Entity detection for PII scrubbing before export (Scribe batch API)
+- [ ] **EXPORT-03**: Meeting templates (save/load meeting type with default agenda, models, keyterms)
+- [ ] **EXPORT-04**: Carry-over — unfinished action items from last meeting auto-populate next
 
-- [ ] **POLS-01**: Every transcript, notes block, and summary has a one-click copy button
-- [ ] **POLS-02**: All user-facing error states (chunk failure, upload timeout, Whisper rejection, auth error) display a clear Icelandic-language message rather than a raw error or blank screen
-- [ ] **POLS-03**: A full Icelandic language QA pass confirms that every GPT-4o output path produces Icelandic output; every Whisper call passes `language: 'is'`
-- [ ] **POLS-04**: App is deployed to Vercel with all required environment variables documented in `.env.example`; unauthenticated access to all API routes is verified to return 401
+### Cleanup
 
-## v2 Requirements
+- [ ] **CLEAN-01**: Detailed CLEANUP.md documenting all v1 dead code to remove
+- [ ] **CLEAN-02**: Remove deprecated routes, SDKs, and unused code after v2 is verified
 
-Deferred. Acknowledged but not in the current roadmap.
+## Future Requirements (v2.1+)
 
-### Discovery
-
-- **DISC-01**: User can search past sessions by keyword across transcript text
-- **DISC-02**: User can export a session as plain text or markdown file
-- **DISC-03**: User can share a session via a public read-only link
-
-### Enhancement
-
-- **ENH-01**: Session profiles include Icelandic domain vocabulary hints (legal, medical, educational) injected into Whisper prompts
-- **ENH-02**: Interview profile triggers speaker-aware prompt framing (two-speaker context hint)
-- **ENH-03**: Auto-stop recording on prolonged silence (client-side VAD or silence threshold)
+- **FUTURE-01**: Meeting comparison trends over time per template type
+- **FUTURE-02**: TTS summary readback (ElevenLabs eleven_flash_v2_5)
+- **FUTURE-03**: Conversational search across meeting history ("Ask Handriti")
+- **FUTURE-04**: Coupon code system for promotional trials
+- **FUTURE-05**: Browser-side Whisper model upgrade (medium/large quantized)
 
 ## Out of Scope
 
-Explicitly excluded. Documented to prevent scope creep.
-
 | Feature | Reason |
 |---------|--------|
-| Credit / payment system | Stripe complexity out of scope; launch free |
-| Email delivery (Resend) | Not core; users copy-paste what they need |
-| Push notifications | Service worker + VAPID complexity for low value |
-| Client-side FFmpeg | Breaks COOP/COEP headers required by Clerk auth popups; 30 MB bundle |
-| Team workspaces | Single-user scope for v1 |
-| Calendar / CRM integrations | Separate product scope |
-| Custom AI model selection | Always use best-available model internally |
-| Offline mode / PWA | Network required; browser tab must stay open |
-| Audio playback with transcript | Timestamps + waveform UI is significant frontend work |
-| Multi-language support | Icelandic only for v1 |
-| Admin dashboard / analytics | Use Vercel logs + Neon console |
-| Speaker diarization (true) | Requires pyannote or AssemblyAI — not in OpenAI SDK |
+| Mobile native app | Web-first for MBA timeline |
+| Video recording | Audio only — complexity + storage |
+| CRM integrations | Not core to meeting intelligence |
+| On-premise deployment | SaaS only for v2 |
+| Custom voice cloning / Icelandic TTS | Needs quality verification first |
+| OAuth social login | Clerk email/password sufficient |
+| Real-time chat between participants | Out of scope — this is a recording tool |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
+(Populated during roadmap creation)
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETUP-01 | Phase 1 | Pending |
-| SETUP-02 | Phase 1 | Pending |
-| SETUP-03 | Phase 1 | Pending |
-| SETUP-04 | Phase 1 | Pending |
-| PIPE-01 | Phase 1 | Pending |
-| PIPE-02 | Phase 1 | Pending |
-| PIPE-03 | Phase 1 | Pending |
-| REC-01 | Phase 2 | Pending |
-| REC-02 | Phase 2 | Pending |
-| REC-03 | Phase 2 | Pending |
-| REC-04 | Phase 2 | Pending |
-| REC-05 | Phase 2 | Pending |
-| SESS-01 | Phase 2 | Pending |
-| SESS-02 | Phase 2 | Pending |
-| SESS-03 | Phase 2 | Pending |
-| SESS-04 | Phase 2 | Pending |
-| UPLOAD-01 | Phase 3 | Pending |
-| UPLOAD-02 | Phase 3 | Pending |
-| UPLOAD-03 | Phase 3 | Pending |
-| REAL-01 | Phase 4 | Pending |
-| REAL-02 | Phase 4 | Pending |
-| POLS-01 | Phase 5 | Pending |
-| POLS-02 | Phase 5 | Pending |
-| POLS-03 | Phase 5 | Pending |
-| POLS-04 | Phase 5 | Pending |
+| — | — | — |
 
 **Coverage:**
-- v1 requirements: 25 total
-- Mapped to phases: 25
-- Unmapped: 0 ✓
+- v2.0 requirements: 33 total
+- Mapped to phases: 0
+- Unmapped: 33 ⚠️
 
 ---
-*Requirements defined: 2026-02-28*
-*Last updated: 2026-02-28 after initial roadmap creation*
+*Requirements defined: 2026-03-21*
+*Last updated: 2026-03-21 after initial definition*
