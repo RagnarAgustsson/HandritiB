@@ -4,6 +4,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     DATABASE_URL: str = ""
     CLERK_SECRET_KEY: str = ""
+    # Clerk JWT verification — one of these must be set for auth to work
+    CLERK_FRONTEND_API_URL: str = ""
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: str = ""
     CORS_ORIGINS: str = "https://handriti.is"
     APP_VERSION: str = "0.1.0"
     ENVIRONMENT: str = "production"
