@@ -87,7 +87,7 @@ M1 (Phases 1-5) shipped a working transcription tool: live recording, file uploa
   3. A Clerk-signed JWT sent from the Next.js frontend is accepted by the FastAPI backend — the same user identity is recognized on both services
   4. FastAPI can read from the Neon database using the same connection string as Vercel (SQLAlchemy read-only mirror)
   5. `api.handriti.is` routes to Railway and `handriti.is` routes to Vercel; CORS headers allow cross-origin requests between them
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
 - [ ] 06-01: Maintenance mode middleware + page
