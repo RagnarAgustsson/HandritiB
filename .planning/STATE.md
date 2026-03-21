@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Meeting Intelligence Tool
-status: planning
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-21T21:00:02.128Z"
-last_activity: 2026-03-21 — Roadmap created for v2.0 (33 requirements mapped to phases 6-12)
+status: executing
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-21T21:12:40.396Z"
+last_activity: 2026-03-21 — Completed 06-01 maintenance mode (env-var toggle, /maintenance page, admin bypass)
 progress:
   total_phases: 12
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 2
   percent: 42
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 6 of 12 (Infrastructure + Maintenance Mode)
-Plan: 0 of 4 in current phase
-Status: Ready to plan
-Last activity: 2026-03-21 — Roadmap created for v2.0 (33 requirements mapped to phases 6-12)
+Plan: 2 of 4 in current phase
+Status: In progress
+Last activity: 2026-03-21 — Completed 06-02 FastAPI backend scaffold (health endpoint, uv, Dockerfile)
 
-Progress: [████████░░░░░░░░░░░░] 42% (M1 phases 1-5 complete, M2 not started)
+Progress: [█████░░░░░] 50% (phase 6: 2/4 plans complete)
 
 ## Milestone History
 
@@ -46,7 +46,7 @@ Progress: [████████░░░░░░░░░░░░] 42% (M1
 ### M2 — Meeting Intelligence Tool (v2.0) ◆
 | # | Name | Status |
 |---|------|--------|
-| 6 | Infrastructure + Maintenance Mode | Not started |
+| 6 | Infrastructure + Maintenance Mode | In Progress (2/4) |
 | 7 | ElevenLabs Scribe v2 STT Layer | Not started |
 | 8 | OpenRouter LLM Routing | Not started |
 | 9 | Meeting Agent (FastAPI WebSocket) | Not started |
@@ -72,6 +72,10 @@ Progress: [████████░░░░░░░░░░░░] 42% (M1
 - [M2 init]: OpenRouter for all new LLM calls — no direct OpenAI/Gemini SDK imports in v2
 - [M2 init]: Drizzle owns migrations, SQLAlchemy mirrors read-only
 - [M2 init]: Phase 6 goes live first — maintenance mode enables safe rollback at any point
+- [Phase 06-01]: Admin bypass uses neon() raw SQL in Edge middleware — avoids Drizzle overhead, edge-safe via fetch
+- [Phase 06-01]: Fail closed on DB error during maintenance — if admin check throws, deny bypass (not silently grant)
+- [Phase 06-02]: Health check returns 200 even when DB unreachable (status='degraded') — Railway should not restart on transient DB blips
+- [Phase 06-02]: Multi-stage Dockerfile: builder installs deps with uv, runtime copies .venv — no uv binary in final image
 
 ### Pending Todos
 
@@ -85,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T21:00:02.122Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-infrastructure-maintenance-mode/06-CONTEXT.md
+Last session: 2026-03-21T21:12:40.394Z
+Stopped at: Completed 06-02-PLAN.md
+Resume file: None

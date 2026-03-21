@@ -7,8 +7,8 @@
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Maintenance mode toggleable via env var (shows "Handriti er að fara í glowup" page)
-- [ ] **INFRA-02**: FastAPI backend deployed on Railway with health check endpoint
+- [x] **INFRA-01**: Maintenance mode toggleable via env var (shows "Handriti er að fara í glowup" page)
+- [x] **INFRA-02**: FastAPI backend deployed on Railway with health check endpoint
 - [ ] **INFRA-03**: Clerk JWT verification working on FastAPI backend (shared auth)
 - [ ] **INFRA-04**: Neon DB accessible from both Vercel and Railway (shared database)
 - [ ] **INFRA-05**: Subdomain routing — api.handriti.is → Railway, handriti.is → Vercel
@@ -95,8 +95,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 6 | Pending |
-| INFRA-02 | Phase 6 | Pending |
+| INFRA-01 | Phase 6 | Complete |
+| INFRA-02 | Phase 6 | Complete |
 | INFRA-03 | Phase 6 | Pending |
 | INFRA-04 | Phase 6 | Pending |
 | INFRA-05 | Phase 6 | Pending |

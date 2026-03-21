@@ -211,7 +211,7 @@ M2: 6 → 7 → 8 → 9 → 10 → 11 → 12
 | 3. File Upload Flow | v1.0 | -/- | Complete | 2026-03 |
 | 4. GPT Realtime Flow | v1.0 | -/- | Complete | 2026-03 |
 | 5. Polish + Deployment | v1.0 | -/- | Complete | 2026-03 |
-| 6. Infrastructure + Maintenance Mode | v2.0 | 0/4 | Not started | - |
+| 6. Infrastructure + Maintenance Mode | 2/4 | In Progress|  | - |
 | 7. ElevenLabs Scribe v2 STT Layer | v2.0 | 0/4 | Not started | - |
 | 8. OpenRouter LLM Routing | v2.0 | 0/3 | Not started | - |
 | 9. Meeting Agent (FastAPI WebSocket) | v2.0 | 0/5 | Not started | - |
