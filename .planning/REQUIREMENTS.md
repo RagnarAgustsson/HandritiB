@@ -93,17 +93,56 @@
 
 ## Traceability
 
-(Populated during roadmap creation)
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| — | — | — |
+| INFRA-01 | Phase 6 | Pending |
+| INFRA-02 | Phase 6 | Pending |
+| INFRA-03 | Phase 6 | Pending |
+| INFRA-04 | Phase 6 | Pending |
+| INFRA-05 | Phase 6 | Pending |
+| STT-01 | Phase 7 | Pending |
+| STT-02 | Phase 7 | Pending |
+| STT-03 | Phase 7 | Pending |
+| STT-04 | Phase 7 | Pending |
+| STT-05 | Phase 7 | Pending |
+| STT-06 | Phase 7 | Pending |
+| STT-07 | Phase 7 | Pending |
+| STT-08 | Phase 7 | Pending |
+| LLM-01 | Phase 8 | Pending |
+| LLM-02 | Phase 8 | Pending |
+| LLM-03 | Phase 8 | Pending |
+| LLM-04 | Phase 8 | Pending |
+| AGNT-01 | Phase 9 | Pending |
+| AGNT-02 | Phase 9 | Pending |
+| AGNT-03 | Phase 9 | Pending |
+| AGNT-04 | Phase 9 | Pending |
+| AGNT-05 | Phase 9 | Pending |
+| AGNT-06 | Phase 9 | Pending |
+| AGNT-07 | Phase 9 | Pending |
+| AGNT-08 | Phase 9 | Pending |
+| UX-01 | Phase 10 | Pending |
+| UX-02 | Phase 10 | Pending |
+| UX-03 | Phase 10 | Pending |
+| UX-04 | Phase 10 | Pending |
+| UX-05 | Phase 10 | Pending |
+| UX-06 | Phase 10 | Pending |
+| UX-07 | Phase 10 | Pending |
+| TIER-01 | Phase 11 | Pending |
+| TIER-02 | Phase 11 | Pending |
+| TIER-03 | Phase 11 | Pending |
+| TIER-04 | Phase 11 | Pending |
+| EXPORT-01 | Phase 11 | Pending |
+| EXPORT-02 | Phase 11 | Pending |
+| EXPORT-03 | Phase 11 | Pending |
+| EXPORT-04 | Phase 11 | Pending |
+| CLEAN-01 | Phase 12 | Pending |
+| CLEAN-02 | Phase 12 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 33 total
-- Mapped to phases: 0
-- Unmapped: 33 ⚠️
+- Mapped to phases: 33
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 — traceability populated after roadmap creation*
