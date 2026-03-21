@@ -19,13 +19,18 @@ from app.config import settings
 
 
 def _build_database_url(raw_url: str) -> str:
-    """Convert postgres:// or postgresql:// to postgresql+asyncpg:// for asyncpg driver."""
-    if raw_url.startswith("postgres://"):
-        return raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
-    if raw_url.startswith("postgresql://"):
-        return raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    # Already in the correct format or empty
-    return raw_url
+    """Convert postgres:// or postgresql:// to postgresql+asyncpg:// for asyncpg driver.
+
+    Also converts sslmode= to ssl= since asyncpg doesn't understand sslmode.
+    """
+    url = raw_url
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    # asyncpg uses ssl= not sslmode=
+    url = url.replace("sslmode=require", "ssl=require")
+    return url
 
 
 # Build engine lazily — if DATABASE_URL is empty we still import cleanly
