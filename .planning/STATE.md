@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: — Meeting Intelligence Tool
 status: executing
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-03-21T21:12:40.396Z"
-last_activity: 2026-03-21 — Completed 06-01 maintenance mode (env-var toggle, /maintenance page, admin bypass)
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-03-21T21:19:07.664Z"
+last_activity: 2026-03-21 — Completed 06-02 FastAPI backend scaffold (health endpoint, uv, Dockerfile)
 progress:
   total_phases: 12
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
-  percent: 42
+  completed_plans: 3
+  percent: 50
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 6 of 12 (Infrastructure + Maintenance Mode)
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In progress
-Last activity: 2026-03-21 — Completed 06-02 FastAPI backend scaffold (health endpoint, uv, Dockerfile)
+Last activity: 2026-03-21 — Completed 06-03 Clerk JWT auth + Neon SQLAlchemy layer
 
-Progress: [█████░░░░░] 50% (phase 6: 2/4 plans complete)
+Progress: [████████░░] 75% (phase 6: 3/4 plans complete)
 
 ## Milestone History
 
@@ -46,7 +46,7 @@ Progress: [█████░░░░░] 50% (phase 6: 2/4 plans complete)
 ### M2 — Meeting Intelligence Tool (v2.0) ◆
 | # | Name | Status |
 |---|------|--------|
-| 6 | Infrastructure + Maintenance Mode | In Progress (2/4) |
+| 6 | Infrastructure + Maintenance Mode | In Progress (3/4) |
 | 7 | ElevenLabs Scribe v2 STT Layer | Not started |
 | 8 | OpenRouter LLM Routing | Not started |
 | 9 | Meeting Agent (FastAPI WebSocket) | Not started |
@@ -76,6 +76,9 @@ Progress: [█████░░░░░] 50% (phase 6: 2/4 plans complete)
 - [Phase 06-01]: Fail closed on DB error during maintenance — if admin check throws, deny bypass (not silently grant)
 - [Phase 06-02]: Health check returns 200 even when DB unreachable (status='degraded') — Railway should not restart on transient DB blips
 - [Phase 06-02]: Multi-stage Dockerfile: builder installs deps with uv, runtime copies .venv — no uv binary in final image
+- [Phase 06]: fastapi-clerk-auth library over manual PyJWT JWKS — handles key caching and JWT verification cleanly
+- [Phase 06]: SQLAlchemy enum values use actual Icelandic characters from migrations (viðtal, frjálst) not ASCII approximations from plan interface
+- [Phase 06]: Missing Clerk config returns HTTP 503 (not 500) — operator misconfiguration is distinct from runtime auth failure
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-21T21:12:40.394Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-03-21T21:19:07.662Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None
